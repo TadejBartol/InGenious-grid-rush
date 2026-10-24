@@ -43,12 +43,12 @@ Testni dostop do notranjosti igre je vklopljen samo z `?e2e` v URL-ju.
 
 Repozitorij že vsebuje workflow `.github/workflows/deploy.yml`, ki ob vsakem pushu na `main` požene teste, zgradi igro in jo objavi.
 
-1. Na GitHubu odpri **Settings → Pages**.
-2. Pod **Build and deployment → Source** izberi **GitHub Actions**.
-3. Pushaj na `main` (ali v zavihku **Actions** ročno poženi »Test in objava«).
-4. Igra bo na voljo na `https://<uporabnik>.github.io/ingenious-grid-rush/`.
+1. GitHub Pages za zasebne repozitorije zahteva plačljiv paket, zato repozitorij nastavi kot javnega (**Settings → General → Danger Zone → Change visibility**). Dokler je zaseben, workflow samo testira in zgradi igro.
+2. Odpri **Settings → Pages** in pod **Build and deployment → Source** izberi **GitHub Actions**.
+3. V zavihku **Actions** ponovno poženi »Test in objava« (ali pushaj na `main`).
+4. Igra bo na voljo na `https://tadejbartol.github.io/InGenious-grid-rush/`.
 
-Opomba: GitHub Pages za zasebne repozitorije zahteva plačljiv GitHub paket. Pri brezplačnem računu repozitorij nastavi kot javen ali pa uporabi drugo gostovanje (Netlify, Vercel, Cloudflare Pages: build ukaz `npm run build`, mapa `dist`, `BASE_PATH` ni potreben).
+Če želiš, da koda ostane zasebna, uporabi drugo gostovanje (Netlify, Vercel, Cloudflare Pages): build ukaz `npm run build`, izhodna mapa `dist`, `BASE_PATH` ni potreben.
 
 Na telefonu odpri povezavo in izberi **Dodaj na domači zaslon**. Igra po prvem nalaganju deluje brez povezave; ko izide nova različica, se pokaže gumb **Posodobi**.
 

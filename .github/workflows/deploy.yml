@@ -19,8 +19,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -29,13 +29,14 @@ jobs:
       - run: npm run build
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
         if: github.ref == 'refs/heads/main'
         with:
           path: dist
 
   deploy:
-    if: github.ref == 'refs/heads/main'
+    # Pages on a private repository needs a paid plan; private repos only test and build.
+    if: github.ref == 'refs/heads/main' && !github.event.repository.private
     needs: build
     runs-on: ubuntu-latest
     environment:
