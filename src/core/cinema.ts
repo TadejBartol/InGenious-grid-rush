@@ -7,13 +7,23 @@ import type { Scene } from './story';
  * a line can still name its own `shot` or `act`.
  */
 export type Shot = 'establish' | 'two' | 'facility' | 'genko' | 'dark';
-export type Act = 'flyin' | 'sneak' | 'zap' | 'hit' | 'flee' | 'power' | 'blackout' | 'dawn' | 'laugh';
+/** Pieces of action. The first group moves an actor or the set; the second is a beat
+ * layered over whatever else the line does (see `Direction.beat`). */
+export type Act = 'flyin' | 'sneak' | 'zap' | 'hit' | 'flee' | 'power' | 'blackout' | 'dawn' | 'laugh' | 'heal' | Beat;
+/** scan: InGenious sweeps a sensor beam; connect: data packets run to the facility;
+ * reveal: a clue under a spotlight; glitch: the Dark Meter tears the picture. */
+export type Beat = 'scan' | 'connect' | 'reveal' | 'glitch';
+const BEATS: Act[] = ['scan', 'connect', 'reveal', 'glitch'];
 
 export interface Direction {
   shot: Shot;
   /** Glide from the previous framing instead of cutting. */
   move: boolean;
-  act?: Act;
+  act?: Exclude<Act, Beat>;
+  /** Overlay beat that plays on top of `act`. */
+  beat?: Beat;
+  /** Tilt the lens a little: unease, a revelation, the villain's grip on the picture. */
+  dutch: boolean;
   /** State of the set while this line plays. */
   genkoOn: boolean;
   darkOn: boolean;
@@ -61,11 +71,19 @@ export function direct(scene: Scene): Direction[] {
       if (line.mood === 'angry' || line.mood === 'smirk') act = i % 2 ? 'laugh' : undefined;
     } else shot = scene.facility ? 'facility' : 'establish';
 
+    let beat: Beat | undefined;
+    if (line.act && BEATS.includes(line.act)) {
+      beat = line.act as Beat;
+      // A beat never steals an entrance; it plays on top of it.
+      if (beat === 'reveal' && !line.shot && act !== 'flyin' && act !== 'sneak') shot = scene.facility ? 'facility' : 'establish';
+      if (beat === 'glitch' && !line.shot && act !== 'sneak') shot = 'dark';
+    } else act = line.act ?? act;
+    // A healed meter does not sneak in: it simply glows into the frame.
+    if (act === 'sneak' && line.mood === 'healed') act = 'heal';
     shot = line.shot ?? shot;
-    act = line.act ?? act;
 
     if (act === 'flyin' || line.who === 'genko') genkoOn = true;
-    if (act === 'sneak' || line.who === 'dark') darkOn = true;
+    if (act === 'sneak' || act === 'heal' || line.who === 'dark') darkOn = true;
     if (act === 'power') {
       lit = true;
       city = Math.min(1, city + 0.35);
@@ -74,7 +92,9 @@ export function direct(scene: Scene): Direction[] {
     if (act === 'blackout') city = 0.02;
     const move = prev === 'establish' || shot === 'establish' || (prev === 'two' && shot === 'facility');
     prev = shot;
-    const d: Direction = { shot, move, act, genkoOn, darkOn, lit, city };
+    if (act === 'heal') city = Math.min(1, city + 0.2);
+    const dutch = beat === 'glitch' || beat === 'reveal' || (line.who === 'dark' && line.mood === 'angry' && scene.tone === 'boss');
+    const d: Direction = { shot, move, act: act as Exclude<Act, Beat> | undefined, beat, dutch, genkoOn, darkOn, lit, city };
     if (act === 'flee') darkOn = false;
     return d;
   });

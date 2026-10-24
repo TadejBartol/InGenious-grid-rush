@@ -51,3 +51,5 @@ export const IconWave = (p: P) => base(p, [<circle cx="12" cy="18" r="2" />, <pa
 export const IconCogen = (p: P) => base(p, [<path d="M12 3c2 3 4 5 4 8a4 4 0 0 1-8 0c0-3 2-5 4-8z" />, <path d="M10 21h4M12 15v6" />]);
 export const IconDark = (p: P) => base(p, [<circle cx="12" cy="12" r="9" />, <path d="M7 15l3-4 2 2 2-4 3 5" />]);
 export const IconTrophy = (p: P) => base(p, [<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z" />, <path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4" />]);
+export const IconBell = (p: P) => base(p, [<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z" />, <path d="M10 21h4" />]);
+export const IconDatabase = (p: P) => base(p, [<ellipse cx="12" cy="5" rx="8" ry="3" />, <path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" />]);

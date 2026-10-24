@@ -39,3 +39,21 @@ describe('cutscene direction', () => {
     expect(d[0].act).toBe('dawn');
   });
 });
+
+describe('beats and the finale', () => {
+  it('layers a beat over an entrance instead of replacing it', () => {
+    const d = direct(sceneById('r6-boss')!);
+    expect(d[1]).toMatchObject({ act: 'sneak', beat: 'glitch', dutch: true, darkOn: true });
+    expect(d[0]).toMatchObject({ beat: 'reveal', shot: 'establish' });
+  });
+
+  it('heals the Dark Meter in the finale and lets a healed meter glow in, not sneak', () => {
+    const ko = direct(sceneById('r6-ko')!);
+    const h = ko.findIndex((x) => x.act === 'heal');
+    expect(h).toBeGreaterThan(0);
+    expect(ko[h].city).toBeGreaterThan(ko[0].city);
+    const ep = direct(sceneById('r6-victory')!);
+    expect(ep.map((x) => x.act)).not.toContain('sneak');
+    expect(ep.find((x) => x.darkOn)?.act).toBe('heal');
+  });
+});

@@ -6,6 +6,7 @@ import { Genko } from '../components/Genko';
 import { Cost } from '../components/Common';
 import { SCENES, sceneKey } from '../../core/story';
 import { playScene } from '../story';
+import { nav } from '../nav';
 import { IconLock, IconPlay } from '../components/Icons';
 
 export function CollectionScreen() {
@@ -28,6 +29,13 @@ export function CollectionScreen() {
             </button>
           );
         })}
+        {seen.includes(sceneKey('r6-victory')) && (
+          <button class="chap dawn" onClick={() => (audio.play('tap'), nav.setState({ credits: true }))} aria-label="Ponovno poglej odjavno špico">
+            <span class="chap-n mono">★</span>
+            <span class="grow">Odjavna špica</span>
+            <IconPlay width={16} height={16} />
+          </button>
+        )}
       </div>
       <div class="section-title">Robotek InGenious · kozmetika za čipe</div>
       <div class="skins">

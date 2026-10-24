@@ -6,6 +6,8 @@ import { KonicaView } from '../../games/konica/KonicaView';
 import { DetektivView } from '../../games/detektiv/DetektivView';
 import { WmbusView } from '../../games/wmbus/WmbusView';
 import { KogeneratorView } from '../../games/kogenerator/KogeneratorView';
+import { AlarmView } from '../../games/alarm/AlarmView';
+import { SelitevView } from '../../games/selitev/SelitevView';
 import { logEvent } from '../../state/persist';
 import { store, useGame } from '../../state/store';
 import { nav, type Screen } from '../nav';
@@ -13,7 +15,7 @@ import { GenkoSays } from '../components/Genko';
 import { Sheet } from '../components/Common';
 import { IconPlay, IconRetry, IconX } from '../components/Icons';
 
-export const KIND_NAME: Record<Stage['kind'], string> = { priklop: 'Priklop', konica: 'Lov na konico', detektiv: 'Detektiv', wmbus: 'Radijsko omrežje', kogenerator: 'Kogenerator' };
+export const KIND_NAME: Record<Stage['kind'], string> = { priklop: 'Priklop', konica: 'Lov na konico', detektiv: 'Detektiv', wmbus: 'Radijsko omrežje', kogenerator: 'Kogenerator', alarm: 'Alarm!', selitev: 'Selitev' };
 
 /** First-time tutorial bubbles, keyed by level. */
 const TIPS: Record<string, string> = {
@@ -29,6 +31,12 @@ const TIPS: Record<string, string> = {
   'r3-2': 'Najprej prehod, nato repetitor. Repetitor mora biti v krogu prehoda, sicer ostane oranžen.',
   'r4-1': 'Motor zaženi, ko je rumena črta (cena) visoko. Toplota mora pokriti oranžne stolpce, sicer se mesto ohladi.',
   'r4-2': 'Ko motor dela več toplote, kot jo mesto rabi, potisni hranilnik na »polni«. Ko motor stoji, ga prazni.',
+  'r5-1': 'Ko zazvoni alarm, tapni hladilnik in izberi ukrep. Poglej vrata (ikona), napajanje in smer krivulje.',
+  'r5-2': 'Meja alarma je spodaj. Prenizka zvoni ob vsakem odpiranju vrat, previsoka te opozori prepozno.',
+  'r5-4': 'Torbe so na poti. Ko se hladilni vložki stopijo, temperatura raste: kurirju pošlji sveže vložke.',
+  'r6-1': 'Zgoraj je tabela kod. Vsak zapis pošlji na pravi nov merilnik, preden ga čas odnese.',
+  'r6-2': 'Rumen Wh pomeni 1000× večjo številko. Najprej pritisni »Wh → kWh«, nato zapis pošlji.',
+  'r6-4': '##### in negativne vrednosti v koš. Če je mesec pri merilniku že zelen, je zapis dvojnik: tudi v koš.',
 };
 
 export function PlayScreen({ level, from }: { level: LevelDef; from: Screen }) {
@@ -119,6 +127,8 @@ export function PlayScreen({ level, from }: { level: LevelDef; from: Screen }) {
       {stage.kind === 'detektiv' && <DetektivView key={key} {...common} params={stage.params} />}
       {stage.kind === 'wmbus' && <WmbusView key={key} {...common} params={stage.params} />}
       {stage.kind === 'kogenerator' && <KogeneratorView key={key} {...common} params={stage.params} />}
+      {stage.kind === 'alarm' && <AlarmView key={key} {...common} params={stage.params} />}
+      {stage.kind === 'selitev' && <SelitevView key={key} {...common} params={stage.params} />}
       {phase === 'countdown' && (
         <div class={`countdown${level.boss ? ' boss' : ''}`} aria-live="assertive">
           {level.boss && (

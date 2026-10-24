@@ -1,5 +1,5 @@
 import { hashString } from './rng';
-import type { ConsumerDef, DetektivParams, FacilityDef, KogeneratorParams, KonicaParams, LevelDef, PriklopParams, RegionDef, StarGoal, WmbusParams } from './types';
+import type { AlarmParams, ConsumerDef, DetektivParams, FacilityDef, KogeneratorParams, KonicaParams, LevelDef, PriklopParams, RegionDef, SelitevParams, StarGoal, WmbusParams } from './types';
 
 const seed = (id: string, salt = '') => hashString(`grid-rush:${id}${salt}`);
 
@@ -8,6 +8,8 @@ const konica = (id: string, p: Omit<KonicaParams, 'seed'>): KonicaParams => ({ .
 const detektiv = (id: string, p: Omit<DetektivParams, 'seed'>): DetektivParams => ({ ...p, seed: seed(id) });
 const wmbus = (id: string, p: Omit<WmbusParams, 'seed'>): WmbusParams => ({ ...p, seed: seed(id) });
 const kogen = (id: string, p: Omit<KogeneratorParams, 'seed'>): KogeneratorParams => ({ ...p, seed: seed(id) });
+const alarm = (id: string, p: Omit<AlarmParams, 'seed'>): AlarmParams => ({ ...p, seed: seed(id) });
+const selitev = (id: string, p: Omit<SelitevParams, 'seed'>): SelitevParams => ({ ...p, seed: seed(id) });
 
 const complete: StarGoal = { type: 'complete' };
 const clean: StarGoal = { type: 'mistakes', max: 0 };
@@ -19,6 +21,11 @@ const devicesMax = (n: number): StarGoal => ({ type: 'metric', key: 'used', op: 
 const effOver = (pct: number): StarGoal => ({ type: 'metric', key: 'efficiency', op: '>=', value: pct, unit: '%', label: `Izkoristek ≥ ${pct} %` });
 const warm: StarGoal = { type: 'mistakes', max: 0, label: 'Brez mrzlih radiatorjev' };
 const foundAll: StarGoal = { type: 'metric', key: 'missed', op: '<=', value: 0, unit: '', label: 'Najdi vse anomalije' };
+const fastResponse = (s: number): StarGoal => ({ type: 'metric', key: 'response', op: '<=', value: s, unit: 's', label: `Povprečni odziv ≤ ${String(s).replace('.', ',')} s` });
+const fewFalse = (n: number): StarGoal => ({ type: 'metric', key: 'falseAlarms', op: '<=', value: n, unit: '', label: `Največ ${n} ${n === 1 ? 'lažni alarm' : n === 2 ? 'lažna alarma' : 'lažne alarme'}` });
+const noWrong: StarGoal = { type: 'mistakes', max: 0, label: 'Brez napačnega ukrepa' };
+const intact = (pct: number): StarGoal => ({ type: 'metric', key: 'integrity', op: '>=', value: pct, unit: '%', label: `Celovitost ≥ ${pct} %` });
+const cleanImport: StarGoal = { type: 'mistakes', max: 0, label: 'Brez napake pri uvozu' };
 
 // Consumers used across region 1. Buffers model what really limits load shedding on site.
 const kompresor = (n: number, kw = 90, drain = 1 / 12, fill = 1 / 9): ConsumerDef => ({
@@ -40,14 +47,20 @@ const mesalo: ConsumerDef = { id: 'mesalo', name: 'Mešalo', icon: 'peskalnik', 
 const crpalka = (n: number, kw: number, startAt?: number): ConsumerDef => ({ id: `crpalka${n}`, name: `Črpalka ${n}`, icon: 'linija', kw, critical: true, startAt });
 const obtocna: ConsumerDef = { id: 'obtocna', name: 'Obtočne črpalke', icon: 'klima', kw: 85, bufferLabel: 'Tlak v omrežju', drain: 1 / 16, fill: 1 / 10 };
 const linija = (n: number, kw: number, startAt?: number): ConsumerDef => ({ id: `linija${n}`, name: `Linija ${n}`, icon: 'linija', kw, critical: true, startAt });
+// Hospital: the operating block can never wait, everything around it can, for a while.
+const operacije: ConsumerDef = { id: 'operacije', name: 'Operacijski blok', icon: 'linija', kw: 140, critical: true };
+const sterilizator: ConsumerDef = { id: 'sterilizator', name: 'Sterilizacija', icon: 'pec', kw: 120, bufferLabel: 'Sterilni material', drain: 1 / 15, fill: 1 / 10 };
+const pralnica: ConsumerDef = { id: 'pralnica', name: 'Pralnica', icon: 'susilnik', kw: 100, bufferLabel: 'Čisto perilo', drain: 1 / 18, fill: 1 / 11 };
+const agregat: ConsumerDef = { id: 'agregat', name: 'Hladilni agregat lekarne', icon: 'hladilnik', kw: 80, bufferLabel: 'Hlad v lekarni', drain: 1 / 14, fill: 1 / 9 };
+const mr: ConsumerDef = { id: 'mr', name: 'Magnetna resonanca', icon: 'klima', kw: 95, critical: true, startAt: 25, cycle: { period: 7, depth: 0.3 } };
 
 export const REGIONS: RegionDef[] = [
   { id: 1, name: 'Industrijska cona', theme: 'Konične moči in puščanje zraka', mechanic: 'Priklop · Lov na konico', pos: { x: 52, y: 52 }, available: true, unlockChips: 0 },
   { id: 2, name: 'Mlekarna in prehrana', theme: 'Hladna veriga in števci na TP', mechanic: 'Detektiv', pos: { x: 81, y: 22 }, available: true, unlockChips: 3 },
   { id: 3, name: 'Komunala', theme: 'Radijski vodomeri, puhala in puščanje', mechanic: 'Radijsko omrežje', pos: { x: 27, y: 80 }, available: true, unlockChips: 5 },
   { id: 4, name: 'Kogeneracija', theme: 'Elektrika, toplota in cena na borzi', mechanic: 'Kogenerator', pos: { x: 17, y: 44 }, available: true, unlockChips: 8 },
-  { id: 5, name: 'Zdravstvo', theme: 'Alarmi v realnem času', mechanic: 'Alarm!', pos: { x: 78, y: 68 }, available: false, unlockChips: 0 },
-  { id: 6, name: 'Center Temnega števca', theme: 'Vse mehanike hkrati', mechanic: 'Finale', pos: { x: 43, y: 13 }, available: false, unlockChips: 0 },
+  { id: 5, name: 'Zdravstvo', theme: 'Hladna veriga cepiv in alarmi v realnem času', mechanic: 'Alarm!', pos: { x: 78, y: 68 }, available: true, unlockChips: 11 },
+  { id: 6, name: 'Center Temnega števca', theme: 'Selitev zgodovine in finale', mechanic: 'Selitev · vse mehanike', pos: { x: 43, y: 13 }, available: true, unlockChips: 14 },
 ];
 
 export const FACILITIES: FacilityDef[] = [
@@ -62,6 +75,12 @@ export const FACILITIES: FacilityDef[] = [
   { id: 'crpalisce', region: 3, name: 'Črpališče', description: 'Črpalke, ki ob nalivu delajo za tri.', levels: ['r3-7', 'r3-8', 'r3-9', 'r3-10'], baseRate: 540, upgradeBaseCost: 7400, art: 'kompresor' },
   { id: 'toplarna', region: 4, name: 'Toplarna', description: 'Plinski motor, ki hkrati daje elektriko in toploto.', levels: ['r4-1', 'r4-2', 'r4-3'], baseRate: 680, upgradeBaseCost: 10000, art: 'toplarna' },
   { id: 'bolnisnicni', region: 4, name: 'Bolnišnični CHP', description: 'Toplota za bolnišnico, elektrika za omrežje.', levels: ['r4-4', 'r4-5', 'r4-6'], baseRate: 850, upgradeBaseCost: 14000, art: 'bolnisnica' },
+  { id: 'zdcenter', region: 5, name: 'ZD Center', description: 'Cepilni center in hladilniki cepiv, ki ne smejo čez 8 °C.', levels: ['r5-1', 'r5-2', 'r5-3'], baseRate: 1300, upgradeBaseCost: 25000, art: 'zd' },
+  { id: 'dostava', region: 5, name: 'Hladna dostava', description: 'Kurirji s torbami cepiv med zdravstvenimi domovi.', levels: ['r5-4', 'r5-5', 'r5-6'], baseRate: 1550, upgradeBaseCost: 32000, art: 'dostava' },
+  { id: 'lekarna', region: 5, name: 'Bolnišnična lekarna', description: 'Hladna soba zdravil in bolnišnica, ki nikoli ne spi.', levels: ['r5-7', 'r5-8', 'r5-9', 'r5-10'], baseRate: 1850, upgradeBaseCost: 41000, art: 'bolnisnica' },
+  { id: 'arhiv', region: 6, name: 'Arhiv meritev', description: 'Trideset let zapisov na trakovih in disketah.', levels: ['r6-1', 'r6-2', 'r6-3'], baseRate: 2200, upgradeBaseCost: 52000, art: 'arhiv' },
+  { id: 'razdelilna', region: 6, name: 'Stara razdelilna postaja', description: 'Od tod je nekoč tekla elektrika za pol mesta.', levels: ['r6-4', 'r6-5', 'r6-6'], baseRate: 2600, upgradeBaseCost: 65000, art: 'trafo' },
+  { id: 'omara', region: 6, name: 'Omara Š-0', description: 'Prvi števec omrežja. Štel je sam, 39 let.', levels: ['r6-7', 'r6-8', 'r6-9', 'r6-10'], baseRate: 3200, upgradeBaseCost: 80000, art: 'omara' },
   { id: 'daljinsko', region: 4, name: 'Daljinsko ogrevanje', description: 'Dve enoti, velik hranilnik in pol mesta na zanki.', levels: ['r4-7', 'r4-8', 'r4-9', 'r4-10'], baseRate: 1050, upgradeBaseCost: 19000, art: 'toplarna' },
 ];
 
@@ -785,6 +804,320 @@ export const LEVELS: LevelDef[] = [
     stars: [complete, effOver(85), clean],
     reward: { kwh: 4000, dp: 400 },
     card: { id: 'c-zima', name: 'Zimska konica', rarity: 'epska', text: 'Ko je zunaj –15 °C, je vsak kilovat toplote vreden zlata. In vsak izgubljen dvojno.' },
+  },
+  // ── Region 5: Zdravstvo ────────────────────────────────────────────
+  {
+    id: 'r5-1',
+    region: 5,
+    index: 1,
+    name: 'Prvi alarm',
+    facilityId: 'zdcenter',
+    intro: 'Noč v cepilnem centru. Dva hladilnika, cepiva za tisoč otrok in senzor, ki vsakih nekaj sekund pove temperaturo.',
+    lesson: 'Cepiva morajo ostati med 2 in 8 °C. InGenious vsako meritev primerja z mejo alarma in pošlje obvestilo dežurnemu, takoj.',
+    stages: [{ kind: 'alarm', params: alarm('r5-1', { durationSec: 60, sites: 1, fridges: 2, incidents: 2, causes: ['vrata'], glitches: 0, openings: 2, threshold: 7 }) }],
+    stars: [complete, fastResponse(9), noWrong],
+    reward: { kwh: 4200, dp: 420 },
+    card: { id: 'c-cepiva', name: 'Hladilnik cepiv', rarity: 'navadna', text: 'Med 2 in 8 °C. Ena noč pri 12 °C in cela pošiljka gre v uničenje.' },
+  },
+  {
+    id: 'r5-2',
+    region: 5,
+    index: 2,
+    name: 'Meja alarma',
+    facilityId: 'zdcenter',
+    intro: 'Nekdo je mejo alarma nastavil na 5 °C. Zvoni ob vsakem odpiranju vrat in dežurni je nehal poslušati.',
+    lesson: 'Prenizka meja ustvari lažne alarme in ljudje jih začnejo ignorirati. Previsoka te opozori prepozno. Pravo mejo najdeš s podatki.',
+    stages: [{ kind: 'alarm', params: alarm('r5-2', { durationSec: 70, sites: 1, fridges: 3, incidents: 3, causes: ['vrata', 'kompresor'], glitches: 1, openings: 8, threshold: 5 }) }],
+    stars: [complete, fewFalse(2), fastResponse(8)],
+    reward: { kwh: 4350, dp: 430 },
+    card: { id: 'c-meja', name: 'Meja alarma', rarity: 'redka', text: 'Alarm, ki zvoni vsakih pet minut, ni alarm. Je šum.' },
+  },
+  {
+    id: 'r5-3',
+    region: 5,
+    index: 3,
+    name: 'Tema v ambulanti',
+    facilityId: 'zdcenter',
+    intro: 'Dva zdravstvena doma, nevihta in stari agregati. Ko zmanjka elektrike, se ogrejejo vsi hladilniki v stavbi.',
+    lesson: 'Ko alarmira več naprav hkrati na isti lokaciji, je vzrok skupen. Napajanje merimo na isti platformi kot temperaturo.',
+    stages: [{ kind: 'alarm', params: alarm('r5-3', { durationSec: 75, sites: 2, fridges: 4, incidents: 4, causes: ['vrata', 'izpad', 'kompresor'], glitches: 1, openings: 5, threshold: 7.5 }) }],
+    stars: [complete, fastResponse(7.5), noWrong],
+    reward: { kwh: 4500, dp: 440 },
+    card: { id: 'c-agregat-zd', name: 'Agregat v kleti', rarity: 'navadna', text: 'Zažene se v desetih sekundah. Če ga kdo vklopi.' },
+  },
+  {
+    id: 'r5-4',
+    region: 5,
+    index: 4,
+    name: 'Torbe na poti',
+    facilityId: 'dostava',
+    intro: 'Kurirji vozijo cepiva med domovi. V vsaki torbi je majhen senzor, ki poroča po mobilnem omrežju.',
+    lesson: 'Hladna veriga ne konča pri hladilniku. Temperaturni zapisovalnik v torbi dokaže, da je pošiljka ostala v območju vso pot.',
+    stages: [{ kind: 'alarm', params: alarm('r5-4', { durationSec: 75, sites: 2, fridges: 2, bags: 2, incidents: 4, causes: ['torba', 'vrata', 'zmrzal'], glitches: 1, openings: 4, threshold: 7 }) }],
+    stars: [complete, fastResponse(7.5), noWrong],
+    reward: { kwh: 4650, dp: 450 },
+    card: { id: 'c-torba', name: 'Torba s cepivi', rarity: 'navadna', text: 'Hladilni vložki zdržijo šest ur. Promet na obvoznici včasih sedem.' },
+  },
+  {
+    id: 'r5-5',
+    region: 5,
+    index: 5,
+    name: 'Prehodi na postajah',
+    facilityId: 'dostava',
+    intro: 'Senzorji v hladilnikih in torbah morajo nekam poslati podatke. Postavi prehode, da pokriješ vse postaje dostave.',
+    lesson: 'Isti radijski prehod, ki bere vodomere, bere tudi temperaturne senzorje. Ena infrastruktura za vse merjene veličine.',
+    stages: [{ kind: 'wmbus', params: wmbus('r5-5', { cols: 7, rows: 9, meters: 8, gateways: 1, repeaters: 3, spare: 1, range: 2.2, obstacles: 0.3, timeSec: 95 }) }],
+    stars: [complete, timeLeft(20), devicesMax(4)],
+    reward: { kwh: 4800, dp: 460 },
+    card: { id: 'c-logger', name: 'Temperaturni zapisovalnik', rarity: 'redka', text: 'Meri vsako minuto in hrani zapise, tudi ko ni signala. Pošlje jih, ko spet ujame omrežje.' },
+  },
+  {
+    id: 'r5-6',
+    region: 5,
+    index: 6,
+    name: 'Mrzla noč',
+    facilityId: 'dostava',
+    intro: 'Minus deset zunaj. Termostati se zatikajo, torbe so v avtih, vrata ambulant se odpirajo vso noč.',
+    lesson: 'Zmrzovanje je za cepiva enako nevarno kot pregrevanje. Zato ima vsak alarm dve meji: zgornjo in spodnjo.',
+    stages: [{ kind: 'alarm', params: alarm('r5-6', { durationSec: 80, sites: 2, fridges: 3, bags: 2, incidents: 5, causes: ['vrata', 'izpad', 'kompresor', 'zmrzal', 'torba'], glitches: 2, openings: 6, threshold: 6.5, speed: 1.1 }) }],
+    stars: [complete, fastResponse(7), noWrong],
+    reward: { kwh: 4950, dp: 470 },
+    card: { id: 'c-zmrzal', name: 'Spodnja meja', rarity: 'redka', text: 'Pri 0 °C cepivo zmrzne in izgubi učinkovitost. Na pogled se ne vidi nič.' },
+  },
+  {
+    id: 'r5-7',
+    region: 5,
+    index: 7,
+    name: 'Lekarna ob polnoči',
+    facilityId: 'lekarna',
+    intro: 'Teden podatkov iz hladne sobe bolnišnične lekarne. Agregat dela več, kot bi moral. Zakaj?',
+    lesson: 'Alarmi ujamejo nenadne dogodke. Počasne težave, kot je zamrznjen uparjalnik, se vidijo šele v trendu čez dneve.',
+    stages: [{ kind: 'detektiv', params: detektiv('r5-7', { durationSec: 60, profile: 'mlekarna', anomalies: 5, kinds: ['hladilnik', 'nocna', 'konica', 'prazniTek'], noise: 0.06, decoys: 3, scale: 0.6 }) }],
+    stars: [complete, foundAll, clean],
+    reward: { kwh: 5100, dp: 480 },
+    card: { id: 'c-hladna-soba', name: 'Hladna soba', rarity: 'navadna', text: 'Zdravila za tisoč pacientov na petnajstih kvadratnih metrih.' },
+  },
+  {
+    id: 'r5-8',
+    region: 5,
+    index: 8,
+    name: 'Trije domovi',
+    facilityId: 'lekarna',
+    intro: 'Dežurstvo za tri zdravstvene domove hkrati. Šest hladilnikov, en dispečer: ti.',
+    lesson: 'En nadzorni zaslon za vse lokacije. Ko je alarmov veliko, šteje, kako hitro razbereš vzrok iz podatkov ob alarmu.',
+    stages: [{ kind: 'alarm', params: alarm('r5-8', { durationSec: 85, sites: 3, fridges: 6, incidents: 6, causes: ['vrata', 'izpad', 'kompresor', 'zmrzal'], glitches: 2, openings: 8, threshold: 7, speed: 1.1 }) }],
+    stars: [complete, fastResponse(7), noWrong],
+    reward: { kwh: 5250, dp: 490 },
+    card: { id: 'c-dispecer-zd', name: 'Dežurni dispečer', rarity: 'redka', text: 'Obvestilo na telefon ob treh zjutraj. Samo, ko je res treba.' },
+  },
+  {
+    id: 'r5-9',
+    region: 5,
+    index: 9,
+    name: 'Konica v bolnišnici',
+    facilityId: 'lekarna',
+    intro: 'Dopoldne v bolnišnici. Operacije, sterilizacija, pralnica in magnetna resonanca, vse naenkrat.',
+    lesson: 'Bolnišnica ima kritične porabnike, ki jih ne smeš ugasniti. Prostor pod konico narediš s tistimi, ki imajo zalogo.',
+    stages: [
+      {
+        kind: 'konica',
+        params: konica('r5-9', {
+          durationSec: 75,
+          limitKw: 640,
+          tolerance: 0.05,
+          baseKw: 180,
+          baseNoise: 0.04,
+          baseSteps: [{ t: 45, kw: 30 }],
+          consumers: [operacije, mr, sterilizator, pralnica, agregat, klima],
+          inrush: 1.4,
+        }),
+      },
+    ],
+    stars: [complete, peakUnder(640), noStall],
+    reward: { kwh: 5400, dp: 500 },
+    card: { id: 'c-mr', name: 'Magnetna resonanca', rarity: 'epska', text: 'Superprevodni magnet se hladi s tekočim helijem. Elektrika ne sme zmanjkati niti za sekundo.' },
+  },
+  {
+    id: 'r5-10',
+    region: 5,
+    index: 10,
+    name: 'Noč treh domov',
+    facilityId: 'lekarna',
+    boss: true,
+    intro: 'Temni števec je izklopil senzorje v treh zdravstvenih domovih in sredi noči sproži vse naenkrat. Najprej poveži, potem rešuj.',
+    lesson: 'Boss: brez meritve ni alarma. Ko so senzorji spet na prehodu, alarmi pridejo pravočasno in dežurni ve, kaj naredi.',
+    stages: [
+      { kind: 'priklop', params: priklop('r5-10', { cols: 6, rows: 8, meters: 6, timeSec: 110, conflicts: 2, baudMismatch: 1, dropouts: [50] }, '#2') },
+      { kind: 'alarm', params: alarm('r5-10', { durationSec: 90, sites: 3, fridges: 5, bags: 2, incidents: 7, causes: ['vrata', 'izpad', 'kompresor', 'zmrzal', 'torba'], glitches: 3, openings: 8, threshold: 7.5, speed: 1.15 }) },
+    ],
+    stars: [complete, fastResponse(7.5), noWrong],
+    reward: { kwh: 5800, dp: 560 },
+    card: { id: 'c-hladna-veriga', name: 'Nepretrgana veriga', rarity: 'epska', text: 'Od tovarne do roke: vsak korak izmerjen, vsak odklon zabeležen.' },
+  },
+  // ── Region 6: Center Temnega števca ───────────────────────────────
+  {
+    id: 'r6-1',
+    region: 6,
+    index: 1,
+    name: 'Prvi zapisi',
+    facilityId: 'arhiv',
+    intro: 'V kleti Centra so trakovi z zapisi od leta 1987. Š-0 je štel vse, a nihče ni prebral ničesar. Prenesimo to v InGenious.',
+    lesson: 'Selitev podatkov se začne s preslikavo: stara koda merilnika mora dobiti pravi nov merilnik, sicer zgodovina pristane pri napačnem objektu.',
+    stages: [{ kind: 'selitev', params: selitev('r6-1', { records: 18, targets: 2, convert: 0, corrupt: 0.08, duplicates: 0, cardSec: 6, pass: 0.8 }) }],
+    stars: [complete, intact(100), cleanImport],
+    reward: { kwh: 6000, dp: 580 },
+    card: { id: 'c-trak', name: 'Magnetni trak', rarity: 'navadna', text: 'Dvajset megabajtov na kolut. Iz leta 1991, še vedno berljiv. Komaj.' },
+  },
+  {
+    id: 'r6-2',
+    region: 6,
+    index: 2,
+    name: 'Vati in kilovati',
+    facilityId: 'arhiv',
+    intro: 'Polovica starih zapisov je v Wh, druga polovica v kWh. Kdor tega ne opazi, ima v bazi tisočkrat preveč.',
+    lesson: 'Pri uvozu zgodovine vedno preveri enote. Napaka faktorja 1000 je najpogostejša napaka pri selitvi energetskih podatkov.',
+    stages: [{ kind: 'selitev', params: selitev('r6-2', { records: 24, targets: 3, convert: 0.35, corrupt: 0.06, duplicates: 0, cardSec: 5.5, pass: 0.8 }) }],
+    stars: [complete, intact(95), cleanImport],
+    reward: { kwh: 6200, dp: 600 },
+    card: { id: 'c-enote', name: 'Faktor 1000', rarity: 'redka', text: '12 480 kWh ali 12 480 000 Wh. Ista energija, drugačna števka, ogromna razlika.' },
+  },
+  {
+    id: 'r6-3',
+    region: 6,
+    index: 3,
+    name: 'Kdo je štel',
+    facilityId: 'arhiv',
+    intro: 'Prvi uvoženi teden iz trakov. Š-0 je beležil vse, tudi stvari, ki jih nihče ni želel videti.',
+    lesson: 'Ko je zgodovina v platformi, lahko staro porabo primerjaš z današnjo. Prihranek dokažeš šele, ko imaš izhodišče.',
+    stages: [{ kind: 'detektiv', params: detektiv('r6-3', { durationSec: 60, profile: 'trafo', anomalies: 5, kinds: ['nocna', 'konica', 'zrak', 'prazniTek'], noise: 0.06, decoys: 3, scale: 0.55 }) }],
+    stars: [complete, foundAll, clean],
+    reward: { kwh: 6400, dp: 610 },
+    card: { id: 'c-izhodisce', name: 'Izhodiščna poraba', rarity: 'redka', text: 'Brez izhodišča ni prihranka. Le občutek, da je bolje.' },
+  },
+  {
+    id: 'r6-4',
+    region: 6,
+    index: 4,
+    name: 'Dvojniki',
+    facilityId: 'razdelilna',
+    intro: 'Stari sistem je nekatere mesece izvozil dvakrat, nekateri zapisi pa so pokvarjeni. Kar ni čisto, ne sme v bazo.',
+    lesson: 'Pred uvozom preveri dvojnike in neveljavne vrednosti. Ena podvojena zima pokvari vsako letno poročilo.',
+    stages: [{ kind: 'selitev', params: selitev('r6-4', { records: 28, targets: 3, convert: 0.25, corrupt: 0.12, duplicates: 0.12, cardSec: 5.2, pass: 0.8 }) }],
+    stars: [complete, intact(95), cleanImport],
+    reward: { kwh: 6600, dp: 620 },
+    card: { id: 'c-dvojnik', name: 'Dvojni zapis', rarity: 'navadna', text: 'Isti mesec, isti števec, dvakrat. Poraba se ni podvojila. Le napaka.' },
+  },
+  {
+    id: 'r6-5',
+    region: 6,
+    index: 5,
+    name: 'Signal iz kleti',
+    facilityId: 'razdelilna',
+    intro: 'Debeli betonski zidovi stare postaje dušijo radio. Stari števci v kleti morajo vseeno priti na omrežje.',
+    lesson: 'V kleteh in jaških signal hitro pade. Repetitorji in pravilna postavitev prehoda rešijo tudi najtežje lokacije.',
+    stages: [{ kind: 'wmbus', params: wmbus('r6-5', { cols: 7, rows: 9, meters: 9, gateways: 1, repeaters: 3, spare: 1, range: 2.1, obstacles: 0.34, timeSec: 95 }) }],
+    stars: [complete, timeLeft(20), devicesMax(4)],
+    reward: { kwh: 6800, dp: 630 },
+    card: { id: 'c-klet', name: 'Števec v kleti', rarity: 'redka', text: 'Meter betona in jeklena vrata. Radijski val mora najti pot naokoli.' },
+  },
+  {
+    id: 'r6-6',
+    region: 6,
+    index: 6,
+    name: 'Vse luči hkrati',
+    facilityId: 'razdelilna',
+    intro: 'Temni števec je vklopil vse, kar je kdaj štel: peči, kompresorje, črpalke in puhala. Na enem odvodu.',
+    lesson: 'Ko podatke vidiš na enem mestu, lahko konice usklajuješ med objekti, ne le znotraj enega.',
+    stages: [
+      {
+        kind: 'konica',
+        params: konica('r6-6', {
+          durationSec: 80,
+          limitKw: 720,
+          tolerance: 0.05,
+          baseKw: 200,
+          baseNoise: 0.05,
+          baseSteps: [{ t: 40, kw: 40 }],
+          consumers: [linija(1, 90), pec, kompresor(1), puhalo(1), obtocna, klima],
+          inrush: 1.5,
+        }),
+      },
+    ],
+    stars: [complete, peakUnder(720), noStall],
+    reward: { kwh: 7000, dp: 650 },
+    card: { id: 'c-odvod', name: 'Skupni odvod', rarity: 'epska', text: 'Pol mesta na enem kablu. Kdor ga je štel, je videl vse.' },
+  },
+  {
+    id: 'r6-7',
+    region: 6,
+    index: 7,
+    name: 'Toplota za Center',
+    facilityId: 'omara',
+    intro: 'Center ogreva ista toplarna kot pol mesta. Borza je nervozna, noč pa dolga.',
+    lesson: 'Ko imaš zgodovino in napoved v isti platformi, dispečer ne ugiba. Ve, kaj se je zgodilo lani na tak dan.',
+    stages: [{ kind: 'kogenerator', params: kogen('r6-7', { durationSec: 65, chpKw: 2000, units: 2, storageKwh: 9000, demandScale: 0.75, priceSwing: 1, spikes: 3, targetEur: 1700 }) }],
+    stars: [complete, effOver(85), warm],
+    reward: { kwh: 7200, dp: 670 },
+    card: { id: 'c-napoved-odjema', name: 'Napoved odjema', rarity: 'redka', text: 'Jutri bo mrzlo. Lani je bilo na tak dan potrebnih 31 MWh toplote.' },
+  },
+  {
+    id: 'r6-8',
+    region: 6,
+    index: 8,
+    name: 'Brez tabele',
+    facilityId: 'omara',
+    intro: 'Zadnji trakovi so brez spremne dokumentacije. Tabelo kod vidiš le na začetku. Zapomni si jo.',
+    lesson: 'Dobra selitev ima zapisano preslikavo, preverjene enote in poročilo o vsaki zavrnjeni vrstici. Tako jo lahko ponoviš.',
+    stages: [{ kind: 'selitev', params: selitev('r6-8', { records: 32, targets: 4, convert: 0.25, corrupt: 0.1, duplicates: 0.1, cardSec: 4.8, hideMap: true, pass: 0.82 }) }],
+    stars: [complete, intact(95), cleanImport],
+    reward: { kwh: 7400, dp: 690 },
+    card: { id: 'c-preslikava', name: 'Preslikava kod', rarity: 'redka', text: 'Š-0/017 je zdaj Livarna. Zapisano, da ne bo pozabljeno še enkrat.' },
+  },
+  {
+    id: 'r6-9',
+    region: 6,
+    index: 9,
+    name: 'Generalka',
+    facilityId: 'omara',
+    intro: 'Pred zadnjim spopadom preizkus celotne verige: poveži odvode Centra in preberi njihov teden.',
+    lesson: 'Zajem, analiza, ukrep. Vsak projekt energetskega upravljanja gre skozi isti krog, znova in znova.',
+    stages: [
+      { kind: 'priklop', params: priklop('r6-9', { cols: 6, rows: 8, meters: 6, timeSec: 110, conflicts: 2, baudMismatch: 2, dropouts: [40, 75] }, '#3') },
+      { kind: 'detektiv', params: detektiv('r6-9', { durationSec: 60, profile: 'livarna', anomalies: 5, kinds: ['nocna', 'konica', 'zrak', 'prazniTek', 'hladilnik'], noise: 0.06, decoys: 3, scale: 0.55 }) },
+    ],
+    stars: [complete, foundAll, clean],
+    reward: { kwh: 7600, dp: 710 },
+    card: { id: 'c-pdca', name: 'Krog PDCA', rarity: 'epska', text: 'Načrtuj, izvedi, preveri, ukrepaj. ISO 50001 v štirih besedah.' },
+  },
+  {
+    id: 'r6-10',
+    region: 6,
+    index: 10,
+    name: 'Š-0',
+    facilityId: 'omara',
+    boss: true,
+    intro: 'Omara Š-0. Prvi števec omrežja, ki je 39 let štel sam. Tri faze: odpri ga, prestani njegov bes in preberi njegov spomin.',
+    lesson: 'Finale: vsak števec je vreden toliko, kolikor ga kdo bere. Ko je zgodovina prenesena, postane Š-0 del omrežja, ne njegov sovražnik.',
+    stages: [
+      { kind: 'priklop', params: priklop('r6-10', { cols: 6, rows: 8, meters: 7, timeSec: 115, conflicts: 2, baudMismatch: 2, dropouts: [45] }, '#4') },
+      {
+        kind: 'konica',
+        params: konica('r6-10', {
+          durationSec: 70,
+          limitKw: 700,
+          tolerance: 0.05,
+          baseKw: 210,
+          baseNoise: 0.05,
+          baseSteps: [{ t: 30, kw: 40 }],
+          consumers: [linija(1, 100), pec, kompresor(1), kompresor(2, 80), puhalo(1), klima],
+          inrush: 1.5,
+        }),
+      },
+      { kind: 'selitev', params: selitev('r6-10', { records: 30, targets: 4, convert: 0.25, corrupt: 0.12, duplicates: 0.1, cardSec: 4.8, pass: 0.8 }) },
+    ],
+    stars: [complete, intact(95), clean],
+    reward: { kwh: 9000, dp: 900 },
+    card: { id: 'c-s0', name: 'Š-0, 1987', rarity: 'epska', text: 'Aluminijast kolut, mehanski števec, 39 let brez enega odčitka. Zdaj ga bere vsak dan.' },
   },
 ];
 

@@ -109,6 +109,20 @@ const SPARKS = Array.from({ length: 14 }, (_, k) => {
   return { dx: Math.cos(a) * len, dy: Math.sin(a) * len * 0.8, delay: (k % 4) * 30 };
 });
 
+/** Data packets from InGenious to the facility: a gentle arc over the stage. */
+const LINK = `M${GENKO.x + 30} ${GENKO.y - 20} Q${(GENKO.x + 320) / 2} ${GENKO.y - 150} 320 ${HORIZON - 60}`;
+/** Lightning that forks down from the clouds in a storm. */
+const SKY_BOLT = (() => {
+  const r = rng(11);
+  let x = 520;
+  let d = `M${x} 80`;
+  for (let y = 80; y < 640; y += 50) d += ` L${(x += (r() - 0.5) * 70)} ${y}`;
+  return d;
+})();
+const CARS = Array.from({ length: 5 }, (_, k) => ({ y: HORIZON + 8 + (k % 3) * 9, dur: 9 + ((k * 7) % 6), delay: -k * 2.3, dir: k % 2 }));
+const BIRDS = Array.from({ length: 6 }, (_, k) => ({ x: -80 - k * 26, y: 420 + ((k * 37) % 70), s: 0.7 + (k % 3) * 0.2, delay: k * 0.35 }));
+const HEAL = Array.from({ length: 12 }, (_, k) => ({ dx: ((k * 47) % 110) - 55, delay: (k % 6) * 140, dur: 1300 + ((k * 211) % 900) }));
+
 const genkoMood = (m?: StoryMood): Mood => (m === 'smug' || m === 'worried' || m === 'wow' ? m : 'happy');
 
 interface Props {
@@ -160,7 +174,7 @@ export function CineWorld({ scene, dirs, i, reduced, fac }: Props) {
       if (!ms) setCuts((c) => c + 1);
     }
     setDrift({ s: 1, ms });
-    const push = d.act === 'laugh' ? { s: 1.1, ms: 2400 } : { s: 1.06, ms: 12000 };
+    const push = d.act === 'laugh' ? { s: 1.1, ms: 2400 } : d.beat === 'reveal' ? { s: 1.16, ms: 5200 } : { s: 1.06, ms: 12000 };
     const t = window.setTimeout(() => setDrift(push), ms + 40);
     return () => {
       cancelAnimationFrame(raf);
@@ -176,11 +190,17 @@ export function CineWorld({ scene, dirs, i, reduced, fac }: Props) {
   const lit = d.lit;
   const line = scene.lines[i];
   const lastMood = (who: 'genko' | 'dark') => [...scene.lines.slice(0, i + 1)].reverse().find((l) => l.who === who)?.mood;
+  const beat = d.beat;
   const shake = !reduced && (act === 'hit' || act === 'zap' || act === 'laugh' || (line.who === 'dark' && line.mood === 'angry'));
+  const healed = lastMood('dark') === 'healed';
+  // Once the meter is read, the storm breaks into plain rain.
+  const sky = scene.weather ?? (scene.tone === 'dark' || scene.tone === 'boss' ? 'rain' : 'clear');
+  const weather = healed && sky === 'storm' ? 'rain' : sky;
+  const scanTo = fac ? { x: 320, y: HORIZON - 50 } : DARK;
 
   return (
-    <div class={`cine tone-${scene.tone}${reduced ? ' still' : ''}`} ref={vp} aria-hidden="true">
-      <div class={`cine-rig${shake ? ` shake-${i % 2}` : ''}`}>
+    <div class={`cine tone-${scene.tone} wx-${weather}${healed ? ' healed' : ''}${reduced ? ' still' : ''}`} ref={vp} aria-hidden="true">
+      <div class={`cine-rig${shake ? ` shake-${i % 2}` : ''}${scene.tone === 'boss' && !reduced ? ' handheld' : ''}${d.dutch && !reduced ? ' dutch' : ''}`}>
         <div class="cine-drift" style={{ transform: `scale(${drift.s})`, transitionDuration: `${reduced ? 0 : drift.ms}ms` }}>
           {/* Sky: gradient, moon or sun, stars. */}
           <div class="cine-layer" style={tf(DEPTH.sky)}>
@@ -210,6 +230,24 @@ export function CineWorld({ scene, dirs, i, reduced, fac }: Props) {
                   <rect class={`cine-warm${warm ? ' on' : ''}`} x="-1200" y="-700" width="3040" height="2400" fill="url(#cine-dawn)" />
                   <circle class={`cine-sun${warm ? ' up' : ''}`} cx="190" cy="590" r="110" fill="url(#cine-sun)" />
                 </>
+              )}
+              {weather === 'storm' && !reduced && (
+                <g class="cine-skybolt">
+                  <path class="glow" d={SKY_BOLT} />
+                  <path d={SKY_BOLT} />
+                </g>
+              )}
+              <g class={`cine-clouds${weather === 'clear' ? ' thin' : ''}`}>
+                {[0, 1, 2, 3].map((k) => (
+                  <ellipse cx={-120 + k * 260} cy={250 + (k % 2) * 90} rx={180 + (k % 3) * 40} ry={26 + (k % 2) * 10} style={{ animationDelay: `${-k * 9}s` }} />
+                ))}
+              </g>
+              {scene.tone === 'dawn' && !reduced && (
+                <g class="cine-birds">
+                  {BIRDS.map((b) => (
+                    <path d={`M${b.x} ${b.y} q6 -6 12 0 q6 -6 12 0`} style={{ animationDelay: `${b.delay}s`, strokeWidth: 2 * b.s }} />
+                  ))}
+                </g>
               )}
               {scene.tone !== 'dawn' && (
                 <g class="cine-stars">
@@ -252,6 +290,9 @@ export function CineWorld({ scene, dirs, i, reduced, fac }: Props) {
               {CABLES.map((c) => (
                 <path class="cine-cable" d={c.d} />
               ))}
+              {PYLONS.map((x, k) => (
+                <circle class="cine-beacon" cx={x} cy={PYLON_BASE - 242} r="3.2" style={{ animationDelay: `${(k % 3) * 0.6}s` }} />
+              ))}
               {lit &&
                 CABLES.map((c) => (
                   <path class="cine-current" d={c.d} style={{ animationDelay: `${Math.round(c.d0 * 1.4)}ms` }} />
@@ -275,6 +316,16 @@ export function CineWorld({ scene, dirs, i, reduced, fac }: Props) {
               </defs>
               <rect x="-900" y={HORIZON} width="2440" height="800" fill="url(#cine-ground)" />
               <path class="cine-rail" d={`M-900 ${HORIZON + 0.5} H1540`} />
+              {!reduced && (
+                <g class="cine-cars">
+                  {CARS.map((c) => (
+                    <g class={c.dir ? 'rev' : ''} style={{ animationDuration: `${c.dur}s`, animationDelay: `${c.delay}s` }}>
+                      <rect x="0" y={c.y} width="7" height="2.4" rx="1" />
+                      <rect x="11" y={c.y} width="7" height="2.4" rx="1" />
+                    </g>
+                  ))}
+                </g>
+              )}
               {[-3, -2, -1, 0, 1, 2, 3].map((k) => (
                 <path class="cine-lane" d={`M${320 + k * 40} ${HORIZON} L${320 + k * 260} 1100`} />
               ))}
@@ -307,6 +358,45 @@ export function CineWorld({ scene, dirs, i, reduced, fac }: Props) {
               </div>
             </div>
 
+            {beat === 'scan' && !reduced && (
+              <svg class="cine-svg cine-fx" width="640" height="1000" key={`sc${i}`}>
+                <defs>
+                  <linearGradient id="cine-scan-g" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0" stop-color="#5cf2ff" stop-opacity="0.75" />
+                    <stop offset="1" stop-color="#5cf2ff" stop-opacity="0" />
+                  </linearGradient>
+                </defs>
+                <g class="cine-scan" style={{ transformOrigin: `${GENKO.x + 16}px ${GENKO.y - 12}px` }}>
+                  <path d={`M${GENKO.x + 16} ${GENKO.y - 12} L${scanTo.x + 40} ${scanTo.y - 90} L${scanTo.x + 40} ${scanTo.y + 70} Z`} fill="url(#cine-scan-g)" />
+                </g>
+                <g class="cine-readout" transform={`translate(${scanTo.x + 34} ${scanTo.y - 96})`}>
+                  <rect width="104" height="34" rx="5" />
+                  <text x="8" y="14">ODČITEK</text>
+                  <text x="8" y="28" class="v">
+                    {(1000 + ((i * 7919) % 8999)).toLocaleString('sl-SI')} kWh
+                  </text>
+                </g>
+              </svg>
+            )}
+            {beat === 'connect' && !reduced && (
+              <svg class="cine-svg cine-fx" width="640" height="1000" key={`cn${i}`}>
+                <path class="cine-link" d={LINK} />
+                {[0, 1, 2, 3, 4, 5].map((k) => (
+                  <rect class="cine-packet" width="7" height="7" rx="1.5" x="-3.5" y="-3.5">
+                    <animateMotion dur="1.4s" begin={`${k * 0.22}s`} repeatCount="indefinite" rotate="auto" {...({ path: LINK } as Record<string, string>)} />
+                  </rect>
+                ))}
+              </svg>
+            )}
+            {act === 'heal' && !reduced && (
+              <div class="cine-heal" key={`hl${i}`} style={{ left: `${DARK.x}px`, top: `${DARK.y}px` }}>
+                <i class="ring" />
+                <i class="ring late" />
+                {HEAL.map((h) => (
+                  <b style={{ '--dx': `${h.dx}px`, animationDelay: `${h.delay}ms`, animationDuration: `${h.dur}ms` }} />
+                ))}
+              </div>
+            )}
             {(act === 'zap' || act === 'hit') && !reduced && (
               <svg class="cine-svg cine-fx" width="640" height="1000" key={`fx${i}`}>
                 {act === 'zap' && (
@@ -340,8 +430,18 @@ export function CineWorld({ scene, dirs, i, reduced, fac }: Props) {
       </div>
 
       {/* Lens: weather, grade, flashes, grain, vignette. */}
-      {(scene.tone === 'dark' || scene.tone === 'boss') && <div class="cine-rain" />}
-      {scene.tone === 'boss' && <div class="cine-alarm" />}
+      {(weather === 'rain' || weather === 'storm') && <div class={`cine-rain${weather === 'storm' ? ' heavy' : ''}`} />}
+      {weather === 'snow' && (
+        <>
+          <div class="cine-snow" />
+          <div class="cine-snow near" />
+        </>
+      )}
+      {weather === 'storm' && !reduced && <div class="cine-lightning" />}
+      {beat === 'reveal' && <div class="cine-spot" key={`sp${i}`} />}
+      {beat === 'glitch' && !reduced && <div class="cine-glitch" key={`gl${i}`} />}
+      {!reduced && act === 'heal' && <div class="cine-flash heal" key={`hf${i}`} />}
+      {scene.tone === 'boss' && !healed && <div class="cine-alarm" />}
       {!reduced && act === 'power' && <div class="cine-flare" key={`fl${i}`} />}
       {!reduced && (act === 'hit' || act === 'zap') && <div class={`cine-flash ${act}`} key={`fx${i}`} />}
       {!reduced && cuts > 0 && <div class="cine-cut" key={`c${cuts}`} />}

@@ -138,11 +138,18 @@ describe('store', () => {
     expect(store.getState().buyResearch('napoved')).toBe(true);
   });
 
-  it('two three-starred regions pay for a good part of the lab, never all of it', () => {
+  it('two three-starred regions pay for a good part of their lab, never all of it', () => {
     const dp = LEVELS.filter((l) => l.region <= 2).reduce((s, l) => s + rewardFor(l, 3, 0).dp, 0);
-    const lab = RESEARCH.reduce((s, r) => s + r.costs.reduce((a, b) => a + b, 0), 0);
-    expect(dp).toBeGreaterThan(lab * 0.1);
+    const lab = RESEARCH.filter((r) => (r.region ?? 1) <= 2).reduce((s, r) => s + r.costs.reduce((a, b) => a + b, 0), 0);
+    expect(dp).toBeGreaterThan(lab * 0.12);
     expect(dp).toBeLessThan(lab * 0.4);
+  });
+
+  it('the whole campaign pays for nearly the whole lab; daily challenges finish it', () => {
+    const dp = LEVELS.reduce((s, l) => s + rewardFor(l, 3, 0).dp, 0);
+    const lab = RESEARCH.reduce((s, r) => s + r.costs.reduce((a, b) => a + b, 0), 0);
+    expect(dp).toBeGreaterThan(lab * 0.9);
+    expect(dp).toBeLessThan(lab * 1.3);
   });
 
   it('daily challenge grows the streak once per day', () => {

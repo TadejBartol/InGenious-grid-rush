@@ -1,6 +1,6 @@
 # InGenious Grid Rush
 
-Mobilna PWA igra, v kateri igralec zgradi energetski nadzorni center: priklaplja merilnike, lovi konice v živih podatkih in z vsakim prihranjenim kWh sestradá **Temni števec**. Vsaka mehanika je preoblečena funkcija platforme InGenious (zajem podatkov, spremljanje moči, analize, napovedi).
+Premium mobilna PWA igra, v kateri igralec zgradi energetski nadzorni center: priklaplja merilnike, lovi konice v živih podatkih in z vsakim prihranjenim kWh sestradá **Temni števec**. Vsaka mehanika je preoblečena funkcija platforme InGenious (zajem podatkov, spremljanje moči, analize, napovedi).
 
 Igra deluje brez povezave, se namesti na domači zaslon in nima backenda: napredek je shranjen v IndexedDB na napravi.
 
@@ -8,10 +8,10 @@ Igra deluje brez povezave, se namesti na domači zaslon in nima backenda: napred
 
 | Področje | Vsebina |
 | --- | --- |
-| Regije | **1. Industrijska cona** (boss »Postaja, ki piska ponoči«), **2. Mlekarna in prehrana** (boss »Lažnivec na TP«), **3. Komunala** (boss »Čistilna, ki diha«) in **4. Kogeneracija** (boss »Zimska špica«), vsaka z 10 stopnjami na vijugasti poti z objekti ob njej. Regiji 5–6 sta na zemljevidu napovedani. |
-| Mini igre | **Priklop** (logična uganka s potmi: poveži vsak merilnik z vtičnico iste barve, kabli se ne smejo križati in morajo zapolniti vsa polja; vsaka plošča ima natanko eno rešitev; nato nastavi Modbus naslov in hitrost), **Lov na konico** (drži obračunsko moč pod rdečo črto, ne da bi ustavil proizvodnjo; stolp porabe v barvah porabnikov pokaže, kdo koliko vleče, kartica pa, ali vklop še gre pod mejo), **Detektiv** (tapni odstopanje od pasu tipičnega tedna, nato v upočasnjenem času izberi vzrok med tremi vzorci; dogodki na urniku so načrtovani in niso anomalije; hitra najdba in combo prineseta dodatne DP), **Radijsko omrežje** (postavi wM-Bus prehode in repetitorje, da vsi vodomeri slišijo signal), **Kogenerator** (vodi motor in hranilnik toplote po ceni elektrike in odjemu, drži omrežje toplo in izkoristek visok). |
-| Napredovanje | 1–3 zvezdice na stopnjo s prikazom »skoraj-zmage«, valute kWh / DP / InGenious čipi, osvetljevanje objektov, idle števec (tudi ko je igra zaprta, do 8–16 h), nadgradnje objektov (vsaka stopnja 70 % dražja), drevo 8 raziskav (poznejše se odklenejo z regijami), regija, ki jo lahko odkleneš, na zemljevidu utripa, značka na zavihku Nadgradnje, ko si kaj lahko privoščiš, nagrada vidna že pred stopnjo, kartice naprav, kozmetika za robotka InGenious, zlati robotek InGenious za popolno regijo. |
-| Zgodba | 28 filmskih prizorov (»Skrivnost Š-0«): uvod v regijo, osvetlitev vsake zgradbe, boss, posmeh ob porazu, udarec bossa (KO) in zmaga. Kamera se nagiba k govorcu, strele, bliski, zgradba se prižge na odru, samodejno predvajanje ali tap. Videni prizori so v Zbirki. |
+| Regije | Šest regij po 10 stopenj (60 skupaj, 18 objektov): **1. Industrijska cona** (boss »Postaja, ki piska ponoči«), **2. Mlekarna in prehrana** (»Lažnivec na TP«), **3. Komunala** (»Čistilna, ki diha«), **4. Kogeneracija** (»Zimska špica«), **5. Zdravstvo** (»Noč brez elektrike«, priklop + Alarm!) in **6. Center Temnega števca** (finale »Š-0« v treh fazah: priklop, konica, selitev). |
+| Mini igre | **Priklop** (logična uganka s potmi: poveži vsak merilnik z vtičnico iste barve, kabli se ne smejo križati in morajo zapolniti vsa polja; vsaka plošča ima natanko eno rešitev; nato nastavi Modbus naslov in hitrost), **Lov na konico** (drži obračunsko moč pod rdečo črto, ne da bi ustavil proizvodnjo; stolp porabe v barvah porabnikov pokaže, kdo koliko vleče, kartica pa, ali vklop še gre pod mejo), **Detektiv** (tapni odstopanje od pasu tipičnega tedna, nato v upočasnjenem času izberi vzrok med tremi vzorci; dogodki na urniku so načrtovani in niso anomalije; hitra najdba in combo prineseta dodatne DP), **Radijsko omrežje** (postavi wM-Bus prehode in repetitorje, da vsi vodomeri slišijo signal), **Kogenerator** (vodi motor in hranilnik toplote po ceni elektrike in odjemu, drži omrežje toplo in izkoristek visok), **Alarm!** (nočna izmena hladne verige cepiv: ko zazvoni, preberi vrata, napajanje in krivuljo ter izberi pravi ukrep; mejo alarma nastaviš sam, prenizka zvoni po nepotrebnem, previsoka prepozno), **Selitev** (prenos 40 let starih zapisov Š-0 na nove merilnike: pravi naslov, pretvorba Wh v kWh, poškodovani zapisi in dvojniki v koš, niz prinese DP). |
+| Napredovanje | 1–3 zvezdice na stopnjo s prikazom »skoraj-zmage«, valute kWh / DP / InGenious čipi, osvetljevanje objektov, idle števec (tudi ko je igra zaprta, do 8–16 h), nadgradnje objektov (vsaka stopnja 70 % dražja), drevo 10 raziskav (poznejše se odklenejo z regijami), regija, ki jo lahko odkleneš, na zemljevidu utripa, značka na zavihku Nadgradnje, ko si kaj lahko privoščiš, nagrada vidna že pred stopnjo, kartice naprav, kozmetika za robotka InGenious, zlati robotek InGenious za popolno regijo. |
+| Zgodba | 42 filmskih prizorov (»Skrivnost Š-0«), od uvoda do epiloga in odjavne špice. Kar ni izmerjeno, je pozabljeno: Š-0 je prvi števec starega omrežja, ki ga od leta 1987 ni nihče več bral. InGenious ga na koncu ne uniči, ampak prebere. Režija v `src/core/cinema.ts` iz vsake replike naredi kader (vzpostavitveni, dvojni, bližnji, objekt), kamera s paralakso v petih ravninah drsi ali reže, akcije (prilet, prikrade, strela, udarec, beg, prižig, tema, zora, ozdravitev) in poudarki (skeniranje, podatkovni paketi, razkritje pod reflektorjem, motnja slike z nagnjeno kamero). Vreme (dež, nevihta s strelami, sneg, jasno), živo ozadje (avtomobili, opozorilne luči na daljnovodih, oblaki, ptice ob zori). Videni prizori in odjavna špica so v Zbirki. |
 | Govor | Vsaka replika ima lahko posnet glas (`public/voice/`). InGenious dobi robotski, Temni števec pa hrapav odmevajoč filter. Brez posnetkov bere slovenski glas naprave, če ga ima. Nastavitev »Glas v zgodbi«. |
 | Boss in zmaga | Po vsaki stopnji kratka bitka: InGenious prileti, udari s strelo in Temni števec izžene iz objekta (ob porazu se ta zaščiti in ostane). Boss stopnja ima svoj videz na poti, opozorilni uvod in oznako faze med igro. Po prvi zmagi sledi zaslon »Boss premagan« z osvetljevanjem objektov regije, štetjem nagrad in nadaljevanjem zgodbe. |
 | Nadgradnje | Nadzorna soba (izberi objekt, drži gumb za hitro optimizacijo, mejniki na 5 in 10) in Laboratorij (vezje raziskav okoli jedra InGenious). Dotik kWh, DP, čipov ali niza odpre razlago, kaj je to in kako se pridobi. |
@@ -44,7 +44,11 @@ npm run e2e
 
 Testni dostop do notranjosti igre je vklopljen samo z `?e2e` v URL-ju.
 
-## Objava na GitHub Pages
+## Objava
+
+Podrobna navodila za objavo (GitHub Pages, Netlify, Cloudflare Pages, lastna domena, Google Play) so v [docs/OBJAVA.md](docs/OBJAVA.md). Na kratko:
+
+### GitHub Pages
 
 Repozitorij že vsebuje workflow `.github/workflows/deploy.yml`, ki ob vsakem pushu na `main` požene teste, zgradi igro in jo objavi.
 
@@ -90,7 +94,8 @@ Sklad: Vite + TypeScript, PixiJS 8 (WebGL), Preact, Zustand, idb, vite-plugin-pw
 
 Odstopanje od scenarija: namesto Howler.js in zvočne sprite datoteke je zvok sintetiziran v brskalniku. Tako ni nobenega zvočnega prenosa in igra ostane pod ciljnimi 2 MB.
 
-## Naslednji koraki (po scenariju)
+## Naslednji koraki
 
-- **Beta:** backend (Supabase) za lige in ekipne izzive, preverjanje rezultatov dnevnega izziva na strežniku s ponovitvijo semena, Web Push opomnik za niz.
-- **Lansiranje:** regiji 5–6 (Alarm!, Selitev, finale s Temnim števcem v treh fazah), prestiž, demo način z resničnimi podatki iz InGenious.
+- **Lige in ekipe:** backend (Supabase) za lestvice in ekipne izzive, preverjanje rezultatov dnevnega izziva na strežniku s ponovitvijo semena, Web Push opomnik za niz.
+- **Nova igra plus:** prestiž po finalu in poglavje »Š-1« (napovedano v prizoru po odjavni špici).
+- **Demo način** z resničnimi podatki iz InGenious.

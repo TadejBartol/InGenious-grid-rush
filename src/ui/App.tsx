@@ -19,6 +19,7 @@ import { SettingsScreen } from './screens/SettingsScreen';
 import { TitleScreen } from './screens/TitleScreen';
 import { StoryScene } from './components/StoryScene';
 import { RegionVictory } from './screens/RegionVictory';
+import { Credits } from './screens/Credits';
 import { sceneById } from '../core/story';
 import { FACILITIES } from '../core/levels';
 import { facilityUpgradeCost, isFacilityLit, MAX_FACILITY_LEVEL, RESEARCH } from '../core/balance';
@@ -32,7 +33,7 @@ const TABS: { id: Tab; name: string; icon: typeof IconMap }[] = [
 ];
 
 export function App() {
-  const { screen, scene, victory } = useNav();
+  const { screen, scene, victory, credits } = useNav();
   const ready = useGame((s) => s.ready);
   const offline = useGame((s) => s.offlineGain);
   const dailyDue = useGame((s) => (s.levels[DAILY_UNLOCK_LEVEL]?.stars ?? 0) > 0 && !s.daily[dateKey(new Date())]);
@@ -91,6 +92,7 @@ export function App() {
       {screen.name === 'play' && <PlayScreen level={screen.level} from={screen.from} key={screen.level.id + Date.now()} />}
       {screen.name === 'result' && <ResultScreen outcome={screen.outcome} from={screen.from} />}
       {victory !== null && <RegionVictory region={victory} />}
+      {credits && !scene && <Credits />}
       {scene && sceneById(scene.id) && <StoryScene scene={sceneById(scene.id)!} onDone={endScene} key={scene.id} />}
       {offline && screen.name !== 'play' && screen.name !== 'result' && (
         <Sheet center label="Prihranek v odsotnosti" onClose={() => store.getState().dismissOffline()}>

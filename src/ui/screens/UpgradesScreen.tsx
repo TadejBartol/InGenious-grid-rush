@@ -7,7 +7,7 @@ import { store, useGame } from '../../state/store';
 import { Cost } from '../components/Common';
 import { GenkoSays } from '../components/Genko';
 import { IsoFactory } from '../components/IsoFactory';
-import { IconBolt, IconChart, IconData, IconDark, IconLock, IconPlug, IconSearch, IconStar, IconUp, IconWave } from '../components/Icons';
+import { IconBell, IconBolt, IconChart, IconData, IconDark, IconDatabase, IconLock, IconPlug, IconSearch, IconStar, IconUp, IconWave } from '../components/Icons';
 
 type Tab = 'objekti' | 'lab';
 let lastTab: Tab = 'objekti';
@@ -214,18 +214,22 @@ const RESEARCH_ICON: Record<string, typeof IconBolt> = {
   spomin: IconData,
   kalibracija: IconDark,
   tarifa: IconStar,
+  pragovi: IconBell,
+  validacija: IconDatabase,
 };
 
 // Node positions on the circuit board, in % of its box. The InGenious core sits in the middle.
 const NODE_POS: Record<string, { x: number; y: number }> = {
-  vzorcenje: { x: 17, y: 12 },
-  rezervoar: { x: 83, y: 12 },
-  merilniki: { x: 17, y: 37 },
-  napoved: { x: 83, y: 37 },
-  kalibracija: { x: 17, y: 63 },
-  tarifa: { x: 83, y: 63 },
-  spomin: { x: 17, y: 88 },
-  ai: { x: 83, y: 88 },
+  vzorcenje: { x: 17, y: 9 },
+  rezervoar: { x: 83, y: 9 },
+  merilniki: { x: 17, y: 29.5 },
+  napoved: { x: 83, y: 29.5 },
+  kalibracija: { x: 17, y: 50 },
+  tarifa: { x: 83, y: 50 },
+  spomin: { x: 17, y: 70.5 },
+  ai: { x: 83, y: 70.5 },
+  pragovi: { x: 17, y: 91 },
+  validacija: { x: 83, y: 91 },
 };
 
 function Lab() {

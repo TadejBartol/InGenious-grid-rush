@@ -10,7 +10,7 @@ import { DarkMeter } from '../components/DarkMeter';
 import { Genko, GenkoSays } from '../components/Genko';
 import { IsoFactory } from '../components/IsoFactory';
 import { Cost, Sheet } from '../components/Common';
-import { IconBack, IconChart, IconCogen, IconDark, IconLock, IconPlug, IconSearch, IconStar, IconTrophy, IconWave } from '../components/Icons';
+import { IconBack, IconBell, IconChart, IconCogen, IconDark, IconDatabase, IconLock, IconPlug, IconSearch, IconStar, IconTrophy, IconWave } from '../components/Icons';
 import { KIND_NAME } from './PlayScreen';
 import type { FacilityDef, LevelDef, Stage } from '../../core/types';
 
@@ -20,6 +20,8 @@ const KIND_ICON: Record<Stage['kind'], typeof IconPlug> = {
   detektiv: IconSearch,
   wmbus: IconWave,
   kogenerator: IconCogen,
+  alarm: IconBell,
+  selitev: IconDatabase,
 };
 
 /** Remembers the last "current" level per region, so a newly unlocked node can celebrate once. */

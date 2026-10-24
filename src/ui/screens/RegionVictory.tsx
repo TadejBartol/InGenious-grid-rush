@@ -49,7 +49,7 @@ export function RegionVictory({ region }: { region: number }) {
   const finish = () => {
     audio.play('tap');
     playScene(`r${region}-victory`, () => {
-      nav.setState({ victory: null });
+      nav.setState({ victory: null, credits: !nextRegion });
       nav.getState().go({ name: 'tabs', tab: 'map' });
     });
   };
@@ -109,6 +109,10 @@ export function RegionVictory({ region }: { region: number }) {
                     Na zemljevidu čaka <b>{nextRegion.name}</b>
                     {nextRegion.unlockChips ? ` (odklep: ${nextRegion.unlockChips} čipov)` : ''}.
                   </p>
+                ) : !nextRegion ? (
+                  <p>
+                    <b>Vseh šest regij sveti.</b> Mesto je izmerjeno do zadnjega kWh.
+                  </p>
                 ) : (
                   <p>Temni števec se je umaknil globlje. Nadaljevanje zgodbe prihaja.</p>
                 )}
@@ -117,7 +121,7 @@ export function RegionVictory({ region }: { region: number }) {
           )}
           {phase >= 3 && (
             <button class="btn green big victory-btn" onClick={finish}>
-              Nadaljuj zgodbo
+              {nextRegion ? 'Nadaljuj zgodbo' : 'Epilog'}
             </button>
           )}
         </div>

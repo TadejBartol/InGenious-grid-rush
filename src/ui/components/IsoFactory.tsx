@@ -113,6 +113,42 @@ export function IsoFactory({ art, lit, level = 0 }: { art: FacilityDef['art']; l
         {chimney(160, 92)}
       </g>
     ),
+    zd: (
+      <g>
+        {box(116, 122, 64, 42, 34)}
+        {box(70, 112, 22, 18, 16)}
+        <rect x="138" y="44" width="22" height="14" rx="3" fill={left} />
+        <path d="M146 46 h6 v4 h4 v4 h-4 v4 h-6 v-4 h-4 v-4 h4z" fill={lit ? '#3dff9a' : '#4a1a2a'} />
+      </g>
+    ),
+    dostava: (
+      <g>
+        {box(150, 118, 44, 34, 24)}
+        {box(82, 124, 36, 18, 18)}
+        {box(113, 106, 12, 18, 12)}
+        <circle cx="92" cy="122" r="5" fill="#0b1330" stroke={top} />
+        <circle cx="116" cy="110" r="5" fill="#0b1330" stroke={top} />
+        <path d="M95 92 v12 M89 95 l12 6 M101 95 l-12 6" stroke={lit ? '#7fe7ff' : '#3a4785'} stroke-width="2" />
+      </g>
+    ),
+    arhiv: (
+      <g>
+        {box(112, 122, 60, 40, 42)}
+        <circle cx="96" cy="88" r="7" fill="none" stroke={lit ? '#7dffc4' : '#3a4785'} stroke-width="2.5" />
+        <circle cx="110" cy="80" r="7" fill="none" stroke={lit ? '#7dffc4' : '#3a4785'} stroke-width="2.5" />
+        <path d="M170 64 v-24 M164 46 l6 -6 l6 6" stroke={top} stroke-width="2.5" />
+      </g>
+    ),
+    omara: (
+      <g>
+        {box(122, 124, 30, 24, 74)}
+        <circle cx="130" cy="74" r="9" fill="#0b1330" stroke={top} stroke-width="2" />
+        <circle cx="130" cy="74" r="3.5" fill={lit ? '#3dff9a' : '#ff2244'}>
+          {!lit && <animate attributeName="opacity" values="1;0.3;1" dur="1.6s" repeatCount="indefinite" />}
+        </circle>
+        <path d="M60 122 C 90 112 100 124 118 112 M200 124 C 180 112 168 122 152 108" stroke={glow} stroke-width="2" fill="none" opacity="0.6" />
+      </g>
+    ),
     trafo: (
       <g>
         {box(110, 120, 40, 40, 30)}
