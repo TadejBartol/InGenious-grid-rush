@@ -1,0 +1,25 @@
+import { chromium } from 'playwright';
+const url = process.argv[2] ?? 'http://localhost:4173/';
+const browser = await chromium.launch();
+const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+const page = await ctx.newPage();
+const logs = [];
+page.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
+page.on('pageerror', (e) => logs.push(`pageerror: ${e.message}`));
+await page.goto(url);
+await page.waitForTimeout(800);
+await page.screenshot({ path: 'playtest/01-title.png' });
+await page.getByRole('button', { name: 'Začni' }).click();
+await page.waitForTimeout(300);
+await page.screenshot({ path: 'playtest/02-genko.png' });
+for (let i = 0; i < 3; i++) { await page.mouse.click(195, 700); await page.waitForTimeout(250); }
+await page.waitForTimeout(500);
+await page.screenshot({ path: 'playtest/03-region.png' });
+await page.getByRole('button', { name: /Stopnja 1: Prvi stik/ }).click();
+await page.waitForTimeout(400);
+await page.screenshot({ path: 'playtest/04-intro.png' });
+await page.getByRole('button', { name: 'Igraj', exact: true }).click();
+await page.waitForTimeout(2600);
+await page.screenshot({ path: 'playtest/05-priklop.png' });
+console.log(logs.join('\n'));
+await browser.close();

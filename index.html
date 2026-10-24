@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="sl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#070b1a" />
+    <meta name="description" content="InGenious Grid Rush – zgradi energetski nadzorni center, lovi konice in ugasni Temni števec." />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Grid Rush" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <title>InGenious Grid Rush</title>
+    <style>
+      html,body{margin:0;background:#070b1a;color:#e6ecff;height:100%}
+      #boot{position:fixed;inset:0;display:grid;place-items:center;font:600 15px system-ui,sans-serif;letter-spacing:.2em;color:#38e1ff}
+      #boot i{display:block;width:120px;height:3px;margin:14px auto 0;background:linear-gradient(90deg,transparent,#38e1ff,transparent);animation:b 1.2s infinite}
+      @keyframes b{0%{transform:translateX(-60px)}100%{transform:translateX(60px)}}
+    </style>
+  </head>
+  <body>
+    <div id="app"><div id="boot"><div>GRID RUSH<i></i></div></div></div>
+    <noscript>Za igranje InGenious Grid Rush omogoči JavaScript.</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
