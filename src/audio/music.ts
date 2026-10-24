@@ -1,12 +1,15 @@
 /**
- * The soundtrack: four composed pieces played live by a small WebAudio band
- * (drums, bass, pad, arpeggio, lead) with reverb, tempo-synced delay and kick sidechain.
- * Nothing is downloaded, so the music works offline and starts instantly.
+ * The soundtrack: four composed pieces for a small synth band (drums, bass, pad,
+ * arpeggio, lead) with reverb, tempo-synced delay and kick sidechain.
  *
- *  - menu  "Svetla mreža": A minor synthwave. It grows with the campaign: every lit
- *          facility adds a layer, from a lonely pad to the full band with the melody.
- *  - play  "Konica": driving D minor electro under the levels; intensity opens the
- *          filters and fills the hats as pressure rises.
+ * Each piece is rendered once, off the main thread, into a seamless loop
+ * (OfflineAudioContext), then simply looped. Building the notes live on a phone
+ * stuttered whenever the game was busy drawing; a looping buffer costs nothing to play.
+ *
+ *  - menu  "Svetla mreža": A minor synthwave. It grows with the campaign: lit
+ *          facilities add layers, from a lonely pad to the full band with the melody.
+ *  - play  "Konica": driving D minor electro under the levels; a calm and a hot mix
+ *          run in sync and crossfade with the level's pressure.
  *  - boss  "Temni števec": E phrygian, heavy sixteenth bass and toms.
  *  - story "Za zaveso": slow pads under the cutscenes.
  */
@@ -98,39 +101,28 @@ const PIECES: Record<Track, Piece> = {
 const hz = (midi: number) => 440 * Math.pow(2, (midi - 69) / 12);
 const chordTones = (c: Chord) => [0, c.minor ? 3 : 4, 7, ...(c.seventh ? [c.minor ? 10 : 11] : [])];
 
-export class Music {
-  private ctx: AudioContext | null = null;
-  private out!: GainNode;
-  private mix!: GainNode;
-  private duck!: GainNode;
-  private drums!: GainNode;
-  private reverb!: ConvolverNode;
-  private reverbSend!: GainNode;
-  private delay!: DelayNode;
-  private delaySend!: GainNode;
-  private noise!: AudioBuffer;
-  private timer: number | null = null;
-  private track: Track | null = null;
-  private wanted: Track = 'menu';
-  private next = 0;
+/** Renders one loop of a piece into an offline context. */
+class Band {
+  private mix: GainNode;
+  private duck: GainNode;
+  private drums: GainNode;
+  private reverbSend: GainNode;
+  private delay: DelayNode;
+  private delaySend: GainNode;
   private step = 0;
   private bar = 0;
-  private tempo = 92;
-  /** 0..1: how hard the music pushes (Lov na konico raises it as time runs out). */
-  intensity = 0.35;
-  /** Facilities lit across the campaign: the menu theme adds a layer as they light up. */
-  lit = 0;
-  /** With music off the clock keeps running, but no notes are built. */
-  enabled = true;
+  private tempo: number;
 
-  attach(ctx: AudioContext, dest: AudioNode, noise: AudioBuffer) {
-    this.ctx = ctx;
-    this.noise = noise;
-    this.out = ctx.createGain();
-    this.out.connect(dest);
+  constructor(
+    private ctx: BaseAudioContext,
+    private noise: AudioBuffer,
+    private track: Track,
+    private lit: number,
+    private intensity: number,
+  ) {
+    this.tempo = PIECES[track].bpm;
     this.mix = ctx.createGain();
-    this.mix.gain.value = 0;
-    this.mix.connect(this.out);
+    this.mix.connect(ctx.destination);
     this.duck = ctx.createGain();
     this.duck.connect(this.mix);
     this.drums = ctx.createGain();
@@ -138,20 +130,21 @@ export class Music {
     this.drums.connect(this.mix);
 
     // Hall reverb from a decaying noise burst.
-    this.reverb = ctx.createConvolver();
+    const reverb = ctx.createConvolver();
     const len = Math.floor(ctx.sampleRate * 2.6);
     const ir = ctx.createBuffer(2, len, ctx.sampleRate);
     for (let ch = 0; ch < 2; ch++) {
       const d = ir.getChannelData(ch);
-      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2);
+      for (let k = 0; k < len; k++) d[k] = (Math.random() * 2 - 1) * Math.pow(1 - k / len, 3.2);
     }
-    this.reverb.buffer = ir;
+    reverb.buffer = ir;
     this.reverbSend = ctx.createGain();
     this.reverbSend.gain.value = 0.35;
-    this.reverbSend.connect(this.reverb).connect(this.mix);
+    this.reverbSend.connect(reverb).connect(this.mix);
 
     // Dotted-eighth echo with a darkening feedback loop.
     this.delay = ctx.createDelay(2);
+    this.delay.delayTime.value = (60 / this.tempo) * 0.75;
     const fb = ctx.createGain();
     fb.gain.value = 0.38;
     const tone = ctx.createBiquadFilter();
@@ -162,79 +155,26 @@ export class Music {
     this.delaySend.connect(this.delay);
     this.delay.connect(tone).connect(fb).connect(this.delay);
     tone.connect(this.mix);
-
-    this.timer = window.setInterval(() => this.schedule(), 25);
   }
 
-  /** Switches pieces with a short fade on the next beat. */
-  play(track: Track) {
-    this.wanted = track;
-    if (!this.ctx || track === this.track) return;
-    const t = this.ctx.currentTime;
-    if (this.track === null) {
-      this.start(track, t + 0.05);
-      return;
-    }
-    this.mix.gain.cancelScheduledValues(t);
-    this.mix.gain.setValueAtTime(this.mix.gain.value, t);
-    this.mix.gain.linearRampToValueAtTime(0, t + 0.45);
-    this.track = track;
-    this.next = t + 0.5;
-    this.resetTo(track, t + 0.5);
+  /** Bars in one full cycle: one pass through the chord progression. */
+  static bars(track: Track) {
+    return PIECES[track].chords.length;
   }
 
-  private start(track: Track, t: number) {
-    this.track = track;
-    this.next = t;
-    this.resetTo(track, t);
+  static loopSeconds(track: Track) {
+    return (Band.bars(track) * 16 * 60) / PIECES[track].bpm / 4;
   }
 
-  private resetTo(track: Track, t: number) {
-    this.step = 0;
-    this.bar = 0;
-    this.tempo = PIECES[track].bpm;
-    this.delay.delayTime.setValueAtTime((60 / this.tempo) * 0.75, t);
-    this.mix.gain.setValueAtTime(0, t);
-    this.mix.gain.linearRampToValueAtTime(1, t + (track === 'story' ? 2.5 : 1.2));
-  }
-
-  /** Lov na konico maps its rising heartbeat onto the music. */
-  setTempo(bpm: number) {
-    this.tempo = bpm;
-    if (this.ctx) this.delay.delayTime.setTargetAtTime((60 / bpm) * 0.75, this.ctx.currentTime, 0.3);
-  }
-
-  get current() {
-    return this.track;
-  }
-
-  /** Back to the piece's own tempo. */
-  resetTempo() {
-    if (this.track) this.setTempo(PIECES[this.track].bpm);
-  }
-
-  get piece() {
-    return this.track ? PIECES[this.track] : null;
-  }
-
-  stop() {
-    if (this.timer !== null) window.clearInterval(this.timer);
-    this.timer = null;
-  }
-
-  private schedule() {
-    const ctx = this.ctx;
-    const p = this.piece;
-    if (!ctx || !p) {
-      if (ctx && !this.track) this.start(this.wanted, ctx.currentTime + 0.05);
-      return;
-    }
-    while (this.next < ctx.currentTime + 0.15) {
-      const dur = 60 / this.tempo / 4;
-      if (this.enabled) this.playStep(p, this.next, dur);
-      this.next += dur;
-      this.step = (this.step + 1) % 16;
-      if (this.step === 0) this.bar++;
+  /** Schedules every note of one cycle starting at t = 0. */
+  score() {
+    const p = PIECES[this.track];
+    const dur = 60 / this.tempo / 4;
+    const steps = Band.bars(this.track) * 16;
+    for (let k = 0; k < steps; k++) {
+      this.step = k % 16;
+      this.bar = Math.floor(k / 16);
+      this.playStep(p, k * dur, dur);
     }
   }
 
@@ -276,8 +216,6 @@ export class Music {
     }
     if (L.lead && p.lead) {
       const loop = Math.max(...p.lead.map((n) => n[0])) + 1;
-      // The melody rests every other pass so it never wears thin.
-      if (this.track === 'menu' && Math.floor(bar / loop) % 2 === 1) return;
       for (const [nb, ns, midi, len] of p.lead) if (nb === bar % loop && ns === s) this.lead(midi, t, len * dur);
     }
   }
@@ -292,7 +230,7 @@ export class Music {
   }
 
   private pad(c: Chord, t: number, len: number, vel: number) {
-    const ctx = this.ctx!;
+    const ctx = this.ctx;
     const f = ctx.createBiquadFilter();
     f.type = 'lowpass';
     f.frequency.setValueAtTime(this.track === 'boss' ? 700 : 1100, t);
@@ -319,7 +257,7 @@ export class Music {
   }
 
   private bass(midi: number, t: number, len: number, vel: number) {
-    const ctx = this.ctx!;
+    const ctx = this.ctx;
     const o = ctx.createOscillator();
     o.type = this.track === 'boss' ? 'sawtooth' : 'square';
     o.frequency.value = hz(midi);
@@ -345,7 +283,7 @@ export class Music {
   }
 
   private pluck(midi: number, t: number, len: number, vel: number) {
-    const ctx = this.ctx!;
+    const ctx = this.ctx;
     const o = ctx.createOscillator();
     o.type = 'square';
     o.frequency.value = hz(midi);
@@ -371,7 +309,7 @@ export class Music {
   }
 
   private lead(midi: number, t: number, len: number) {
-    const ctx = this.ctx!;
+    const ctx = this.ctx;
     const o = ctx.createOscillator();
     o.type = this.track === 'boss' ? 'sawtooth' : 'triangle';
     o.frequency.value = hz(midi);
@@ -408,7 +346,7 @@ export class Music {
   }
 
   private kick(t: number) {
-    const ctx = this.ctx!;
+    const ctx = this.ctx;
     const o = ctx.createOscillator();
     const g = ctx.createGain();
     o.frequency.setValueAtTime(150, t);
@@ -425,7 +363,7 @@ export class Music {
   }
 
   private snare(t: number, vol: number) {
-    const ctx = this.ctx!;
+    const ctx = this.ctx;
     const src = ctx.createBufferSource();
     src.buffer = this.noise;
     const f = ctx.createBiquadFilter();
@@ -453,7 +391,7 @@ export class Music {
   }
 
   private hat(t: number, vol: number, len: number) {
-    const ctx = this.ctx!;
+    const ctx = this.ctx;
     const src = ctx.createBufferSource();
     src.buffer = this.noise;
     const f = ctx.createBiquadFilter();
@@ -468,7 +406,7 @@ export class Music {
   }
 
   private tom(t: number, freq: number) {
-    const ctx = this.ctx!;
+    const ctx = this.ctx;
     const o = ctx.createOscillator();
     const g = ctx.createGain();
     o.frequency.setValueAtTime(freq, t);
@@ -481,6 +419,171 @@ export class Music {
     o.start(t);
     o.stop(t + 0.28);
   }
+}
+
+/** Menu layering steps: the arrangement only changes at these lit-facility counts. */
+const MENU_STEPS = [0, 1, 2, 4, 5, 6];
+const SAMPLE_RATE = 32000;
+
+type Loop = { buffer: AudioBuffer; seconds: number };
+
+/** Plays the rendered loops and crossfades between them. */
+export class Music {
+  private ctx: AudioContext | null = null;
+  private out!: GainNode;
+  private noise!: AudioBuffer;
+  private cache = new Map<string, Promise<Loop>>();
+  /** What is sounding now: one source per mix (play has a calm and a hot one). */
+  private voices: { key: string; src: AudioBufferSourceNode; gain: GainNode; role: 'main' | 'calm' | 'hot' }[] = [];
+  private track: Track | null = null;
+  private wanted: Track = 'menu';
+  private menuStep = 0;
+  private startedAt = 0;
+  private token = 0;
+  private _intensity = 0.35;
+  private _enabled = true;
+
+  attach(ctx: AudioContext, dest: AudioNode, noise: AudioBuffer) {
+    this.ctx = ctx;
+    this.noise = noise;
+    this.out = ctx.createGain();
+    this.out.connect(dest);
+    // The rest is rendered a little later, so it never competes with the first screens.
+    void this.switchTo(this.wanted).then(() => window.setTimeout(() => void this.prewarm(), 4000));
+  }
+
+  /** Renders the other pieces in the background, one after another, so later switches are instant. */
+  private async prewarm() {
+    for (const [track, role] of [['play', 'calm'], ['play', 'hot'], ['story', 'main'], ['boss', 'main']] as const) {
+      if (!this._enabled) return;
+      await this.loop(track, role);
+    }
+  }
+
+  /** Facilities lit across the campaign: the menu theme adds a layer as they light up. */
+  set lit(n: number) {
+    const step = MENU_STEPS.filter((x) => x <= n).length - 1;
+    if (step === this.menuStep) return;
+    this.menuStep = step;
+    if (this.track === 'menu') void this.switchTo('menu', true);
+  }
+
+  /** 0..1: how hard the level music pushes; crossfades the calm and the hot mix. */
+  set intensity(v: number) {
+    this._intensity = v;
+    this.applyIntensity(0.4);
+  }
+
+  get intensity() {
+    return this._intensity;
+  }
+
+  /** With music off nothing plays and nothing is rendered. */
+  set enabled(on: boolean) {
+    this._enabled = on;
+    if (!on) this.fadeOut(this.voices, 0.3);
+    else if (this.ctx) {
+      this.track = null;
+      void this.switchTo(this.wanted);
+    }
+  }
+
+  get current() {
+    return this.track;
+  }
+
+  play(track: Track) {
+    this.wanted = track;
+    if (track !== this.track) void this.switchTo(track);
+  }
+
+  private key(track: Track, role: 'main' | 'calm' | 'hot') {
+    return track === 'menu' ? `menu:${this.menuStep}` : `${track}:${role}`;
+  }
+
+  private loop(track: Track, role: 'main' | 'calm' | 'hot'): Promise<Loop> {
+    const key = this.key(track, role);
+    let p = this.cache.get(key);
+    if (!p) {
+      const lit = track === 'menu' ? MENU_STEPS[this.menuStep] : 0;
+      const intensity = role === 'hot' ? 1 : role === 'calm' ? 0.3 : 0.5;
+      p = renderLoop(track, lit, intensity, this.noise);
+      this.cache.set(key, p);
+      // Only one menu arrangement is ever needed again: drop the older ones.
+      for (const k of [...this.cache.keys()]) if (k.startsWith('menu:') && k !== key && track === 'menu') this.cache.delete(k);
+    }
+    return p;
+  }
+
+  /** Starts `track`; `inPlace` keeps the musical position (a new menu layer joins in time). */
+  private async switchTo(track: Track, inPlace = false) {
+    const ctx = this.ctx;
+    this.track = track;
+    if (!ctx || !this._enabled) return;
+    const my = ++this.token;
+    const roles: ('main' | 'calm' | 'hot')[] = track === 'play' ? ['calm', 'hot'] : ['main'];
+    const loops = await Promise.all(roles.map((r) => this.loop(track, r)));
+    if (my !== this.token || !this._enabled) return;
+    const old = this.voices;
+    const t = ctx.currentTime + 0.05;
+    const offset = inPlace ? (t - this.startedAt) % loops[0].seconds : 0;
+    if (!inPlace) this.startedAt = t;
+    this.voices = roles.map((role, k) => {
+      const src = ctx.createBufferSource();
+      src.buffer = loops[k].buffer;
+      src.loop = true;
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      src.connect(gain).connect(this.out);
+      src.start(t, offset);
+      return { key: this.key(track, role), src, gain, role };
+    });
+    const fadeIn = inPlace ? 1.5 : track === 'story' ? 2.5 : 1.2;
+    this.applyIntensity(fadeIn, t);
+    this.fadeOut(old, inPlace ? 1.5 : 0.5);
+  }
+
+  private applyIntensity(tc: number, at?: number) {
+    if (!this.ctx) return;
+    const t = at ?? this.ctx.currentTime;
+    const k = Math.max(0, Math.min(1, (this._intensity - 0.3) / 0.7));
+    for (const v of this.voices) {
+      const target = v.role === 'main' ? 1 : v.role === 'hot' ? k : 1 - k;
+      v.gain.gain.cancelScheduledValues(t);
+      v.gain.gain.setValueAtTime(v.gain.gain.value, t);
+      v.gain.gain.linearRampToValueAtTime(target, t + tc);
+    }
+  }
+
+  private fadeOut(list: typeof this.voices, sec: number) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    for (const v of list) {
+      v.gain.gain.cancelScheduledValues(t);
+      v.gain.gain.setValueAtTime(v.gain.gain.value, t);
+      v.gain.gain.linearRampToValueAtTime(0, t + sec);
+      v.src.stop(t + sec + 0.05);
+    }
+    if (list === this.voices) this.voices = [];
+  }
+}
+
+/** Renders one cycle plus its reverb tail, then folds the tail onto the start so the loop is seamless. */
+async function renderLoop(track: Track, lit: number, intensity: number, noise: AudioBuffer): Promise<Loop> {
+  const seconds = Band.loopSeconds(track);
+  const tail = 3;
+  const n = Math.ceil(seconds * SAMPLE_RATE);
+  const ctx = new OfflineAudioContext(2, n + tail * SAMPLE_RATE, SAMPLE_RATE);
+  new Band(ctx, noise, track, lit, intensity).score();
+  const full = await ctx.startRendering();
+  const buffer = new AudioBuffer({ numberOfChannels: 2, length: n, sampleRate: SAMPLE_RATE });
+  for (let ch = 0; ch < 2; ch++) {
+    const src = full.getChannelData(ch);
+    const dst = buffer.getChannelData(ch);
+    dst.set(src.subarray(0, n));
+    for (let k = n; k < src.length; k++) dst[k - n] += src[k];
+  }
+  return { buffer, seconds: n / SAMPLE_RATE };
 }
 
 export const music = new Music();

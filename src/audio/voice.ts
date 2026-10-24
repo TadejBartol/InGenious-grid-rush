@@ -6,34 +6,41 @@ import { audio } from './sfx';
  * without one the device's Slovenian speech voice reads the line, if it has one.
  * A clip only counts while its recorded text still matches the line, so edited
  * dialogue never plays stale audio.
+ *
+ * Clips are decoded into WebAudio buffers and played through the same unlocked
+ * context as the music. HTML audio elements are refused by mobile browsers outside
+ * a tap, which left the cutscenes silent on phones.
  */
 type Manifest = Record<string, { file: string; text: string }>;
 
 const BASE = `${import.meta.env.BASE_URL}voice/`;
 let manifest: Promise<Manifest> | null = null;
-let current: HTMLAudioElement | null = null;
+const clips = new Map<string, Promise<AudioBuffer | null>>();
+let current: AudioBufferSourceNode | null = null;
 let token = 0;
-/** One element per speaker, each wired once through its character chain. */
-const players: Partial<Record<Speaker, HTMLAudioElement>> = {};
-/** 0.05 s of silence, played inside the first tap so iOS lets the players speak later. */
-const SILENCE = 'data:audio/wav;base64,UklGRrQBAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YZABAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA';
-
-function player(who: Speaker) {
-  let el = players[who];
-  if (!el) {
-    el = new Audio();
-    el.preload = 'auto';
-    audio.attachVoice(el, who);
-    players[who] = el;
-  }
-  return el;
-}
 
 function loadManifest() {
   manifest ??= fetch(`${BASE}manifest.json`)
     .then((r) => (r.ok ? (r.json() as Promise<Manifest>) : {}))
     .catch(() => ({}));
   return manifest;
+}
+
+function clip(file: string) {
+  const ctx = audio.context;
+  if (!ctx) return Promise.resolve(null);
+  let p = clips.get(file);
+  if (!p) {
+    p = fetch(BASE + file)
+      .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
+      .then((data) => new Promise<AudioBuffer>((res, rej) => void ctx.decodeAudioData(data, res, rej)))
+      .catch(() => {
+        clips.delete(file);
+        return null;
+      });
+    clips.set(file, p);
+  }
+  return p;
 }
 
 function slVoice() {
@@ -52,32 +59,40 @@ export const voice = {
   /** Call from a user gesture, after audio.unlock(). */
   prime() {
     void loadManifest();
-    for (const who of ['genko', 'dark', 'narrator'] as Speaker[]) {
-      const el = player(who);
-      if (el.src) continue;
-      el.src = SILENCE;
-      el.play().catch(() => {});
-    }
+  },
+
+  /** Fetches and decodes a whole scene in the background so lines start without a gap. */
+  async preload(sceneId: string, lines: { text: string }[]) {
+    const m = await loadManifest();
+    lines.forEach((l, i) => {
+      const c = m[`${sceneId}.${i}`];
+      if (c && c.text === l.text) void clip(c.file);
+    });
   },
 
   /** Starts the line and resolves with its length in ms (null when silent). */
   async speak(sceneId: string, index: number, who: Speaker, text: string): Promise<number | null> {
     this.stop();
     const my = ++token;
-    const clip = (await loadManifest())[`${sceneId}.${index}`];
+    const entry = (await loadManifest())[`${sceneId}.${index}`];
     if (my !== token) return null;
-    if (clip && clip.text === text) {
-      const el = player(who);
-      el.src = BASE + clip.file;
+    const ctx = audio.context;
+    if (entry && entry.text === text && ctx) {
+      const buf = await clip(entry.file);
+      const dest = audio.voiceInput(who);
+      if (my !== token || !buf || !dest) return null;
+      if (ctx.state === 'suspended') void ctx.resume();
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(dest);
       audio.duckMusic(true);
-      el.addEventListener('ended', () => audio.duckMusic(false), { once: true });
-      current = el;
-      const ms = await new Promise<number | null>((resolve) => {
-        el.addEventListener('loadedmetadata', () => resolve(Number.isFinite(el.duration) ? el.duration * 1000 : null), { once: true });
-        el.addEventListener('error', () => resolve(null), { once: true });
-        el.play().catch(() => resolve(null));
-      });
-      return my === token ? ms : null;
+      src.onended = () => {
+        if (current === src) current = null;
+        audio.duckMusic(false);
+      };
+      src.start();
+      current = src;
+      return buf.duration * 1000;
     }
     const v = slVoice();
     if (!v) return null;
@@ -94,9 +109,13 @@ export const voice = {
   stop() {
     token++;
     if (current) {
-      current.pause();
-      current.dispatchEvent(new Event('ended'));
+      const c = current;
       current = null;
+      try {
+        c.stop();
+      } catch {
+        /* already ended */
+      }
     }
     if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
   },

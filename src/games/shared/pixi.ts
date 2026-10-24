@@ -21,7 +21,7 @@ export function usePixi(setup: (app: Application, host: HTMLDivElement) => Teard
         backgroundAlpha: 0,
         antialias: true,
         autoDensity: true,
-        resolution: Math.min(window.devicePixelRatio || 1, 3),
+        resolution: Math.min(window.devicePixelRatio || 1, 2),
         preference: 'webgl',
         powerPreference: 'high-performance',
       })

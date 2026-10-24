@@ -217,57 +217,62 @@ class AudioEngine {
     this.musicBus.gain.setTargetAtTime(on ? 0.18 : 0.5, this.ctx.currentTime, on ? 0.1 : 0.4);
   }
 
+  private voiceIns: Partial<Record<'genko' | 'dark' | 'narrator', GainNode>> = {};
+
+  get context() {
+    return this.ctx;
+  }
+
   /**
-   * Routes a story voice clip through a small character chain: a ring modulator gives
-   * InGenious its robot timbre, grit and a low echo make the Dark Meter sound broken.
+   * Input of a speaker's character chain: a ring modulator gives InGenious its robot
+   * timbre, grit and a low echo make the Dark Meter sound broken. Built once per speaker.
    */
-  attachVoice(el: HTMLAudioElement, who: 'genko' | 'dark' | 'narrator') {
+  voiceInput(who: 'genko' | 'dark' | 'narrator'): AudioNode | null {
     const ctx = this.ctx;
-    if (!ctx) return false;
-    try {
-      const src = ctx.createMediaElementSource(el);
-      const out = ctx.createGain();
-      out.gain.value = 1.1;
-      out.connect(this.master);
-      if (who === 'genko') {
-        const dry = ctx.createGain();
-        dry.gain.value = 0.75;
-        const ring = ctx.createGain();
-        ring.gain.value = 0;
-        const lfo = ctx.createOscillator();
-        lfo.frequency.value = 38;
-        const depth = ctx.createGain();
-        depth.gain.value = 0.55;
-        lfo.connect(depth).connect(ring.gain);
-        lfo.start();
-        src.connect(dry).connect(out);
-        src.connect(ring).connect(out);
-      } else if (who === 'dark') {
-        const shelf = ctx.createBiquadFilter();
-        shelf.type = 'lowshelf';
-        shelf.frequency.value = 220;
-        shelf.gain.value = 7;
-        const grit = ctx.createWaveShaper();
-        const curve = new Float32Array(256);
-        for (let i = 0; i < 256; i++) {
-          const x = (i / 255) * 2 - 1;
-          curve[i] = Math.tanh(x * 2.2) / Math.tanh(2.2);
-        }
-        grit.curve = curve;
-        const echo = ctx.createDelay(0.5);
-        echo.delayTime.value = 0.13;
-        const fb = ctx.createGain();
-        fb.gain.value = 0.28;
-        src.connect(shelf).connect(grit).connect(out);
-        grit.connect(echo).connect(fb).connect(echo);
-        fb.connect(out);
-      } else {
-        src.connect(out);
+    if (!ctx) return null;
+    const cached = this.voiceIns[who];
+    if (cached) return cached;
+    const src = ctx.createGain();
+    const out = ctx.createGain();
+    out.gain.value = 1.1;
+    out.connect(this.master);
+    if (who === 'genko') {
+      const dry = ctx.createGain();
+      dry.gain.value = 0.75;
+      const ring = ctx.createGain();
+      ring.gain.value = 0;
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 38;
+      const depth = ctx.createGain();
+      depth.gain.value = 0.55;
+      lfo.connect(depth).connect(ring.gain);
+      lfo.start();
+      src.connect(dry).connect(out);
+      src.connect(ring).connect(out);
+    } else if (who === 'dark') {
+      const shelf = ctx.createBiquadFilter();
+      shelf.type = 'lowshelf';
+      shelf.frequency.value = 220;
+      shelf.gain.value = 7;
+      const grit = ctx.createWaveShaper();
+      const curve = new Float32Array(256);
+      for (let k = 0; k < 256; k++) {
+        const x = (k / 255) * 2 - 1;
+        curve[k] = Math.tanh(x * 2.2) / Math.tanh(2.2);
       }
-      return true;
-    } catch {
-      return false;
+      grit.curve = curve;
+      const echo = ctx.createDelay(0.5);
+      echo.delayTime.value = 0.13;
+      const fb = ctx.createGain();
+      fb.gain.value = 0.28;
+      src.connect(shelf).connect(grit).connect(out);
+      grit.connect(echo).connect(fb).connect(echo);
+      fb.connect(out);
+    } else {
+      src.connect(out);
     }
+    this.voiceIns[who] = src;
+    return src;
   }
 
   /** Facilities lit across the campaign: the menu theme gains a layer for each. */
@@ -285,7 +290,7 @@ class AudioEngine {
     music.intensity = Math.max(0, Math.min(1, v));
   }
 
-  /** Lov na konico's heartbeat (92 calm .. 176 panic), mapped onto the level music. */
+  /** Lov na konico's heartbeat (92 calm .. 176 panic), mapped onto the level music's intensity. */
   get bpm() {
     return this.heartbeat;
   }
@@ -294,7 +299,6 @@ class AudioEngine {
     this.heartbeat = v;
     const k = Math.max(0, Math.min(1, (v - 92) / 84));
     this.setIntensity(0.35 + 0.65 * k);
-    music.setTempo(music.current === 'boss' ? 128 + 16 * k : 116 + 26 * k);
   }
 
   /** Lov na konico takes over the level music while it runs. */
@@ -304,7 +308,6 @@ class AudioEngine {
 
   stopBeat() {
     this.setIntensity(0.35);
-    music.resetTempo();
   }
 }
 

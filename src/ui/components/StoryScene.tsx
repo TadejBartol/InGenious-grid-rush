@@ -10,8 +10,8 @@ import { IsoFactory } from './IsoFactory';
 
 const genkoMood = (m?: StoryMood): Mood => (m === 'smug' || m === 'worried' || m === 'wow' ? m : 'happy');
 
-/** Survives between scenes: once a player turns auto-play off, it stays off. */
-let autoPlay = true;
+/** Survives between scenes. Off by default: the player taps to move on, and can switch it on. */
+let autoPlay = false;
 
 /** Lightning path from InGenious (left) to the Dark Meter (right). */
 const BOLT = 'M47 82 L101 50 L125 72 L179 28 L211 60 L257 22 L281 50 L343 33';
@@ -19,7 +19,7 @@ const BOLT = 'M47 82 L101 50 L125 72 L179 28 L211 60 L257 22 L281 50 L343 33';
 /**
  * Cinematic cutscene: letterbox, a slow camera that leans towards whoever talks,
  * two actors, an optional facility centre stage, stage effects and spoken lines.
- * Lines advance on their own (auto) or on tap.
+ * Lines advance on tap; auto-play is an opt-in toggle.
  */
 export function StoryScene({ scene, onDone }: { scene: Scene; onDone: () => void }) {
   const reduced = useGame((s) => s.settings.reducedMotion);
@@ -37,7 +37,10 @@ export function StoryScene({ scene, onDone }: { scene: Scene; onDone: () => void
   const fac = scene.facility ? facilityById(scene.facility) : undefined;
   const lit = scene.lines.slice(0, i + 1).some((l) => l.fx === 'light');
 
-  useEffect(() => () => voice.stop(), []);
+  useEffect(() => {
+    void voice.preload(scene.id, scene.lines);
+    return () => voice.stop();
+  }, []);
 
   useEffect(() => {
     setTyped(reduced ? line.text.length : 0);
