@@ -34,7 +34,7 @@ npm run preview    # predogled builda (vključno s service workerjem)
 
 ### Avtomatski playtest
 
-`scripts/e2e.mjs` odigra igro v Chromiumu na telefonskem zaslonu z resničnim vnosom (vlečenje kablov, tapi), preveri zvezdice, nakup nadgradnje, shranjevanje po osvežitvi, prihranek v odsotnosti, odklep regij 2–4, Detektiva, Radijsko omrežje, Kogenerator (prek pravih drsnikov) in dnevni izziv ter shrani posnetke zaslona v `playtest/`.
+`scripts/e2e.mjs` odigra igro v Chromiumu na telefonskem zaslonu z resničnim vnosom (vlečenje kablov, tapi), preveri zvezdice, nakup nadgradnje, shranjevanje po osvežitvi, prihranek v odsotnosti, odklep regij 2–6, Detektiva, Radijsko omrežje, Kogenerator (prek pravih drsnikov), Alarm!, Selitev in dnevni izziv ter shrani posnetke zaslona v `playtest/`.
 
 ```bash
 npm i -D playwright && npx playwright install chromium   # enkrat

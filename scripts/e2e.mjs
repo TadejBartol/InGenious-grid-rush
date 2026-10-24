@@ -29,7 +29,67 @@ const clearHooks = () =>
     delete window.__gr_detektiv;
     delete window.__gr_wmbus;
     delete window.__gr_kogen;
+    delete window.__gr_alarm;
+    delete window.__gr_selitev;
   });
+// Alarm!: tap whichever unit needs help and pick the fix the incident calls for.
+const FIX = { vrata: 'zapri', izpad: 'agregat', kompresor: 'preseli', zmrzal: 'termostat', torba: 'vlozki' };
+async function playAlarm(maxSec = 140) {
+  await page.waitForFunction(() => window.__gr_alarm);
+  const t0 = Date.now();
+  while (Date.now() - t0 < maxSec * 1000) {
+    const todo = await page.evaluate((FIX) => {
+      const sim = window.__gr_alarm;
+      if (!sim || sim.finished) return 'done';
+      for (const x of sim.incidents) {
+        if (!x.active || x.done) continue;
+        const u = sim.units[x.unit];
+        if (u.alarm || u.door || !u.power) return { unit: x.unit, action: FIX[x.cause] };
+      }
+      const g = sim.units.find((u) => u.alarm && !u.lost);
+      return g ? { unit: g.id, action: 'lazni' } : null;
+    }, FIX);
+    if (todo === 'done') break;
+    if (todo) {
+      const ok = await page
+        .locator(`.unit-card[data-unit="${todo.unit}"]`)
+        .click({ timeout: 2000 })
+        .then(() => true, () => false);
+      const opt = page.locator(`.alarm-opt[data-action="${todo.action}"]`);
+      if (ok && (await opt.count())) await opt.click();
+      else if (await page.locator('.alarm-sheet .sheet-x').count()) await page.locator('.alarm-sheet .sheet-x').click();
+    }
+    await wait(250);
+  }
+  await page.waitForSelector('.result', { timeout: 15000 });
+}
+
+// Selitev: bin the bad records, convert Wh, send the rest to the right meter.
+async function playSelitev(maxSec = 160) {
+  await page.waitForFunction(() => window.__gr_selitev);
+  const t0 = Date.now();
+  while (Date.now() - t0 < maxSec * 1000) {
+    const r = await page.evaluate(() => {
+      const g = window.__gr_selitev;
+      if (!g || g.finished) return 'done';
+      const c = g.current;
+      return c ? { id: c.id, bad: g.bad(c), wh: c.unit === 'Wh' && !g.converted, target: c.target } : null;
+    });
+    if (r === 'done') break;
+    if (r) {
+      // Between records the buttons are briefly disabled; just look again.
+      const tap = (l) => l.click({ timeout: 1500 }).catch(() => {});
+      if (r.bad) await tap(page.locator('.sel-bin'));
+      else {
+        if (r.wh) await tap(page.locator('.sel-convert'));
+        await tap(page.locator('.sel-lane').nth(r.target));
+      }
+    }
+    await wait(180);
+  }
+  await page.waitForSelector('.result', { timeout: 15000 });
+}
+
 // Story scenes pop up on first visits; the playtest watches the first one, then skips.
 let storyShots = 0;
 const skipStory = async () => {
@@ -250,7 +310,9 @@ if (stars?.startsWith('0')) fail('1-3 should be beatable by the scripted player'
 const litTag = await page.locator('text=Livarna je osvetljena').count();
 if (!litTag) fail('Livarna should light up after 1-3');
 
-// 5. Tabs
+// 5. Tabs (the facility's lighting scene opens over the result a moment later)
+await wait(2500);
+await skipStory();
 await page.locator('.result').getByRole('button', { name: /Zemljevid/ }).click();
 await skipStory();
 await shot('07-region-lit');
@@ -377,6 +439,37 @@ stars = await resultStars();
 step(`4-1 result: ${stars}`);
 await shot('22-result-kogen');
 if (stars?.startsWith('0')) fail('4-1 should be beatable through the sliders');
+
+// 10. Healthcare and the Dark Meter's centre
+const jump = (id) =>
+  page.evaluate((id) => {
+    const st = window.__gr_store.getState();
+    const levels = { ...st.levels };
+    const region = Number(id[1]);
+    for (const l of window.__gr_levels) if (l.region < region) levels[l.id] = levels[l.id] ?? { stars: 2, best: 0, plays: 1 };
+    const seenTips = [...st.seenTips, 'scene:r5-intro', 'scene:r6-intro'];
+    window.__gr_store.setState({ levels, regionsUnlocked: [1, 2, 3, 4, 5, 6], seenTips });
+    const level = window.__gr_levels.find((l) => l.id === id);
+    window.__gr_nav.getState().go({ name: 'play', level, from: { name: 'region', region } });
+  }, id);
+await clearHooks();
+await jump('r5-1');
+await skipStory();
+await playAlarm();
+stars = await resultStars();
+step(`5-1 result: ${stars}`);
+await shot('23-result-alarm');
+if (!stars?.startsWith('3')) fail('5-1 should be 3 stars with prompt, correct responses');
+
+await clearHooks();
+await jump('r6-2');
+await skipStory();
+await playSelitev();
+stars = await resultStars();
+step(`6-2 result: ${stars}`);
+await shot('24-result-selitev');
+// A slow CI browser can let a record or two time out, so only a clean pass is required.
+if (!stars || stars.startsWith('0') || stars.startsWith('1')) fail('6-2 should pass cleanly through the real buttons');
 
 if (errors.length) fail(`console errors:\n  ${errors.join('\n  ')}`);
 await browser.close();

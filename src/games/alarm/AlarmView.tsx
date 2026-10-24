@@ -336,6 +336,7 @@ function UnitCard({ u, sim, pulse, onTap }: { u: Unit; sim: AlarmSim; pulse?: 'g
   const spoil = out ? Math.min(1, u.excursion / sim.spoilSec) : 0;
   return (
     <button
+      data-unit={u.id}
       class={`unit-card ${state}${pulse ? ` pulse-${pulse}` : ''}${u.kind === 'bag' ? ' bag' : ''}`}
       onClick={onTap}
       disabled={u.lost}
