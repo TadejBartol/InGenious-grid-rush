@@ -6,8 +6,8 @@
  * (OfflineAudioContext), then simply looped. Building the notes live on a phone
  * stuttered whenever the game was busy drawing; a looping buffer costs nothing to play.
  *
- *  - menu  "Svetla mreža": A minor synthwave. It grows with the campaign: lit
- *          facilities add layers, from a lonely pad to the full band with the melody.
+ *  - menu  "Svetla mreža": A minor synthwave with its melody from the start; lit
+ *          facilities bring in the drums and then the full sixteenth arpeggio.
  *  - play  "Konica": driving D minor electro under the levels; a calm and a hot mix
  *          run in sync and crossfade with the level's pressure.
  *  - boss  "Temni števec": E phrygian, heavy sixteenth bass and toms.
@@ -179,9 +179,9 @@ class Band {
   }
 
   private layers() {
-    if (this.track !== 'menu') return { bass: true, arp: this.track !== 'story', drums: this.track !== 'story', lead: this.track === 'boss' || this.intensity > 0.6 };
-    // The menu theme is built up by the campaign itself.
-    return { bass: this.lit >= 1, arp: this.lit >= 2, drums: this.lit >= 4, lead: this.lit >= 6 };
+    if (this.track !== 'menu') return { bass: true, arp: this.track !== 'story', drums: this.track !== 'story', lead: this.track !== 'story' };
+    // The melody and its harmony are there from the first minute; the campaign adds the groove.
+    return { bass: true, arp: true, drums: this.lit >= 2, lead: true };
   }
 
   private playStep(p: Piece, t: number, dur: number) {
@@ -422,7 +422,7 @@ class Band {
 }
 
 /** Menu layering steps: the arrangement only changes at these lit-facility counts. */
-const MENU_STEPS = [0, 1, 2, 4, 5, 6];
+const MENU_STEPS = [0, 2, 5];
 const SAMPLE_RATE = 32000;
 
 type Loop = { buffer: AudioBuffer; seconds: number };
