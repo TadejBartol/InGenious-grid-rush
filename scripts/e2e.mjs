@@ -191,7 +191,7 @@ async function playKogen(screenshotAt) {
 
 async function resultStars() {
   await page.waitForSelector('.result');
-  await wait(1800);
+  await wait(3400);
   return page.locator('.result .stars').getAttribute('aria-label');
 }
 
@@ -221,6 +221,7 @@ if (!stars?.startsWith('3')) fail('1-1 should be 3 stars with perfect play');
 
 // 3. Level 1-2 with address conflict, via "Naprej"
 await page.getByRole('button', { name: /Naprej/ }).click();
+await skipStory();
 await startLevel();
 await wait(2400);
 await shot('05-priklop-conflict');
@@ -231,6 +232,7 @@ if (!stars?.startsWith('3')) fail('1-2 should be 3 stars with perfect play');
 
 // 4. Level 1-3 Lov na konico
 await page.getByRole('button', { name: /Naprej/ }).click();
+await skipStory();
 await startLevel();
 await playKonica(20);
 stars = await resultStars();
@@ -241,7 +243,7 @@ const litTag = await page.locator('text=Livarna je osvetljena').count();
 if (!litTag) fail('Livarna should light up after 1-3');
 
 // 5. Tabs
-await page.getByRole('button', { name: 'Na zemljevid regije' }).click();
+await page.locator('.result').getByRole('button', { name: /Zemljevid/ }).click();
 await skipStory();
 await shot('07-region-lit');
 await page.getByRole('button', { name: 'Zemljevid', exact: true }).click();
@@ -311,7 +313,7 @@ step(`2-1 result: ${stars}`);
 await shot('16-result-detektiv');
 if (!stars?.startsWith('3')) fail('2-1 should be 3 stars with perfect play');
 
-await page.getByRole('button', { name: 'Na zemljevid regije' }).click();
+await page.locator('.result').getByRole('button', { name: /Zemljevid/ }).click();
 await page.getByRole('button', { name: /^Izziv/ }).click();
 await wait(300);
 await shot('17-daily');
@@ -352,7 +354,7 @@ await page.evaluate(() => {
   for (const l of window.__gr_levels) if (l.region === 3) levels[l.id] = levels[l.id] ?? { stars: 2, best: 0, plays: 1 };
   window.__gr_store.setState({ levels });
 });
-await page.getByRole('button', { name: 'Na zemljevid regije' }).click();
+await page.locator('.result').getByRole('button', { name: /Zemljevid/ }).click();
 await page.getByRole('button', { name: 'Zemljevid', exact: true }).click();
 await page.getByRole('button', { name: /Kogeneracija/ }).click();
 await page.getByRole('button', { name: /Odkleni/ }).click();

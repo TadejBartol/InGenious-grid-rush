@@ -41,6 +41,9 @@ export function SettingsScreen({ from }: { from: Screen }) {
           Glasba <Toggle label="Glasba" checked={settings.music} onChange={(v) => set('music', v)} />
         </div>
         <div class="toggle-row">
+          Glas v zgodbi <Toggle label="Glas v zgodbi" checked={settings.voice} onChange={(v) => set('voice', v)} />
+        </div>
+        <div class="toggle-row">
           Vibracije <Toggle label="Vibracije" checked={settings.haptics} onChange={(v) => set('haptics', v)} />
         </div>
         <div class="toggle-row" style={{ borderBottom: 0 }}>

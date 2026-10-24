@@ -41,6 +41,14 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,json}'],
         navigateFallback: 'index.html',
         cleanupOutdatedCaches: true,
+        // Story voices load on demand and stay cached for offline replays.
+        runtimeCaching: [
+          {
+            urlPattern: /\/voice\/.*\.mp3$/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'voice', expiration: { maxEntries: 400 } },
+          },
+        ],
       },
     }),
   ],

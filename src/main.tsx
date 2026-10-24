@@ -4,6 +4,7 @@ import { App } from './ui/App';
 import { store, saveOf } from './state/store';
 import { loadSave, logEvent, requestPersistence, writeSave } from './state/persist';
 import { audio, setHaptics } from './audio/sfx';
+import { voice } from './audio/voice';
 import { FACILITIES, LEVELS } from './core/levels';
 import { isFacilityLit } from './core/balance';
 import { initPwa } from './pwa';
@@ -53,7 +54,14 @@ async function boot() {
   });
   window.addEventListener('pagehide', flush);
   // First gesture anywhere unlocks WebAudio (iOS requirement).
-  window.addEventListener('pointerdown', () => audio.unlock(), { once: true, capture: true });
+  window.addEventListener(
+    'pointerdown',
+    () => {
+      audio.unlock();
+      voice.prime();
+    },
+    { once: true, capture: true },
+  );
 
   expose('store', store);
   expose('nav', nav);

@@ -23,7 +23,10 @@ export type Sfx =
   | 'go'
   | 'found'
   | 'wrong'
-  | 'unlock';
+  | 'unlock'
+  | 'zap'
+  | 'boom'
+  | 'powerup';
 
 class AudioEngine {
   private ctx: AudioContext | null = null;
@@ -194,6 +197,78 @@ class AudioEngine {
       case 'unlock':
         [392, 523, 659, 784, 1047].forEach((f, i) => this.tone(f, 0.4, { vol: 0.1, type: 'triangle', delay: i * 0.07 }));
         break;
+      case 'zap':
+        this.tone(1800, 0.35, { vol: 0.16, type: 'sawtooth', to: 120 });
+        this.hiss(0.5, { freq: 4500, q: 0.4, vol: 0.5 });
+        this.hiss(0.2, { freq: 9000, vol: 0.3, delay: 0.15 });
+        break;
+      case 'boom':
+        this.tone(70, 0.9, { vol: 0.45, type: 'sine', to: 28 });
+        this.hiss(0.8, { freq: 300, q: 0.5, vol: 0.5, type: 'lowpass' });
+        break;
+      case 'powerup':
+        this.tone(110, 1.1, { vol: 0.14, type: 'sawtooth', to: 880, attack: 0.3 });
+        [523, 659, 784, 1047].forEach((f, i) => this.tone(f, 0.6, { vol: 0.09, type: 'triangle', delay: 0.9 + i * 0.05 }));
+        break;
+    }
+  }
+
+  /** Lowers the music while a story line is spoken. */
+  duckMusic(on: boolean) {
+    if (!this.ctx || !this.musicOn) return;
+    this.musicBus.gain.setTargetAtTime(on ? 0.18 : 0.5, this.ctx.currentTime, on ? 0.1 : 0.4);
+  }
+
+  /**
+   * Routes a story voice clip through a small character chain: a ring modulator gives
+   * InGenious its robot timbre, grit and a low echo make the Dark Meter sound broken.
+   */
+  attachVoice(el: HTMLAudioElement, who: 'genko' | 'dark' | 'narrator') {
+    const ctx = this.ctx;
+    if (!ctx) return false;
+    try {
+      const src = ctx.createMediaElementSource(el);
+      const out = ctx.createGain();
+      out.gain.value = 1.1;
+      out.connect(this.master);
+      if (who === 'genko') {
+        const dry = ctx.createGain();
+        dry.gain.value = 0.75;
+        const ring = ctx.createGain();
+        ring.gain.value = 0;
+        const lfo = ctx.createOscillator();
+        lfo.frequency.value = 38;
+        const depth = ctx.createGain();
+        depth.gain.value = 0.55;
+        lfo.connect(depth).connect(ring.gain);
+        lfo.start();
+        src.connect(dry).connect(out);
+        src.connect(ring).connect(out);
+      } else if (who === 'dark') {
+        const shelf = ctx.createBiquadFilter();
+        shelf.type = 'lowshelf';
+        shelf.frequency.value = 220;
+        shelf.gain.value = 7;
+        const grit = ctx.createWaveShaper();
+        const curve = new Float32Array(256);
+        for (let i = 0; i < 256; i++) {
+          const x = (i / 255) * 2 - 1;
+          curve[i] = Math.tanh(x * 2.2) / Math.tanh(2.2);
+        }
+        grit.curve = curve;
+        const echo = ctx.createDelay(0.5);
+        echo.delayTime.value = 0.13;
+        const fb = ctx.createGain();
+        fb.gain.value = 0.28;
+        src.connect(shelf).connect(grit).connect(out);
+        grit.connect(echo).connect(fb).connect(echo);
+        fb.connect(out);
+      } else {
+        src.connect(out);
+      }
+      return true;
+    } catch {
+      return false;
     }
   }
 

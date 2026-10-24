@@ -13,6 +13,8 @@ export interface Settings {
   music: boolean;
   haptics: boolean;
   reducedMotion: boolean;
+  /** Spoken story lines. */
+  voice: boolean;
 }
 
 export interface SaveData {
@@ -57,7 +59,7 @@ export function freshSave(now: number): SaveData {
     seenTips: [],
     streak: { streak: 0, best: 0 },
     daily: {},
-    settings: { sound: true, music: true, haptics: true, reducedMotion: false },
+    settings: { sound: true, music: true, haptics: true, reducedMotion: false, voice: true },
     stats: { sessions: 0, plays: 0, days: [] },
   };
 }
