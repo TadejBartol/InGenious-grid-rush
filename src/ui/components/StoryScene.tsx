@@ -1,24 +1,18 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { audio, buzz } from '../../audio/sfx';
 import { voice } from '../../audio/voice';
+import { direct } from '../../core/cinema';
 import { facilityById } from '../../core/levels';
-import type { Scene, StoryMood } from '../../core/story';
+import type { Scene } from '../../core/story';
 import { useGame } from '../../state/store';
-import { DarkMeter } from './DarkMeter';
-import { Genko, type Mood } from './Genko';
-import { IsoFactory } from './IsoFactory';
-
-const genkoMood = (m?: StoryMood): Mood => (m === 'smug' || m === 'worried' || m === 'wow' ? m : 'happy');
+import { CineWorld } from './CineWorld';
 
 /** Survives between scenes. Off by default: the player taps to move on, and can switch it on. */
 let autoPlay = false;
 
-/** Lightning path from InGenious (left) to the Dark Meter (right). */
-const BOLT = 'M47 82 L101 50 L125 72 L179 28 L211 60 L257 22 L281 50 L343 33';
-
 /**
- * Cinematic cutscene: letterbox, a slow camera that leans towards whoever talks,
- * two actors, an optional facility centre stage, stage effects and spoken lines.
+ * Cinematic cutscene: letterbox bars around a filmed set (CineWorld) that cuts and
+ * glides between shots, with spoken, typed-out lines below.
  * Lines advance on tap; auto-play is an opt-in toggle.
  */
 export function StoryScene({ scene, onDone }: { scene: Scene; onDone: () => void }) {
@@ -29,13 +23,12 @@ export function StoryScene({ scene, onDone }: { scene: Scene; onDone: () => void
   const [step, setStep] = useState(22);
   const [talking, setTalking] = useState(false);
   const [auto, setAuto] = useState(autoPlay);
-  const [fxKey, setFxKey] = useState(0);
   const line = scene.lines[i];
   const full = typed >= line.text.length;
   const timer = useRef<number>();
   const spokenUntil = useRef(0);
   const fac = scene.facility ? facilityById(scene.facility) : undefined;
-  const lit = scene.lines.slice(0, i + 1).some((l) => l.fx === 'light');
+  const dirs = useMemo(() => direct(scene), [scene]);
 
   useEffect(() => {
     void voice.preload(scene.id, scene.lines);
@@ -48,7 +41,6 @@ export function StoryScene({ scene, onDone }: { scene: Scene; onDone: () => void
     setTalking(false);
     spokenUntil.current = 0;
     if (line.fx) {
-      setFxKey((k) => k + 1);
       if (line.fx === 'zap') (audio.play('zap'), buzz([30, 20, 60]));
       if (line.fx === 'flash') (audio.play('boom'), buzz([80, 40, 120]));
       if (line.fx === 'light') (audio.play('powerup'), buzz(40));
@@ -101,53 +93,9 @@ export function StoryScene({ scene, onDone }: { scene: Scene; onDone: () => void
     advance();
   };
 
-  const darkOn = scene.lines.slice(0, i + 1).some((l) => l.who === 'dark');
-  const genkoOn = scene.lines.slice(0, i + 1).some((l) => l.who === 'genko');
-  const lastDark = [...scene.lines.slice(0, i + 1)].reverse().find((l) => l.who === 'dark');
-  const lastGenko = [...scene.lines.slice(0, i + 1)].reverse().find((l) => l.who === 'genko');
-  const cam = line.who === 'genko' ? 'cam-left' : line.who === 'dark' ? 'cam-right' : 'cam-mid';
-  const hurt = line.fx === 'flash';
-
   return (
-    <div class={`story tone-${scene.tone}${line.who === 'dark' && line.mood === 'angry' && !reduced ? ' quake' : ''}`} role="dialog" aria-label={scene.title} onClick={next}>
-      <div class={`story-cam ${reduced ? '' : cam}`}>
-        <div class="story-sky" aria-hidden="true">
-          <div class="story-city" />
-          {scene.tone !== 'dawn' && scene.tone !== 'lit' && <div class="story-rain" />}
-          {scene.tone === 'dawn' && <div class="story-sun" />}
-          {scene.tone === 'lit' && <div class="story-stars" />}
-        </div>
-
-        {fac && (
-          <div class={`story-fac${lit ? ' on' : ''}`} aria-hidden="true">
-            <div class="story-fac-beam" />
-            <IsoFactory art={fac.art} lit={lit} />
-            <span class="story-fac-name">{fac.name}</span>
-          </div>
-        )}
-
-        <div class="story-stage">
-          <div class={`actor genko-actor${genkoOn ? ' in' : ''}${line.who === 'genko' ? ' speaking' : ''}`}>
-            <Genko size={120} mood={genkoMood(lastGenko?.mood)} />
-            <span class="actor-name">InGenious</span>
-          </div>
-          <div
-            class={`actor dark-actor${darkOn ? ' in' : ''}${line.who === 'dark' ? ' speaking' : ''}${hurt ? ' hit' : ''}${lastDark?.mood === 'fleeing' && line.who === 'dark' ? ' flee' : ''}`}
-          >
-            <DarkMeter size={128} mood={lastDark?.mood ?? 'smirk'} />
-            <span class="actor-name">Temni števec</span>
-          </div>
-        </div>
-      </div>
-
-      {line.fx === 'zap' && !reduced && (
-        <svg class="story-zap" key={`z${fxKey}`} viewBox="0 0 390 110" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-          <path class="bolt-glow" d={BOLT} />
-          <path d={BOLT} />
-          <path class="bolt-core" d={BOLT} />
-        </svg>
-      )}
-      {line.fx && !reduced && <div class={`story-flash fx-${line.fx}`} key={`f${fxKey}`} aria-hidden="true" />}
+    <div class={`story tone-${scene.tone}`} role="dialog" aria-label={scene.title} onClick={next}>
+      <CineWorld scene={scene} dirs={dirs} i={i} reduced={reduced} fac={fac} />
 
       <div class="story-bar top">
         <span class="story-title">{scene.title}</span>

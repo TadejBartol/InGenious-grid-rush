@@ -2,6 +2,8 @@
  * The story: who is the Dark Meter? Every region peels off one layer of the
  * mystery of "Š-0", the first meter of the old grid that nobody read again.
  */
+import type { Act, Shot } from './cinema';
+
 export type Speaker = 'genko' | 'dark' | 'narrator';
 export type StoryMood = 'happy' | 'smug' | 'worried' | 'wow' | 'smirk' | 'angry' | 'hurt' | 'fleeing';
 
@@ -13,6 +15,10 @@ export interface StoryLine {
   mood?: StoryMood;
   text: string;
   fx?: StoryFx;
+  /** Overrides the automatic camera framing (see cinema.ts). */
+  shot?: Shot;
+  /** Overrides the automatic piece of action. */
+  act?: Act;
 }
 
 export interface Scene {

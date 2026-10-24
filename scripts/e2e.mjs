@@ -76,7 +76,9 @@ async function playPriklop() {
     const r = canvas.getBoundingClientRect();
     return game.puzzle.solution.map((route) => route.map((c) => {
       const p = center(c);
-      return { x: r.left + p.x, y: r.top + p.y };
+      // The UI is drawn scaled down (zoom-out), so layout pixels are smaller on screen.
+      const k = r.width / canvas.clientWidth;
+      return { x: r.left + p.x * k, y: r.top + p.y * k };
     }));
   });
   for (const route of routes) {
@@ -153,7 +155,8 @@ async function playWmbus() {
   const devices = await page.evaluate(() => {
     const { game, center, canvas } = window.__gr_wmbus;
     const r = canvas.getBoundingClientRect();
-    return game.puzzle.solution.map((d) => ({ kind: d.kind, ...center(d), left: r.left, top: r.top }));
+    const k = r.width / canvas.clientWidth;
+    return game.puzzle.solution.map((d) => { const c = center(d); return { kind: d.kind, x: c.x * k, y: c.y * k, left: r.left, top: r.top }; });
   });
   for (const d of devices) {
     await page.getByRole('radio', { name: d.kind === 'gateway' ? /^Prehod/ : /^Repetitor/ }).click();

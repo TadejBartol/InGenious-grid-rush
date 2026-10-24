@@ -24,8 +24,14 @@ interface Burst {
 /** Little "+12 kWh/h" sparks that fly up from where you tapped. */
 function useBursts() {
   const [bursts, setBursts] = useState<Burst[]>([]);
-  const add = (x: number, y: number, text: string, kind: Burst['kind']) => {
+  const add = (cx: number, cy: number, text: string, kind: Burst['kind']) => {
     const id = Math.random();
+    // Screen coordinates into the (scaled) app shell the layer lives in.
+    const shell = document.querySelector<HTMLElement>('.shell');
+    const r = shell?.getBoundingClientRect();
+    const k = shell && r ? r.width / shell.offsetWidth : 1;
+    const x = (cx - (r?.left ?? 0)) / k;
+    const y = (cy - (r?.top ?? 0)) / k;
     setBursts((b) => [...b, { id, x, y, text, kind }]);
     setTimeout(() => setBursts((b) => b.filter((q) => q.id !== id)), 1100);
   };
