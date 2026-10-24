@@ -480,6 +480,9 @@ export class Music {
 
   /** With music off nothing plays and nothing is rendered. */
   set enabled(on: boolean) {
+    // Settings are re-applied on every store change (once a second with the idle
+    // trickle); restarting here made the music jump back to its first bars each time.
+    if (on === this._enabled) return;
     this._enabled = on;
     if (!on) this.fadeOut(this.voices, 0.3);
     else if (this.ctx) {
