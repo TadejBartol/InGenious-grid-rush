@@ -117,7 +117,7 @@ export const store = createStore<GameState>()((set, get) => ({
     const isDaily = level.id.startsWith('daily-');
     const prev = s.levels[level.id];
     const prevStars = isDaily ? (s.daily[level.id.slice(6)]?.stars ?? 0) : (prev?.stars ?? 0);
-    const reward = rewardFor(level, stars, prevStars, stars > 0 ? bonusDp : 0);
+    const reward = rewardFor(level, stars, prevStars, stars > 0 ? bonusDp : 0, s.research.tarifa ?? 0);
     const wasLit = FACILITIES.filter((f) => isFacilityLit(f, s.levels)).map((f) => f.id);
     const levels = isDaily
       ? s.levels
@@ -177,7 +177,7 @@ export const store = createStore<GameState>()((set, get) => ({
   buyResearch(id) {
     const s = get();
     const r = RESEARCH.find((x) => x.id === id);
-    if (!r) return false;
+    if (!r || !s.regionsUnlocked.includes(r.region ?? 1)) return false;
     const lvl = s.research[id] ?? 0;
     if (lvl >= r.costs.length || s.dp < r.costs[lvl]) return false;
     set({ dp: s.dp - r.costs[lvl], research: { ...s.research, [id]: lvl + 1 } });

@@ -4,6 +4,7 @@ import { fmt, fmtExact } from '../../core/format';
 import { idleRate } from '../../core/balance';
 import { liveStreak, dateKey } from '../../core/daily';
 import { useGame } from '../../state/store';
+import { useNav } from '../nav';
 import { audio } from '../../audio/sfx';
 import { IconBolt, IconChip, IconData, IconFlame, IconGear, IconStar } from './Icons';
 import { CurrencyInfo, type Currency } from './CurrencyInfo';
@@ -46,20 +47,66 @@ export function CountUp({ value, delay = 0, ms = 900, prefix = '' }: { value: nu
   );
 }
 
-/** Mechanical-style savings counter that ticks like an old electricity meter. */
+/** Size of the trickle step the progress bar fills towards: a step lands every 10 to 30 seconds. */
+function trickleUnit(rate: number) {
+  return Math.max(1, Math.pow(10, Math.round(Math.log10(Math.max(1, rate / 240)))));
+}
+
+/**
+ * Mechanical-style savings counter that ticks like an old electricity meter. Level rewards
+ * wait until the player is back from the result screen, then roll in with a "+N kWh" chip;
+ * the thin bar underneath fills with the idle trickle so the passive income is always visible.
+ */
 export function SavingsCounter() {
   const kwh = useGame((s) => Math.floor(s.kwh));
+  const raw = useGame((s) => s.kwh);
   const rate = useGame((s) => idleRate(s.levels, s.upgrades, s.research));
-  const prev = useRef(kwh);
+  const away = ['play', 'result'].includes(useNav().screen.name);
+  const [shown, setShown] = useState(kwh);
+  const [gain, setGain] = useState<{ n: number; id: number } | null>(null);
+  const shownRef = useRef(kwh);
   useEffect(() => {
-    // Small increments are the idle trickle: give them the mechanical meter click.
-    if (kwh > prev.current && kwh - prev.current < 50) audio.play('tick');
-    prev.current = kwh;
-  }, [kwh]);
-  const text = kwh >= 1e7 ? fmt(kwh) : fmtExact(kwh);
+    if (away) return;
+    const from = shownRef.current;
+    const diff = kwh - from;
+    if (diff <= 0 || diff < 20) {
+      // Small increments are the idle trickle: give them the mechanical meter click.
+      if (diff > 0) audio.play('tick');
+      shownRef.current = kwh;
+      setShown(kwh);
+      return;
+    }
+    setGain({ n: diff, id: Date.now() });
+    audio.play('coin');
+    const t0 = performance.now();
+    const dur = 1300;
+    let raf = 0;
+    const step = (now: number) => {
+      const k = Math.min(1, (now - t0) / dur);
+      const v = Math.round(from + diff * (1 - Math.pow(1 - k, 3)));
+      shownRef.current = v;
+      setShown(v);
+      if (k < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [kwh, away]);
+  useEffect(() => {
+    if (!gain) return;
+    const t = setTimeout(() => setGain(null), 1800);
+    return () => clearTimeout(t);
+  }, [gain]);
+  const unit = trickleUnit(rate);
+  const frac = rate > 0 ? (raw % unit) / unit : 0;
+  const text = shown >= 1e7 ? fmt(shown) : fmtExact(shown);
   return (
-    <div class="counter" aria-live="off">
+    <div class={`counter${gain ? ' gaining' : ''}`} aria-live="off">
       <div class="counter-label">Prihranjeno</div>
+      {gain && (
+        <span class="counter-gain" key={gain.id}>
+          +{fmt(gain.n)} kWh
+        </span>
+      )}
       <div class="counter-digits" aria-label={`${fmtExact(kwh)} kWh prihranjeno`}>
         {[...text].map((ch, i) => (
           // Keyed by value, so a changed digit remounts and replays the roll animation.
@@ -69,7 +116,12 @@ export function SavingsCounter() {
         ))}
         <span class="counter-unit">kWh</span>
       </div>
-      <div class="counter-rate">{rate > 0 ? `+${fmt(rate)} kWh/h iz osvetljenih objektov` : 'Osvetli prvi objekt za idle prihranek'}</div>
+      {rate > 0 && (
+        <div class="counter-flow" title={`Naslednjih ${fmt(unit)} kWh`}>
+          <i key={Math.floor(raw / unit)} style={{ transform: `scaleX(${frac})` }} />
+        </div>
+      )}
+      <div class="counter-rate">{rate > 0 ? `+${fmt(rate)} kWh/h · objekti varčujejo zate` : 'Osvetli prvi objekt in začel bo varčevati sam'}</div>
     </div>
   );
 }

@@ -109,6 +109,12 @@ export function ResultScreen({ outcome, from }: { outcome: LevelOutcome; from: S
         )}
       </div>
 
+      {reward.kwh > 0 && (
+        <p class="res-flow res-in" style={nextD()}>
+          ⚡ kWh gredo na števec prihranka · z njimi v <b>Nadgradnjah</b> izboljšaš objekte, ki potem varčujejo sami.
+        </p>
+      )}
+
       <ul class="res-goals res-in" style={nextD()}>
         {checks.map((c) => (
           <li>

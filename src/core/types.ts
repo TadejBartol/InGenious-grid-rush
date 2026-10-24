@@ -54,6 +54,10 @@ export interface DetektivParams {
   anomalies: number;
   kinds: AnomalyKind[];
   noise: number;
+  /** Planned events on the production schedule that look like anomalies but are not. */
+  decoys?: number;
+  /** Anomaly strength, 1 = obvious; lower values hide them in the noise. */
+  scale?: number;
   seed: number;
 }
 

@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { FACILITIES, levelsOfRegion, regionById } from '../../core/levels';
-import { isFacilityLit, isLevelUnlocked, facilityRate, goalLabel, regionStars } from '../../core/balance';
+import { isFacilityLit, isLevelUnlocked, facilityRate, goalLabel, regionStars, rewardFor } from '../../core/balance';
 import { fmt } from '../../core/format';
 import { audio, buzz } from '../../audio/sfx';
 import { useGame } from '../../state/store';
@@ -9,7 +9,7 @@ import { playScene } from '../story';
 import { DarkMeter } from '../components/DarkMeter';
 import { Genko, GenkoSays } from '../components/Genko';
 import { IsoFactory } from '../components/IsoFactory';
-import { Sheet } from '../components/Common';
+import { Cost, Sheet } from '../components/Common';
 import { IconBack, IconChart, IconCogen, IconDark, IconLock, IconPlug, IconSearch, IconStar, IconTrophy, IconWave } from '../components/Icons';
 import { KIND_NAME } from './PlayScreen';
 import type { FacilityDef, LevelDef, Stage } from '../../core/types';
@@ -232,6 +232,24 @@ function LevelNode({ item, stars, open, isCurrent, pop, width }: { item: Extract
   );
 }
 
+/** What this level can pay out, so every run has a visible stake in kWh and DP. */
+function Stake({ level, best }: { level: LevelDef; best: number }) {
+  const tarifa = useGame((s) => s.research.tarifa ?? 0);
+  const r = rewardFor(level, 3, best, 0, tarifa);
+  return (
+    <div class="stake">
+      <span class="tiny muted">{best > 0 ? 'Ponovna igra do' : 'Nagrada do'}</span>
+      {r.kwh > 0 && <Cost kind="kwh" n={r.kwh} />}
+      <Cost kind="dp" n={r.dp} />
+      {r.chips > 0 && (
+        <span class="mono small" style={{ color: 'var(--chip)' }}>
+          +{r.chips} {r.chips === 1 ? 'čip' : 'čipi'}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function LevelIntro({ level, best }: { level: LevelDef; best: number }) {
   const close = () => nav.getState().openIntro(null);
   const screen = nav.getState().screen;
@@ -267,9 +285,11 @@ export function LevelIntro({ level, best }: { level: LevelDef; best: number }) {
       )}
       <GenkoSays text={level.intro} mood={level.boss ? 'worried' : 'happy'} />
       {level.boss && <p class="small boss-warn">Faze si sledijo brez odmora. Če pade prva, druge ne boš videl.</p>}
-      <div class="lesson" style={{ marginTop: '12px' }}>
-        {level.lesson}
-      </div>
+      <details class="lesson-fold">
+        <summary>💡 Iz prakse</summary>
+        <div class="lesson">{level.lesson}</div>
+      </details>
+      <Stake level={level} best={best} />
       <ul class="goal-list">
         {level.stars.map((g, i) => (
           <li>

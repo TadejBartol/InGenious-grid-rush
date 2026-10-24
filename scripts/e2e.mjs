@@ -114,12 +114,13 @@ async function playKonica(screenshotAt) {
     if (starving) {
       // Make room first, like a player who reads the graph.
       const donor = tog.filter((c) => c.on && c.buffer > 0.5).sort((a, b) => b.buffer - a.buffer)[0];
-      if (donor && st.p + starving.kw * 1.5 > st.limit * 0.97) await page.getByRole('button', { name: new RegExp(`^${donor.name},`) }).click();
+      if (donor && st.p + starving.kw * 1.5 > st.limit * 0.97) await page.getByRole('button', { name: new RegExp(`^${donor.name},`) }).click({ timeout: 2000 }).catch(() => {});
       target = starving;
     }
     else if (st.p > st.limit * 0.96) target = tog.filter((c) => c.on && c.buffer > 0.35).sort((a, b) => b.buffer - a.buffer)[0];
     else target = tog.filter((c) => !c.on && st.p + c.kw * 1.5 < st.limit * 0.93).sort((a, b) => a.buffer - b.buffer)[0];
-    if (target) await page.getByRole('button', { name: new RegExp(`^${target.name},`) }).click();
+    // The round can end between reading the state and clicking.
+    if (target) await page.getByRole('button', { name: new RegExp(`^${target.name},`) }).click({ timeout: 2000 }).catch(() => {});
     await wait(120);
   }
 }
@@ -137,7 +138,11 @@ async function playDetektiv() {
       return { finished: g.finished, tap: ready ? { x: r.left + (ready.start + ready.len / 2 - g.viewStart) * pxPerHour, y: r.top + r.height / 2 } : null };
     });
     if (st.finished) break;
-    if (st.tap) await page.mouse.click(st.tap.x, st.tap.y);
+    if (st.tap) {
+      await page.mouse.click(st.tap.x, st.tap.y);
+      const kind = await page.evaluate(() => window.__gr_detektiv.pending?.anomaly.kind);
+      if (kind) await page.locator(`.diag-opt[data-kind="${kind}"]`).click();
+    }
     await wait(150);
   }
 }
@@ -297,10 +302,13 @@ await page.evaluate(() => {
   window.__gr_store.setState({ levels, chips: st.chips + 5 });
 });
 await page.getByRole('button', { name: 'Zemljevid', exact: true }).click();
-await page.getByRole('button', { name: /Mlekarna in prehrana/ }).click();
+await wait(400);
+await shot('14a-map-region-ready');
+if (!(await page.locator('.region-node.ready').count())) fail('unlockable region not highlighted');
+await page.getByRole('button', { name: /Nova regija je pripravljena/ }).click();
 await wait(300);
 await shot('14-unlock-region2');
-await page.getByRole('button', { name: /Odkleni/ }).click();
+await page.getByRole('button', { name: /Odkleni za/ }).click();
 await skipStory();
 await page.getByRole('button', { name: /Stopnja 1: Kdo je pustil/ }).click();
 await startLevel();
@@ -336,7 +344,7 @@ await page.evaluate(() => {
   window.__gr_store.setState({ levels, chips: st.chips + 20 });
 });
 await page.getByRole('button', { name: 'Zemljevid', exact: true }).click();
-await page.getByRole('button', { name: /Komunala/ }).click();
+await page.locator('.region-node').getByText('Komunala').click();
 await page.getByRole('button', { name: /Odkleni/ }).click();
 await skipStory();
 await shot('19-region3');
@@ -356,7 +364,7 @@ await page.evaluate(() => {
 });
 await page.locator('.result').getByRole('button', { name: /Zemljevid/ }).click();
 await page.getByRole('button', { name: 'Zemljevid', exact: true }).click();
-await page.getByRole('button', { name: /Kogeneracija/ }).click();
+await page.locator('.region-node').getByText('Kogeneracija').click();
 await page.getByRole('button', { name: /Odkleni/ }).click();
 await skipStory();
 await page.getByRole('button', { name: /Stopnja 1: Prvi zagon/ }).click();

@@ -115,7 +115,7 @@ export function dailyLevel(key: string, detektivUnlocked: boolean): LevelDef {
     };
     stars = [{ type: 'complete' }, { type: 'metric', key: 'peak', op: '<=', value: limit, unit: 'kW', label: `Konica ≤ ${limit} kW` }, { type: 'mistakes', max: 0, label: 'Brez zastoja proizvodnje' }];
   } else {
-    stage = { kind: 'detektiv', params: { durationSec: 60, profile: (['livarna', 'mlekarna', 'trafo'] as const)[variant], anomalies: 4 + variant, kinds: ['nocna', 'konica', 'zrak', 'prazniTek', 'hladilnik'], noise: 0.05, seed } };
+    stage = { kind: 'detektiv', params: { durationSec: 60, profile: (['livarna', 'mlekarna', 'trafo'] as const)[variant], anomalies: 4 + variant, kinds: ['nocna', 'konica', 'zrak', 'prazniTek', 'hladilnik'], noise: 0.05, decoys: 2, scale: 0.75, seed } };
     stars = [{ type: 'complete' }, { type: 'metric', key: 'missed', op: '<=', value: 0, unit: '', label: 'Najdi vse anomalije' }, { type: 'mistakes', max: 0 }];
   }
   return {

@@ -7,7 +7,7 @@ import { store, useGame } from '../../state/store';
 import { Cost } from '../components/Common';
 import { GenkoSays } from '../components/Genko';
 import { IsoFactory } from '../components/IsoFactory';
-import { IconBolt, IconChart, IconData, IconLock, IconPlug, IconSearch, IconUp, IconWave } from '../components/Icons';
+import { IconBolt, IconChart, IconData, IconDark, IconLock, IconPlug, IconSearch, IconStar, IconUp, IconWave } from '../components/Icons';
 
 type Tab = 'objekti' | 'lab';
 let lastTab: Tab = 'objekti';
@@ -206,20 +206,26 @@ const RESEARCH_ICON: Record<string, typeof IconBolt> = {
   merilniki: IconBolt,
   ai: IconSearch,
   spomin: IconData,
+  kalibracija: IconDark,
+  tarifa: IconStar,
 };
 
 // Node positions on the circuit board, in % of its box. The InGenious core sits in the middle.
 const NODE_POS: Record<string, { x: number; y: number }> = {
-  vzorcenje: { x: 18, y: 16 },
-  rezervoar: { x: 82, y: 16 },
-  napoved: { x: 82, y: 84 },
-  merilniki: { x: 18, y: 84 },
-  ai: { x: 82, y: 50 },
-  spomin: { x: 18, y: 50 },
+  vzorcenje: { x: 17, y: 12 },
+  rezervoar: { x: 83, y: 12 },
+  merilniki: { x: 17, y: 37 },
+  napoved: { x: 83, y: 37 },
+  kalibracija: { x: 17, y: 63 },
+  tarifa: { x: 83, y: 63 },
+  spomin: { x: 17, y: 88 },
+  ai: { x: 83, y: 88 },
 };
 
 function Lab() {
   const research = useGame((s) => s.research);
+  const regions = useGame((s) => s.regionsUnlocked);
+  const open = (x: ResearchDef) => regions.includes(x.region ?? 1);
   const dp = useGame((s) => Math.floor(s.dp));
   const [sel, setSel] = useState<string>(RESEARCH[0].id);
   const [flash, setFlash] = useState<{ id: string; n: number } | null>(null);
@@ -229,6 +235,7 @@ function Lab() {
   const maxed = lvl >= r.costs.length;
   const cost = r.costs[lvl];
   const btn = useRef<HTMLButtonElement>(null);
+  const locked = !open(r);
 
   const buy = () => {
     if (!store.getState().buyResearch(r.id)) {
@@ -263,7 +270,15 @@ function Lab() {
           <small class="mono">{Object.values(research).reduce((a, b) => a + b, 0)}/{RESEARCH.reduce((a, x) => a + x.costs.length, 0)}</small>
         </div>
         {RESEARCH.map((x) => (
-          <LabNode r={x} level={research[x.id] ?? 0} selected={sel === x.id} affordable={(research[x.id] ?? 0) < x.costs.length && dp >= x.costs[research[x.id] ?? 0]} flash={flash?.id === x.id ? flash.n : 0} onSelect={() => (audio.play('tap'), setSel(x.id))} />
+          <LabNode
+            r={x}
+            level={research[x.id] ?? 0}
+            selected={sel === x.id}
+            locked={!open(x)}
+            affordable={open(x) && (research[x.id] ?? 0) < x.costs.length && dp >= x.costs[research[x.id] ?? 0]}
+            flash={flash?.id === x.id ? flash.n : 0}
+            onSelect={() => (audio.play('tap'), setSel(x.id))}
+          />
         ))}
       </div>
       <div class="lab-panel card" key={r.id}>
@@ -281,9 +296,21 @@ function Lab() {
             <i class={i < lvl ? 'on' : ''} />
           ))}
         </div>
-        <button ref={btn} class="btn primary big" style={{ marginTop: '10px' }} disabled={maxed || dp < cost} onClick={buy}>
-          {maxed ? 'Raziskano do konca' : <>Raziskuj · <Cost kind="dp" n={cost} /></>}
+        <button ref={btn} class="btn primary big" style={{ marginTop: '10px' }} disabled={locked || maxed || dp < cost} onClick={buy}>
+          {locked ? (
+            <>
+              <IconLock width={16} height={16} /> Odklene se z regijo {r.region}
+            </>
+          ) : maxed ? (
+            'Raziskano do konca'
+          ) : (
+            <>
+              Raziskuj · <Cost kind="dp" n={cost} />
+            </>
+          )}
         </button>
+        {locked && <p class="tiny muted" style={{ marginTop: '6px' }}>Najprej odkleni regijo {regionById(r.region!).name} na zemljevidu.</p>}
+        {!locked && !maxed && dp < cost && <p class="tiny muted" style={{ marginTop: '6px' }}>Še {fmt(cost - dp)} DP. DP dobiš za zvezdice, combo in hitre najdbe.</p>}
       </div>
       <div style={{ marginTop: '12px' }}>
         <GenkoSays text="Brez nakupov s pravim denarjem. Vse se zasluži z znanjem. Kot v pravi energetiki." mood="smug" />
@@ -293,20 +320,20 @@ function Lab() {
   );
 }
 
-function LabNode({ r, level, selected, affordable, flash, onSelect }: { r: ResearchDef; level: number; selected: boolean; affordable: boolean; flash: number; onSelect: () => void }) {
+function LabNode({ r, level, selected, locked, affordable, flash, onSelect }: { r: ResearchDef; level: number; selected: boolean; locked: boolean; affordable: boolean; flash: number; onSelect: () => void }) {
   const p = NODE_POS[r.id];
   const Icon = RESEARCH_ICON[r.id] ?? IconData;
   const maxed = level >= r.costs.length;
   return (
     <button
-      class={`lab-node${selected ? ' sel' : ''}${level > 0 ? ' on' : ''}${maxed ? ' max' : ''}${affordable ? ' can' : ''}`}
+      class={`lab-node${selected ? ' sel' : ''}${level > 0 ? ' on' : ''}${maxed ? ' max' : ''}${affordable ? ' can' : ''}${locked ? ' locked' : ''}`}
       style={{ left: `${p.x}%`, top: `${p.y}%` }}
       onClick={onSelect}
       aria-pressed={selected}
       aria-label={`${r.name}, stopnja ${level} od ${r.costs.length}`}
       key={flash || undefined}
     >
-      <Icon width={24} height={24} />
+      {locked ? <IconLock width={22} height={22} /> : <Icon width={24} height={24} />}
       <span class="lab-pips">
         {r.costs.map((_, i) => (
           <i class={i < level ? 'on' : ''} />

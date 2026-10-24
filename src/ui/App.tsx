@@ -20,6 +20,8 @@ import { TitleScreen } from './screens/TitleScreen';
 import { StoryScene } from './components/StoryScene';
 import { RegionVictory } from './screens/RegionVictory';
 import { sceneById } from '../core/story';
+import { FACILITIES } from '../core/levels';
+import { facilityUpgradeCost, isFacilityLit, MAX_FACILITY_LEVEL, RESEARCH } from '../core/balance';
 import { endScene } from './story';
 
 const TABS: { id: Tab; name: string; icon: typeof IconMap }[] = [
@@ -34,7 +36,16 @@ export function App() {
   const ready = useGame((s) => s.ready);
   const offline = useGame((s) => s.offlineGain);
   const dailyDue = useGame((s) => (s.levels[DAILY_UNLOCK_LEVEL]?.stars ?? 0) > 0 && !s.daily[dateKey(new Date())]);
+  // Savings are only felt when they can be spent: flag the upgrades tab as soon as something is affordable.
+  const canBuy = useGame(
+    (s) =>
+      FACILITIES.some((f) => isFacilityLit(f, s.levels) && (s.upgrades[f.id] ?? 0) < MAX_FACILITY_LEVEL && s.kwh >= facilityUpgradeCost(f, s.upgrades[f.id] ?? 0)) ||
+      RESEARCH.some((r) => s.regionsUnlocked.includes(r.region ?? 1) && (s.research[r.id] ?? 0) < r.costs.length && s.dp >= r.costs[s.research[r.id] ?? 0]),
+  );
   const [update, setUpdate] = useState(updateReady.available);
+  // The soundtrack follows the screen: cutscenes, boss fights, levels and the menus each have their piece.
+  const track = scene ? 'story' : screen.name === 'play' ? (screen.level.boss ? 'boss' : 'play') : 'menu';
+  useEffect(() => audio.setTrack(track), [track]);
   useEffect(() => updateReady.subscribe(setUpdate), []);
 
   if (!ready) return null;
@@ -71,6 +82,7 @@ export function App() {
                 <t.icon />
                 {t.name}
                 {t.id === 'daily' && dailyDue && <span class="badge-dot" aria-label="Nov izziv" />}
+                {t.id === 'upgrades' && canBuy && <span class="badge-dot buy" aria-hidden="true" />}
               </button>
             ))}
           </nav>
