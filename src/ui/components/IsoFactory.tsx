@@ -38,7 +38,44 @@ export function IsoFactory({ art, lit, level = 0 }: { art: FacilityDef['art']; l
       ))}
     </g>
   );
+  // Round open tank seen from the iso angle (wastewater basins, water storage).
+  const tank = (cx: number, cy: number, rx: number, h: number, water: string) => (
+    <g>
+      <path d={`M${cx - rx} ${cy} v${-h} a${rx} ${rx * 0.5} 0 0 0 ${rx * 2} 0 v${h} a${rx} ${rx * 0.5} 0 0 1 ${-rx * 2} 0z`} fill={left} />
+      <ellipse cx={cx} cy={cy - h} rx={rx} ry={rx * 0.5} fill={top} />
+      <ellipse cx={cx} cy={cy - h} rx={rx - 4} ry={rx * 0.5 - 2} fill={water} opacity={lit ? 0.75 : 0.3} />
+    </g>
+  );
   const parts: Record<FacilityDef['art'], JSX.Element> = {
+    cistilna: (
+      <g>
+        {tank(90, 116, 26, 12, '#5fb4ff')}
+        {tank(150, 120, 30, 14, '#7ad6a0')}
+        {box(186, 110, 22, 20, 24)}
+        <path d="M150 106 v-14 M138 100 l24 0" stroke={top} stroke-width="3" />
+      </g>
+    ),
+    vodarna: (
+      <g>
+        <path d="M112 118 l6 -50 M136 118 l-6 -50 M115 96 h18" stroke={left} stroke-width="5" />
+        {tank(124, 70, 22, 22, '#5fb4ff')}
+        {box(160, 120, 34, 30, 20)}
+      </g>
+    ),
+    toplarna: (
+      <g>
+        {box(108, 122, 60, 44, 34)}
+        {chimney(150, 80)}
+        {chimney(166, 90)}
+        {tank(206, 118, 14, 36, '#ff8a4f')}
+      </g>
+    ),
+    bolnisnica: (
+      <g>
+        {box(118, 122, 60, 40, 44)}
+        <path d="M100 52 h10 v-10 h8 v10 h10 v8 h-10 v10 h-8 v-10 h-10z" fill={lit ? '#ff6b81' : '#4a1a2a'} />
+      </g>
+    ),
     livarna: (
       <g>
         {chimney(150, 92)}

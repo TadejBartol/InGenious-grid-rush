@@ -47,7 +47,7 @@ export function App() {
       ) : (
         <>
           <TopBar onSettings={openSettings} />
-          <main class="content">
+          <main class="content" key={base.name === 'region' ? `r${base.region}` : base.name === 'tabs' ? base.tab : base.name}>
             {base.name === 'region' && <RegionScreen region={base.region} />}
             {base.name === 'tabs' && base.tab === 'map' && <MapScreen />}
             {base.name === 'tabs' && base.tab === 'upgrades' && <UpgradesScreen />}

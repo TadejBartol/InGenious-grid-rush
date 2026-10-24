@@ -8,7 +8,7 @@ import { dailyNumber } from '../../core/daily';
 import type { LevelOutcome } from '../../state/store';
 import { nav, type Screen } from '../nav';
 import { GenkoSays } from '../components/Genko';
-import { Stars } from '../components/Common';
+import { CountUp, Stars } from '../components/Common';
 import { IconCheck, IconRetry, IconShare, IconX } from '../components/Icons';
 import { KIND_NAME } from './PlayScreen';
 
@@ -129,17 +129,17 @@ export function ResultScreen({ outcome, from }: { outcome: LevelOutcome; from: S
       <div class="reward-row">
         {reward.kwh > 0 && (
           <div class="reward">
-            <b style={{ color: 'var(--green)' }}>+{fmt(reward.kwh)}</b>
+            <b style={{ color: 'var(--green)' }}><CountUp prefix="+" value={reward.kwh} delay={450 + stars * 350} /></b>
             <span>kWh</span>
           </div>
         )}
         <div class="reward">
-          <b style={{ color: 'var(--dp)' }}>+{fmt(reward.dp)}</b>
+          <b style={{ color: 'var(--dp)' }}><CountUp prefix="+" value={reward.dp} delay={600 + stars * 350} /></b>
           <span>DP</span>
         </div>
         {reward.chips > 0 && (
           <div class="reward">
-            <b style={{ color: 'var(--chip)' }}>+{reward.chips}</b>
+            <b style={{ color: 'var(--chip)' }}><CountUp prefix="+" value={reward.chips} delay={750 + stars * 350} ms={400} /></b>
             <span>Genko čipi</span>
           </div>
         )}

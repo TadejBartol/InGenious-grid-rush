@@ -8,8 +8,8 @@ Igra deluje brez povezave, se namesti na domači zaslon in nima backenda: napred
 
 | Področje | Vsebina |
 | --- | --- |
-| Regiji | **1. Industrijska cona** (10 stopenj, boss »Postaja, ki piska ponoči«) in **2. Mlekarna in prehrana** (10 stopenj, boss »Lažnivec na TP«). Regije 3–6 so na zemljevidu napovedane. |
-| Mini igre | **Priklop** (vleci kable od merilnikov do prehoda, nastavi Modbus naslov in hitrost), **Lov na konico** (drži obračunsko moč pod rdečo črto, ne da bi ustavil proizvodnjo), **Detektiv** (najdi anomalije v tednu podatkov, combo podvoji DP). |
+| Regije | **1. Industrijska cona** (boss »Postaja, ki piska ponoči«), **2. Mlekarna in prehrana** (boss »Lažnivec na TP«), **3. Komunala** (boss »Čistilna, ki diha«) in **4. Kogeneracija** (boss »Zimska špica«), vsaka z 10 stopnjami na vijugasti poti z objekti ob njej. Regiji 5–6 sta na zemljevidu napovedani. |
+| Mini igre | **Priklop** (vleci kable od merilnikov do prehoda, nastavi Modbus naslov in hitrost), **Lov na konico** (drži obračunsko moč pod rdečo črto, ne da bi ustavil proizvodnjo), **Detektiv** (najdi anomalije v tednu podatkov, combo podvoji DP), **Radijsko omrežje** (postavi wM-Bus prehode in repetitorje, da vsi vodomeri slišijo signal), **Kogenerator** (vodi motor in hranilnik toplote po ceni elektrike in odjemu, drži omrežje toplo in izkoristek visok). |
 | Napredovanje | 1–3 zvezdice na stopnjo s prikazom »skoraj-zmage«, valute kWh / DP / Genko čipi, osvetljevanje objektov, idle števec (tudi ko je igra zaprta, do 8–16 h), nadgradnje objektov, drevo raziskav, kartice naprav, kozmetika za Genka, zlati Genko za popolno regijo. |
 | Dnevna zanka | Dnevni izziv (enak za vse, deljenje rezultata kot emoji graf), niz dni z enim zamrzovalnikom na teden. Odklene se z bossom regije 1. |
 | Občutek | Sintetiziran zvok (WebAudio, nič prenosov), ambient, ki je bolj harmoničen z več osvetljenimi objekti, BPM, ki pospešuje med Lovom na konico, delci, tresenje, upočasnitev v zadnjih sekundah, vibracije na Androidu, »Manj animacij« za dostopnost. |
@@ -29,7 +29,7 @@ npm run preview    # predogled builda (vključno s service workerjem)
 
 ### Avtomatski playtest
 
-`scripts/e2e.mjs` odigra igro v Chromiumu na telefonskem zaslonu z resničnim vnosom (vlečenje kablov, tapi), preveri zvezdice, nakup nadgradnje, shranjevanje po osvežitvi, prihranek v odsotnosti, odklep regije 2, Detektiva in dnevni izziv ter shrani posnetke zaslona v `playtest/`.
+`scripts/e2e.mjs` odigra igro v Chromiumu na telefonskem zaslonu z resničnim vnosom (vlečenje kablov, tapi), preveri zvezdice, nakup nadgradnje, shranjevanje po osvežitvi, prihranek v odsotnosti, odklep regij 2–4, Detektiva, Radijsko omrežje, Kogenerator (prek pravih drsnikov) in dnevni izziv ter shrani posnetke zaslona v `playtest/`.
 
 ```bash
 npm i -D playwright && npx playwright install chromium   # enkrat
@@ -85,5 +85,5 @@ Odstopanje od scenarija: namesto Howler.js in zvočne sprite datoteke je zvok si
 
 ## Naslednji koraki (po scenariju)
 
-- **Beta:** backend (Supabase) za lige in ekipne izzive, preverjanje rezultatov dnevnega izziva na strežniku s ponovitvijo semena, Web Push opomnik za niz, regiji 3–4 (wM-Bus Priklop, Kogenerator).
+- **Beta:** backend (Supabase) za lige in ekipne izzive, preverjanje rezultatov dnevnega izziva na strežniku s ponovitvijo semena, Web Push opomnik za niz.
 - **Lansiranje:** regiji 5–6 (Alarm!, Selitev, finale s Temnim števcem v treh fazah), prestiž, demo način z resničnimi podatki iz InGenious.

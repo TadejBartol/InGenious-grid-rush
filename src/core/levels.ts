@@ -1,17 +1,23 @@
 import { hashString } from './rng';
-import type { ConsumerDef, DetektivParams, FacilityDef, KonicaParams, LevelDef, PriklopParams, RegionDef, StarGoal } from './types';
+import type { ConsumerDef, DetektivParams, FacilityDef, KogeneratorParams, KonicaParams, LevelDef, PriklopParams, RegionDef, StarGoal, WmbusParams } from './types';
 
 const seed = (id: string, salt = '') => hashString(`grid-rush:${id}${salt}`);
 
 const priklop = (id: string, p: Omit<PriklopParams, 'seed'>, salt = ''): PriklopParams => ({ ...p, seed: seed(id, salt) });
 const konica = (id: string, p: Omit<KonicaParams, 'seed'>): KonicaParams => ({ ...p, seed: seed(id) });
 const detektiv = (id: string, p: Omit<DetektivParams, 'seed'>): DetektivParams => ({ ...p, seed: seed(id) });
+const wmbus = (id: string, p: Omit<WmbusParams, 'seed'>): WmbusParams => ({ ...p, seed: seed(id) });
+const kogen = (id: string, p: Omit<KogeneratorParams, 'seed'>): KogeneratorParams => ({ ...p, seed: seed(id) });
 
 const complete: StarGoal = { type: 'complete' };
 const clean: StarGoal = { type: 'mistakes', max: 0 };
 const peakUnder = (kw: number): StarGoal => ({ type: 'metric', key: 'peak', op: '<=', value: kw, unit: 'kW', label: `Konica ≤ ${kw} kW` });
 const noStall: StarGoal = { type: 'mistakes', max: 0, label: 'Brez zastoja proizvodnje' };
 const timeLeft = (s: number): StarGoal => ({ type: 'timeLeft', min: s });
+const noMoves: StarGoal = { type: 'mistakes', max: 0, label: 'Brez prestavljanja naprav' };
+const devicesMax = (n: number): StarGoal => ({ type: 'metric', key: 'used', op: '<=', value: n, unit: '', label: `Največ ${n} ${n === 1 ? 'naprava' : n === 2 ? 'napravi' : n < 5 ? 'naprave' : 'naprav'}` });
+const effOver = (pct: number): StarGoal => ({ type: 'metric', key: 'efficiency', op: '>=', value: pct, unit: '%', label: `Izkoristek ≥ ${pct} %` });
+const warm: StarGoal = { type: 'mistakes', max: 0, label: 'Brez mrzlih radiatorjev' };
 const foundAll: StarGoal = { type: 'metric', key: 'missed', op: '<=', value: 0, unit: '', label: 'Najdi vse anomalije' };
 
 // Consumers used across region 1. Buffers model what really limits load shedding on site.
@@ -28,13 +34,18 @@ const pec: ConsumerDef = { id: 'pec', name: 'Indukcijska peč', icon: 'pec', kw:
 const susilnik: ConsumerDef = { id: 'susilnik', name: 'Sušilnik peska', icon: 'susilnik', kw: 110, bufferLabel: 'Vlaga peska', drain: 1 / 18, fill: 1 / 12 };
 const peskalnik: ConsumerDef = { id: 'peskalnik', name: 'Peskalni stroj', icon: 'peskalnik', kw: 130, bufferLabel: 'Zaloga ulitkov', drain: 1 / 14, fill: 1 / 10, cycle: { period: 6, depth: 0.25 } };
 const klima: ConsumerDef = { id: 'klima', name: 'Prezračevanje hale', icon: 'klima', kw: 70, bufferLabel: 'Kakovost zraka', drain: 1 / 20, fill: 1 / 10 };
+// Wastewater plant: aeration blowers keep oxygen in the basins, pumps move water.
+const puhalo = (n: number, kw = 110): ConsumerDef => ({ id: `puhalo${n}`, name: `Puhalo ${n}`, icon: 'kompresor', kw, bufferLabel: 'Kisik v bazenu', drain: 1 / 13, fill: 1 / 9 });
+const mesalo: ConsumerDef = { id: 'mesalo', name: 'Mešalo', icon: 'peskalnik', kw: 45, bufferLabel: 'Mešanje blata', drain: 1 / 20, fill: 1 / 10, cycle: { period: 5, depth: 0.2 } };
+const crpalka = (n: number, kw: number, startAt?: number): ConsumerDef => ({ id: `crpalka${n}`, name: `Črpalka ${n}`, icon: 'linija', kw, critical: true, startAt });
+const obtocna: ConsumerDef = { id: 'obtocna', name: 'Obtočne črpalke', icon: 'klima', kw: 85, bufferLabel: 'Tlak v omrežju', drain: 1 / 16, fill: 1 / 10 };
 const linija = (n: number, kw: number, startAt?: number): ConsumerDef => ({ id: `linija${n}`, name: `Linija ${n}`, icon: 'linija', kw, critical: true, startAt });
 
 export const REGIONS: RegionDef[] = [
   { id: 1, name: 'Industrijska cona', theme: 'Konične moči in puščanje zraka', mechanic: 'Priklop · Lov na konico', pos: { x: 52, y: 54 }, available: true, unlockChips: 0 },
   { id: 2, name: 'Mlekarna in prehrana', theme: 'Hladna veriga in števci na TP', mechanic: 'Detektiv', pos: { x: 80, y: 24 }, available: true, unlockChips: 3 },
-  { id: 3, name: 'Komunala', theme: 'wM-Bus, pretoki, puhala', mechanic: 'wM-Bus Priklop', pos: { x: 26, y: 74 }, available: false, unlockChips: 0 },
-  { id: 4, name: 'Kogeneracija', theme: 'Izkoristek, toplota in elektrika', mechanic: 'Kogenerator', pos: { x: 22, y: 36 }, available: false, unlockChips: 0 },
+  { id: 3, name: 'Komunala', theme: 'Radijski vodomeri, puhala in puščanje', mechanic: 'Radijsko omrežje', pos: { x: 26, y: 74 }, available: true, unlockChips: 5 },
+  { id: 4, name: 'Kogeneracija', theme: 'Elektrika, toplota in cena na borzi', mechanic: 'Kogenerator', pos: { x: 22, y: 36 }, available: true, unlockChips: 8 },
   { id: 5, name: 'Zdravstvo', theme: 'Alarmi v realnem času', mechanic: 'Alarm!', pos: { x: 76, y: 62 }, available: false, unlockChips: 0 },
   { id: 6, name: 'Center Temnega števca', theme: 'Vse mehanike hkrati', mechanic: 'Finale', pos: { x: 38, y: 17 }, available: false, unlockChips: 0 },
 ];
@@ -46,6 +57,12 @@ export const FACILITIES: FacilityDef[] = [
   { id: 'hladilnica', region: 2, name: 'Hladilnica', description: 'Hladilne komore za mleko in jogurte.', levels: ['r2-1', 'r2-2', 'r2-3'], baseRate: 140, upgradeBaseCost: 900, art: 'hladilnica' },
   { id: 'pakirnica', region: 2, name: 'Pakirnica', description: 'Polnilne linije in pasterizacija.', levels: ['r2-4', 'r2-5', 'r2-6'], baseRate: 190, upgradeBaseCost: 1500, art: 'pakirnica' },
   { id: 'trafo', region: 2, name: 'Trafo postaja', description: 'Dvanajst števcev in en lažnivec.', levels: ['r2-7', 'r2-8', 'r2-9', 'r2-10'], baseRate: 260, upgradeBaseCost: 2400, art: 'trafo' },
+  { id: 'vodarna', region: 3, name: 'Vodarna', description: 'Vodohran in radijski vodomeri po soseski.', levels: ['r3-1', 'r3-2', 'r3-3'], baseRate: 340, upgradeBaseCost: 3600, art: 'vodarna' },
+  { id: 'cistilna', region: 3, name: 'Čistilna naprava', description: 'Prezračevalni bazeni in puhala, ki jedo elektriko.', levels: ['r3-4', 'r3-5', 'r3-6'], baseRate: 430, upgradeBaseCost: 5200, art: 'cistilna' },
+  { id: 'crpalisce', region: 3, name: 'Črpališče', description: 'Črpalke, ki ob nalivu delajo za tri.', levels: ['r3-7', 'r3-8', 'r3-9', 'r3-10'], baseRate: 540, upgradeBaseCost: 7400, art: 'kompresor' },
+  { id: 'toplarna', region: 4, name: 'Toplarna', description: 'Plinski motor, ki hkrati daje elektriko in toploto.', levels: ['r4-1', 'r4-2', 'r4-3'], baseRate: 680, upgradeBaseCost: 10000, art: 'toplarna' },
+  { id: 'bolnisnicni', region: 4, name: 'Bolnišnični CHP', description: 'Toplota za bolnišnico, elektrika za omrežje.', levels: ['r4-4', 'r4-5', 'r4-6'], baseRate: 850, upgradeBaseCost: 14000, art: 'bolnisnica' },
+  { id: 'daljinsko', region: 4, name: 'Daljinsko ogrevanje', description: 'Dve enoti, velik hranilnik in pol mesta na zanki.', levels: ['r4-7', 'r4-8', 'r4-9', 'r4-10'], baseRate: 1050, upgradeBaseCost: 19000, art: 'toplarna' },
 ];
 
 export const LEVELS: LevelDef[] = [
@@ -444,6 +461,330 @@ export const LEVELS: LevelDef[] = [
     stars: [complete, foundAll, clean],
     reward: { kwh: 1800, dp: 200 },
     card: { id: 'c-lazni', name: 'Števec lažnivec', rarity: 'epska', text: 'Napačno vezan tokovni transformator. Leta je kazal pol manj, kot je res teklo.' },
+  },
+  // ── Region 3: Komunala ─────────────────────────────────────────────
+  {
+    id: 'r3-1',
+    region: 3,
+    index: 1,
+    name: 'Tihi vodomeri',
+    facilityId: 'vodarna',
+    intro: 'Vodomeri v soseski pošiljajo podatke po radiu, a jih nihče ne posluša. Postavi prehod.',
+    lesson: 'wM-Bus vodomeri na baterijo vsakih nekaj minut oddajo kratek radijski paket. InGenious prehod jih ujame in pošlje v oblak. Brez kopanja, brez kablov.',
+    stages: [{ kind: 'wmbus', params: wmbus('r3-1', { cols: 5, rows: 6, meters: 3, gateways: 1, repeaters: 0, range: 2.4, obstacles: 0.15, timeSec: 60 }) }],
+    stars: [complete, timeLeft(40), noMoves],
+    reward: { kwh: 1200, dp: 140 },
+    card: { id: 'c-vodomer', name: 'wM-Bus vodomer', rarity: 'navadna', text: 'Baterija zdrži 10 let, ker radio oddaja le nekaj milisekund naenkrat.' },
+  },
+  {
+    id: 'r3-2',
+    region: 3,
+    index: 2,
+    name: 'Na robu dosega',
+    facilityId: 'vodarna',
+    intro: 'En prehod ne seže do vseh. Repetitor pa sliši le, če je dovolj blizu prehoda.',
+    lesson: 'Repetitor sprejme paket in ga pošlje naprej. Biti mora v dosegu prehoda (ali drugega povezanega repetitorja), sicer kriči v prazno.',
+    stages: [{ kind: 'wmbus', params: wmbus('r3-2', { cols: 5, rows: 7, meters: 4, gateways: 1, repeaters: 1, range: 2.3, obstacles: 0.18, timeSec: 70 }) }],
+    stars: [complete, timeLeft(35), noMoves],
+    reward: { kwh: 1300, dp: 150 },
+    card: { id: 'c-repetitor', name: 'Repetitor', rarity: 'navadna', text: 'Majhna škatlica na fasadi, ki podvoji doseg celotnega omrežja.' },
+  },
+  {
+    id: 'r3-3',
+    region: 3,
+    index: 3,
+    name: 'Pušča ponoči',
+    facilityId: 'vodarna',
+    intro: 'Zdaj ko vodomeri govorijo, poglej, kaj povedo. Nekje voda teče, ko vsi spijo.',
+    lesson: 'Nočni minimalni pretok je najboljši detektor puščanja: ob treh zjutraj skoraj nihče ne toči vode. Kar teče takrat, je pogosto okvara.',
+    stages: [{ kind: 'detektiv', params: detektiv('r3-3', { durationSec: 55, profile: 'trafo', anomalies: 4, kinds: ['nocna', 'prazniTek'], noise: 0.05 }) }],
+    stars: [complete, foundAll, clean],
+    reward: { kwh: 1400, dp: 160 },
+    card: { id: 'c-nocni', name: 'Nočni pretok', rarity: 'redka', text: 'Kapljajoča pipa je 15 m³ na leto. Počena cev pod ploščo je lahko 15 m³ na dan.' },
+  },
+  {
+    id: 'r3-4',
+    region: 3,
+    index: 4,
+    name: 'Bloki in stolpnice',
+    facilityId: 'cistilna',
+    intro: 'Beton guta radijske valove. Na strehe stavb ne moreš, okoli njih pa moraš.',
+    lesson: 'Načrtovanje radijskega omrežja: najprej prehod tja, kjer pokrije največ, potem repetitorji kot mostovi do oddaljenih skupin.',
+    stages: [{ kind: 'wmbus', params: wmbus('r3-4', { cols: 6, rows: 8, meters: 6, gateways: 1, repeaters: 2, spare: 1, range: 2.3, obstacles: 0.3, timeSec: 80 }) }],
+    stars: [complete, timeLeft(25), devicesMax(3)],
+    reward: { kwh: 1500, dp: 170 },
+    card: { id: 'c-doseg', name: 'Radijski doseg', rarity: 'navadna', text: 'Na 868 MHz je doseg v mestu nekaj sto metrov, na prostem tudi kilometer.' },
+  },
+  {
+    id: 'r3-5',
+    region: 3,
+    index: 5,
+    name: 'Puhala v špici',
+    facilityId: 'cistilna',
+    intro: 'Puhala dovajajo kisik bakterijam v bazenih. In pobirajo več kot pol elektrike čistilne.',
+    lesson: 'Bakterije prenesejo kratek premor brez kisika. Ko puhala izmenično ugašaš, znižaš konico, ne da bi voda trpela.',
+    stages: [
+      {
+        kind: 'konica',
+        params: konica('r3-5', {
+          durationSec: 70,
+          limitKw: 500,
+          tolerance: 0.05,
+          baseKw: 180,
+          baseNoise: 0.04,
+          baseSteps: [],
+          consumers: [crpalka(1, 90), puhalo(1), puhalo(2), puhalo(3, 120), mesalo],
+          inrush: 1.35,
+        }),
+      },
+    ],
+    stars: [complete, peakUnder(500), noStall],
+    reward: { kwh: 1600, dp: 180 },
+    card: { id: 'c-puhalo', name: 'Puhalo z regulacijo', rarity: 'redka', text: 'Puhalo, ki sledi senzorju kisika, porabi do 30 % manj kot puhalo na polno.' },
+  },
+  {
+    id: 'r3-6',
+    region: 3,
+    index: 6,
+    name: 'Dva prehoda',
+    facilityId: 'cistilna',
+    intro: 'Čistilna je na dveh koncih doline. En prehod ne bo dovolj.',
+    lesson: 'Več prehodov pomeni rezervo: če eden izpade, drugi še vedno ujame večino vodomerov.',
+    stages: [{ kind: 'wmbus', params: wmbus('r3-6', { cols: 7, rows: 8, meters: 7, gateways: 2, repeaters: 1, spare: 1, range: 2.2, obstacles: 0.28, timeSec: 85 }) }],
+    stars: [complete, timeLeft(25), devicesMax(3)],
+    reward: { kwh: 1700, dp: 190 },
+    card: { id: 'c-redundanca', name: 'Redundanca', rarity: 'redka', text: 'Paket, ki ga slišita dva prehoda, InGenious shrani le enkrat.' },
+  },
+  {
+    id: 'r3-7',
+    region: 3,
+    index: 7,
+    name: 'Naliv',
+    facilityId: 'crpalisce',
+    intro: 'Začelo je liti. Nevihtne črpalke se bodo vklopile same, ti pa skrbi za puhala.',
+    lesson: 'Kritičnih porabnikov ne moreš ugasniti. Prostor pod konico si narediš z vsem ostalim – in z dobrim časovnim zamikom.',
+    stages: [
+      {
+        kind: 'konica',
+        params: konica('r3-7', {
+          durationSec: 75,
+          limitKw: 640,
+          tolerance: 0.05,
+          baseKw: 190,
+          baseNoise: 0.05,
+          baseSteps: [{ t: 40, kw: 30 }],
+          consumers: [crpalka(1, 90), crpalka(2, 130, 28), puhalo(1), puhalo(2), mesalo, klima],
+          inrush: 1.45,
+        }),
+      },
+    ],
+    stars: [complete, peakUnder(640), noStall],
+    reward: { kwh: 1800, dp: 200 },
+    card: { id: 'c-nevihta', name: 'Nevihtni preliv', rarity: 'redka', text: 'Ob nalivu črpališče potegne trikrat več. Konica, ki je ne izbereš ti, ampak oblaki.' },
+  },
+  {
+    id: 'r3-8',
+    region: 3,
+    index: 8,
+    name: 'Gosta soseska',
+    facilityId: 'crpalisce',
+    intro: 'Devet števcev, en prehod, malo prostora. Vsaka naprava mora šteti.',
+    lesson: 'Toplotni števci (T) in vodomeri (V) gredo na isto radijsko omrežje. Ena infrastruktura, vsi podatki.',
+    stages: [{ kind: 'wmbus', params: wmbus('r3-8', { cols: 7, rows: 9, meters: 9, gateways: 1, repeaters: 3, spare: 1, range: 2.2, obstacles: 0.3, timeSec: 95 }) }],
+    stars: [complete, timeLeft(25), devicesMax(4)],
+    reward: { kwh: 1900, dp: 210 },
+    card: { id: 'c-kalorimeter', name: 'Kalorimeter', rarity: 'navadna', text: 'Meri pretok in razliko temperatur. Iz tega izračuna, koliko toplote je šlo v stanovanje.' },
+  },
+  {
+    id: 'r3-9',
+    region: 3,
+    index: 9,
+    name: 'Kdo zaliva ob treh',
+    facilityId: 'crpalisce',
+    intro: 'Teden podatkov s črpališča. Nekaj ne gre skupaj z vikendi in nočmi.',
+    lesson: 'Primerjava z običajnim tednom je hitrejša od vsakega alarma: odstopanje vidiš, še preden postane račun.',
+    stages: [{ kind: 'detektiv', params: detektiv('r3-9', { durationSec: 60, profile: 'mlekarna', anomalies: 5, kinds: ['nocna', 'prazniTek', 'konica', 'zrak'], noise: 0.06 }) }],
+    stars: [complete, foundAll, clean],
+    reward: { kwh: 2000, dp: 220 },
+    card: { id: 'c-primerjava', name: 'Primerjava obdobij', rarity: 'redka', text: 'Ta teden proti lanskemu, ta ponedeljek proti prejšnjemu. Najpreprostejša analiza z največ zadetki.' },
+  },
+  {
+    id: 'r3-10',
+    region: 3,
+    index: 10,
+    name: 'Čistilna, ki diha',
+    facilityId: 'crpalisce',
+    boss: true,
+    intro: 'Temni števec je utišal vse radijske števce in prižgal vsa puhala hkrati. Najprej omrežje, potem konica.',
+    lesson: 'Boss: brez podatkov ni optimizacije. Ko vodomeri spet govorijo, lahko puhala vodiš po dejanski obremenitvi.',
+    stages: [
+      { kind: 'wmbus', params: wmbus('r3-10', { cols: 7, rows: 9, meters: 8, gateways: 1, repeaters: 3, spare: 1, range: 2.2, obstacles: 0.3, timeSec: 90 }) },
+      {
+        kind: 'konica',
+        params: konica('r3-10', {
+          durationSec: 70,
+          limitKw: 650,
+          tolerance: 0.05,
+          baseKw: 200,
+          baseNoise: 0.05,
+          baseSteps: [],
+          consumers: [crpalka(1, 90), crpalka(2, 110, 30), puhalo(1), puhalo(2), puhalo(3, 120), mesalo],
+          inrush: 1.45,
+        }),
+      },
+    ],
+    stars: [complete, peakUnder(650), clean],
+    reward: { kwh: 2600, dp: 280 },
+    card: { id: 'c-cistilna', name: 'Pametna čistilna', rarity: 'epska', text: 'Čistilne naprave so pogosto največji porabnik elektrike v občini. In največja priložnost.' },
+  },
+  // ── Region 4: Kogeneracija ─────────────────────────────────────────
+  {
+    id: 'r4-1',
+    region: 4,
+    index: 1,
+    name: 'Prvi zagon',
+    facilityId: 'toplarna',
+    intro: 'Plinski motor daje elektriko in toploto hkrati. Elektriko prodaš, toploto potrebuje mesto.',
+    lesson: 'Kogeneracija (CHP) izkoristi do 90 % energije plina, a le, če toploto res porabiš. Motor naj teče, ko je elektrika draga.',
+    stages: [{ kind: 'kogenerator', params: kogen('r4-1', { durationSec: 55, chpKw: 1000, storageKwh: 5000, demandScale: 0.65, priceSwing: 0.6, spikes: 0, targetEur: 330 }) }],
+    stars: [complete, effOver(80), warm],
+    reward: { kwh: 2000, dp: 230 },
+    card: { id: 'c-chp', name: 'Kogeneracijska enota', rarity: 'navadna', text: 'Motor, generator in toplotni izmenjevalnik v enem zabojniku.' },
+  },
+  {
+    id: 'r4-2',
+    region: 4,
+    index: 2,
+    name: 'Toplota za pozneje',
+    facilityId: 'toplarna',
+    intro: 'Elektrika je draga zvečer, toplota pa se rabi zjutraj. Hranilnik je most med njima.',
+    lesson: 'Hranilnik toplote loči proizvodnjo od porabe. Motor teče, ko se splača, toplota pa počaka v rezervoarju.',
+    stages: [{ kind: 'kogenerator', params: kogen('r4-2', { durationSec: 60, chpKw: 1000, storageKwh: 4500, demandScale: 0.6, priceSwing: 0.8, spikes: 0, targetEur: 380 }) }],
+    stars: [complete, effOver(82), warm],
+    reward: { kwh: 2150, dp: 240 },
+    card: { id: 'c-hranilnik', name: 'Hranilnik toplote', rarity: 'redka', text: 'Velik izoliran rezervoar vroče vode. Najcenejša baterija, kar jih poznamo.' },
+  },
+  {
+    id: 'r4-3',
+    region: 4,
+    index: 3,
+    name: 'Cenovni skok',
+    facilityId: 'toplarna',
+    intro: 'Borza se je zbudila nervozna. Ko cena poskoči, bodi pripravljen.',
+    lesson: 'Cene elektrike na borzi se menjajo vsakih 15 minut. Kdor ima podatke in prostor v hranilniku, ujame najboljše ure.',
+    stages: [{ kind: 'kogenerator', params: kogen('r4-3', { durationSec: 60, chpKw: 1000, storageKwh: 4500, demandScale: 0.6, priceSwing: 0.8, spikes: 2, targetEur: 730 }) }],
+    stars: [complete, effOver(82), warm],
+    reward: { kwh: 2300, dp: 250 },
+    card: { id: 'c-borza', name: 'Borzna cena', rarity: 'redka', text: 'Zvečer je elektrika lahko desetkrat dražja kot opoldne, ko sije sonce.' },
+  },
+  {
+    id: 'r4-4',
+    region: 4,
+    index: 4,
+    name: 'Kje gori plin',
+    facilityId: 'bolnisnicni',
+    intro: 'Bolnišnica dobi toploto iz motorja. Teden podatkov pa kaže, da nekaj gori tudi takrat, ko ne bi smelo.',
+    lesson: 'Merjenje plina in toplote na isti platformi kot elektriko pokaže celo sliko: koliko gre noter, koliko pride ven.',
+    stages: [{ kind: 'detektiv', params: detektiv('r4-4', { durationSec: 60, profile: 'livarna', anomalies: 5, kinds: ['nocna', 'konica', 'prazniTek', 'zrak'], noise: 0.06 }) }],
+    stars: [complete, foundAll, clean],
+    reward: { kwh: 2450, dp: 260 },
+    card: { id: 'c-plin', name: 'Plinomer z impulzi', rarity: 'navadna', text: 'Vsak impulz je 0,1 m³ plina. Seštej jih in veš, koliko je motor res pojedel.' },
+  },
+  {
+    id: 'r4-5',
+    region: 4,
+    index: 5,
+    name: 'Mrzlo jutro',
+    facilityId: 'bolnisnicni',
+    intro: 'Bolnišnica ne sme nikoli ostati brez toplote. Jutranja konica odjema je huda.',
+    lesson: 'Pri CHP je toplota pogosto glavni produkt, elektrika pa bonus. Najprej zagotovi odjem, potem lovi ceno.',
+    stages: [{ kind: 'kogenerator', params: kogen('r4-5', { durationSec: 60, chpKw: 1000, storageKwh: 4000, demandScale: 0.75, priceSwing: 0.8, spikes: 1, targetEur: 510 }) }],
+    stars: [complete, effOver(84), warm],
+    reward: { kwh: 2600, dp: 270 },
+    card: { id: 'c-odjem', name: 'Toplotni odjem', rarity: 'navadna', text: 'Bolnišnica potrebuje toploto vse leto: ogrevanje pozimi, topla voda in sterilizacija vedno.' },
+  },
+  {
+    id: 'r4-6',
+    region: 4,
+    index: 6,
+    name: 'Obtočne črpalke',
+    facilityId: 'bolnisnicni',
+    intro: 'Daljinsko omrežje poganjajo velike črpalke. Tudi one znajo narediti konico.',
+    lesson: 'Tudi v toplarni je elektrika strošek: obtočne črpalke s frekvenčnikom porabijo do polovico manj.',
+    stages: [
+      {
+        kind: 'konica',
+        params: konica('r4-6', {
+          durationSec: 70,
+          limitKw: 600,
+          tolerance: 0.05,
+          baseKw: 220,
+          baseNoise: 0.04,
+          baseSteps: [{ t: 35, kw: 40 }],
+          consumers: [crpalka(1, 100), obtocna, puhalo(1, 95), kompresor(1), klima],
+          inrush: 1.45,
+        }),
+      },
+    ],
+    stars: [complete, peakUnder(600), noStall],
+    reward: { kwh: 2750, dp: 280 },
+    card: { id: 'c-frekvencnik', name: 'Frekvenčni pretvornik', rarity: 'redka', text: 'Črpalka na 80 % hitrosti porabi le približno pol energije. Fizika je včasih prijazna.' },
+  },
+  {
+    id: 'r4-7',
+    region: 4,
+    index: 7,
+    name: 'Nervozna borza',
+    facilityId: 'daljinsko',
+    intro: 'Dva cenovna skoka, večji hranilnik in večji odjem. Zdaj se igraš kot pravi dispečer.',
+    lesson: 'Dispečer CHP gleda tri krivulje hkrati: ceno, odjem in hranilnik. InGenious jih prikaže na enem zaslonu.',
+    stages: [{ kind: 'kogenerator', params: kogen('r4-7', { durationSec: 65, chpKw: 1500, storageKwh: 7000, demandScale: 0.65, priceSwing: 1, spikes: 2, targetEur: 1070 }) }],
+    stars: [complete, effOver(84), warm],
+    reward: { kwh: 2900, dp: 290 },
+    card: { id: 'c-dispecer', name: 'Dispečerski pult', rarity: 'redka', text: 'Kjer se srečata trg elektrike in toplotno omrežje.' },
+  },
+  {
+    id: 'r4-8',
+    region: 4,
+    index: 8,
+    name: 'Kalorimetri na zanki',
+    facilityId: 'daljinsko',
+    intro: 'Koliko toplote res dobijo stavbe? Poveži toplotne števce po radiu.',
+    lesson: 'Brez meritev pri odjemalcih ne veš, kje se toplota izgublja v ceveh. Razlika med proizvedeno in prodano je izguba omrežja.',
+    stages: [{ kind: 'wmbus', params: wmbus('r4-8', { cols: 7, rows: 9, meters: 9, gateways: 2, repeaters: 2, spare: 1, range: 2.1, obstacles: 0.32, timeSec: 90 }) }],
+    stars: [complete, timeLeft(20), devicesMax(4)],
+    reward: { kwh: 3050, dp: 300 },
+    card: { id: 'c-izgube', name: 'Izgube omrežja', rarity: 'epska', text: 'V starem daljinskem omrežju se lahko izgubi petina toplote, še preden pride do radiatorja.' },
+  },
+  {
+    id: 'r4-9',
+    region: 4,
+    index: 9,
+    name: 'Majhen hranilnik',
+    facilityId: 'daljinsko',
+    intro: 'Hranilnik je v remontu, na voljo je le majhen. Vsaka odločitev šteje dvakrat.',
+    lesson: 'Brez hranilnika mora motor slediti odjemu. Ravno tu se vidi, koliko je vredna prožnost.',
+    stages: [{ kind: 'kogenerator', params: kogen('r4-9', { durationSec: 65, chpKw: 1500, storageKwh: 3500, demandScale: 0.7, priceSwing: 1, spikes: 1, targetEur: 770 }) }],
+    stars: [complete, effOver(85), warm],
+    reward: { kwh: 3200, dp: 310 },
+    card: { id: 'c-proznost', name: 'Prožnost', rarity: 'redka', text: 'Sposobnost, da porabo ali proizvodnjo premakneš v čas, ko se najbolj splača.' },
+  },
+  {
+    id: 'r4-10',
+    region: 4,
+    index: 10,
+    name: 'Zimska špica',
+    facilityId: 'daljinsko',
+    boss: true,
+    intro: 'Najmrzlejši dan v letu, dve enoti in Temni števec, ki je zmešal vse nastavitve. Najprej poveži, potem vozi.',
+    lesson: 'Boss: brez zanesljivega zajema podatkov ni dispečiranja. Ko vse teče, ena platforma vodi elektriko, toploto in plin.',
+    stages: [
+      { kind: 'priklop', params: priklop('r4-10', { cols: 6, rows: 8, meters: 5, timeSec: 85, obstacles: 0.3, conflicts: 2, baudMismatch: 1, dropouts: [45] }) },
+      { kind: 'kogenerator', params: kogen('r4-10', { durationSec: 70, chpKw: 2000, units: 2, storageKwh: 9000, demandScale: 0.8, priceSwing: 1, spikes: 2, targetEur: 1640 }) },
+    ],
+    stars: [complete, effOver(85), clean],
+    reward: { kwh: 4000, dp: 400 },
+    card: { id: 'c-zima', name: 'Zimska konica', rarity: 'epska', text: 'Ko je zunaj –15 °C, je vsak kilovat toplote vreden zlata. In vsak izgubljen dvojno.' },
   },
 ];
 

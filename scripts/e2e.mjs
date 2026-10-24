@@ -27,6 +27,8 @@ const clearHooks = () =>
     delete window.__gr_priklop;
     delete window.__gr_konica;
     delete window.__gr_detektiv;
+    delete window.__gr_wmbus;
+    delete window.__gr_kogen;
   });
 const startLevel = async () => {
   await clearHooks();
@@ -124,6 +126,53 @@ async function playDetektiv() {
     if (st.finished) break;
     if (st.tap) await page.mouse.click(st.tap.x, st.tap.y);
     await wait(150);
+  }
+}
+
+async function playWmbus() {
+  await page.waitForFunction(() => window.__gr_wmbus?.game);
+  await wait(2300);
+  const devices = await page.evaluate(() => {
+    const { game, center, canvas } = window.__gr_wmbus;
+    const r = canvas.getBoundingClientRect();
+    return game.puzzle.solution.map((d) => ({ kind: d.kind, ...center(d), left: r.left, top: r.top }));
+  });
+  for (const d of devices) {
+    await page.getByRole('radio', { name: d.kind === 'gateway' ? /^Prehod/ : /^Repetitor/ }).click();
+    await page.mouse.click(d.left + d.x, d.top + d.y);
+    await wait(200);
+  }
+}
+
+async function playKogen(screenshotAt) {
+  await page.waitForFunction(() => window.__gr_kogen);
+  await wait(2200);
+  const load = page.getByRole('slider', { name: 'Moč kogeneratorja' });
+  const storage = page.getByRole('slider', { name: /Hranilnik toplote/ });
+  let shotDone = false;
+  let lastLoad = -1;
+  let lastSt = -999;
+  for (;;) {
+    // Same policy as the balance bot, but through the real sliders.
+    const st = await page.evaluate(() => {
+      const s = window.__gr_kogen;
+      const sorted = [...s.day.price].sort((a, b) => a - b);
+      const threshold = Math.max(112.5 - 55 * 1.2 * 0.7, sorted[Math.floor(sorted.length * 0.45)]);
+      const heatFull = s.p.chpKw * 1.2;
+      const ahead = s.sample(s.day.demand, s.hour + 1);
+      let load = s.price >= threshold ? 1 : 0;
+      if (!load && s.soc < 0.12) load = Math.min(1, Math.max(0.4, (ahead * 1.05) / heatFull));
+      const want = load * heatFull - s.demand + (s.temp - 80) * heatFull * 0.08;
+      return { finished: s.finished, hour: s.hour, load: Math.round(load * 20) * 5, storage: Math.max(-100, Math.min(100, Math.round((want / s.storageMaxKw) * 20) * 5)) };
+    });
+    if (st.finished) break;
+    if (!shotDone && st.hour > screenshotAt) {
+      await shot('21-kogenerator');
+      shotDone = true;
+    }
+    if (st.load !== lastLoad) await load.fill(String((lastLoad = st.load)));
+    if (st.storage !== lastSt) await storage.fill(String((lastSt = st.storage)));
+    await wait(100);
   }
 }
 
@@ -261,6 +310,46 @@ else await playDetektiv();
 stars = await resultStars();
 step(`daily result: ${stars}`);
 await shot('18-daily-result');
+
+// 9. New regions: radio network and CHP
+await page.locator('.result').getByRole('button', { name: 'Nazaj', exact: true }).click();
+await page.evaluate(() => {
+  const st = window.__gr_store.getState();
+  const levels = { ...st.levels };
+  for (const l of window.__gr_levels) if (l.region === 2) levels[l.id] = levels[l.id] ?? { stars: 2, best: 0, plays: 1 };
+  window.__gr_store.setState({ levels, chips: st.chips + 20 });
+});
+await page.getByRole('button', { name: 'Zemljevid', exact: true }).click();
+await page.getByRole('button', { name: /Komunala/ }).click();
+await page.getByRole('button', { name: /Odkleni/ }).click();
+await wait(500);
+await shot('19-region3');
+await page.getByRole('button', { name: /Stopnja 1: Tihi vodomeri/ }).click();
+await startLevel();
+await playWmbus();
+stars = await resultStars();
+step(`3-1 result: ${stars}`);
+await shot('20-result-wmbus');
+if (!stars?.startsWith('3')) fail('3-1 should be 3 stars with perfect play');
+
+await page.evaluate(() => {
+  const st = window.__gr_store.getState();
+  const levels = { ...st.levels };
+  for (const l of window.__gr_levels) if (l.region === 3) levels[l.id] = levels[l.id] ?? { stars: 2, best: 0, plays: 1 };
+  window.__gr_store.setState({ levels });
+});
+await page.getByRole('button', { name: 'Na zemljevid regije' }).click();
+await page.getByRole('button', { name: 'Zemljevid', exact: true }).click();
+await page.getByRole('button', { name: /Kogeneracija/ }).click();
+await page.getByRole('button', { name: /Odkleni/ }).click();
+await wait(400);
+await page.getByRole('button', { name: /Stopnja 1: Prvi zagon/ }).click();
+await startLevel();
+await playKogen(12);
+stars = await resultStars();
+step(`4-1 result: ${stars}`);
+await shot('22-result-kogen');
+if (stars?.startsWith('0')) fail('4-1 should be beatable through the sliders');
 
 if (errors.length) fail(`console errors:\n  ${errors.join('\n  ')}`);
 await browser.close();

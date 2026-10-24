@@ -4,6 +4,8 @@ import { audio } from '../../audio/sfx';
 import { PriklopView } from '../../games/priklop/PriklopView';
 import { KonicaView } from '../../games/konica/KonicaView';
 import { DetektivView } from '../../games/detektiv/DetektivView';
+import { WmbusView } from '../../games/wmbus/WmbusView';
+import { KogeneratorView } from '../../games/kogenerator/KogeneratorView';
 import { logEvent } from '../../state/persist';
 import { store, useGame } from '../../state/store';
 import { nav, type Screen } from '../nav';
@@ -11,7 +13,7 @@ import { GenkoSays } from '../components/Genko';
 import { Sheet } from '../components/Common';
 import { IconPlay, IconRetry, IconX } from '../components/Icons';
 
-export const KIND_NAME: Record<Stage['kind'], string> = { priklop: 'Priklop', konica: 'Lov na konico', detektiv: 'Detektiv' };
+export const KIND_NAME: Record<Stage['kind'], string> = { priklop: 'Priklop', konica: 'Lov na konico', detektiv: 'Detektiv', wmbus: 'Radijsko omrežje', kogenerator: 'Kogenerator' };
 
 /** First-time tutorial bubbles, keyed by level. */
 const TIPS: Record<string, string> = {
@@ -22,6 +24,10 @@ const TIPS: Record<string, string> = {
   'r1-6': 'Ko porabnika vklopiš, za trenutek potegne več. Ne vklapljaj vsega naenkrat.',
   'r1-7': 'Pozor, povezava je nestabilna. Ko kabel pade, ga znova povleci.',
   'r2-1': 'Tapni na graf tam, kjer debela črta odstopa od svetle. Svetla je tipičen teden.',
+  'r3-1': 'Drži prst na polju in poglej krog dosega. Spusti, ko krog pokrije vse vodomere.',
+  'r3-2': 'Najprej prehod, nato repetitor. Repetitor mora biti v krogu prehoda, sicer ostane oranžen.',
+  'r4-1': 'Motor zaženi, ko je rumena črta (cena) visoko. Toplota mora pokriti oranžne stolpce, sicer se mesto ohladi.',
+  'r4-2': 'Ko motor dela več toplote, kot jo mesto rabi, potisni hranilnik na »polni«. Ko motor stoji, ga prazni.',
 };
 
 export function PlayScreen({ level, from }: { level: LevelDef; from: Screen }) {
@@ -110,6 +116,8 @@ export function PlayScreen({ level, from }: { level: LevelDef; from: Screen }) {
       {stage.kind === 'priklop' && <PriklopView key={key} {...common} params={stage.params} />}
       {stage.kind === 'konica' && <KonicaView key={key} {...common} params={stage.params} />}
       {stage.kind === 'detektiv' && <DetektivView key={key} {...common} params={stage.params} />}
+      {stage.kind === 'wmbus' && <WmbusView key={key} {...common} params={stage.params} />}
+      {stage.kind === 'kogenerator' && <KogeneratorView key={key} {...common} params={stage.params} />}
       {phase === 'countdown' && (
         <div class="countdown" aria-live="assertive">
           <span key={count}>{count}</span>

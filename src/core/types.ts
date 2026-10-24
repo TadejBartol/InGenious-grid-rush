@@ -1,4 +1,4 @@
-export type GameKind = 'priklop' | 'konica' | 'detektiv';
+export type GameKind = 'priklop' | 'konica' | 'detektiv' | 'wmbus' | 'kogenerator';
 
 export interface PriklopParams {
   cols: number;
@@ -59,10 +59,50 @@ export interface DetektivParams {
   seed: number;
 }
 
+export interface WmbusParams {
+  cols: number;
+  rows: number;
+  /** Number of water/heat meters to cover. */
+  meters: number;
+  /** Receivers (gateways) and repeaters the player may place. */
+  gateways: number;
+  repeaters: number;
+  /** Extra repeaters beyond the known solution; the third star asks you not to need them. */
+  spare?: number;
+  /** Radio range in cells (Euclidean). */
+  range: number;
+  /** Share of cells that are buildings blocking placement. */
+  obstacles: number;
+  timeSec: number;
+  seed: number;
+}
+
+export interface KogeneratorParams {
+  /** Real seconds for one simulated day. */
+  durationSec: number;
+  /** CHP electric power at 100% load (kW). Heat output follows at a fixed ratio. */
+  chpKw: number;
+  /** Units shown on screen; power is split evenly, for flavour and the boss. */
+  units?: number;
+  /** Heat storage capacity (kWh of heat). */
+  storageKwh: number;
+  /** Heat demand relative to the CHP heat output at full load. */
+  demandScale: number;
+  /** 0..1, how far the price swings from its daily mean. */
+  priceSwing: number;
+  /** Random price spikes during the day. */
+  spikes: number;
+  /** Profit needed to pass (EUR). */
+  targetEur: number;
+  seed: number;
+}
+
 export type Stage =
   | { kind: 'priklop'; params: PriklopParams }
   | { kind: 'konica'; params: KonicaParams }
-  | { kind: 'detektiv'; params: DetektivParams };
+  | { kind: 'detektiv'; params: DetektivParams }
+  | { kind: 'wmbus'; params: WmbusParams }
+  | { kind: 'kogenerator'; params: KogeneratorParams };
 
 export type StarGoal =
   | { type: 'complete' }
@@ -118,7 +158,7 @@ export interface FacilityDef {
   /** kWh per hour saved once the facility is lit, before upgrades. */
   baseRate: number;
   upgradeBaseCost: number;
-  art: 'livarna' | 'peskanje' | 'kompresor' | 'hladilnica' | 'trafo' | 'pakirnica';
+  art: 'livarna' | 'peskanje' | 'kompresor' | 'hladilnica' | 'trafo' | 'pakirnica' | 'cistilna' | 'vodarna' | 'toplarna' | 'bolnisnica';
 }
 
 export interface RegionDef {

@@ -1,5 +1,5 @@
 import type { ComponentChildren } from 'preact';
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { fmt, fmtExact } from '../../core/format';
 import { idleRate } from '../../core/balance';
 import { liveStreak, dateKey } from '../../core/daily';
@@ -13,6 +13,34 @@ export function Stars({ n, max = 3, big = false, label }: { n: number; max?: num
       {Array.from({ length: max }, (_, i) => (
         <IconStar class={i < n ? 'star-on' : 'star-off'} style={big ? { animationDelay: `${0.25 + i * 0.35}s` } : undefined} />
       ))}
+    </span>
+  );
+}
+
+/** Number that rolls up from zero, for rewards. */
+export function CountUp({ value, delay = 0, ms = 900, prefix = '' }: { value: number; delay?: number; ms?: number; prefix?: string }) {
+  const reduced = document.documentElement.classList.contains('reduced-motion') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const [shown, setShown] = useState(reduced ? value : 0);
+  useEffect(() => {
+    if (reduced) return setShown(value);
+    let raf = 0;
+    let t0 = 0;
+    const frame = (t: number) => {
+      if (!t0) t0 = t;
+      const k = Math.min(1, (t - t0) / ms);
+      setShown(Math.round(value * (1 - (1 - k) ** 3)));
+      if (k < 1) raf = requestAnimationFrame(frame);
+    };
+    const timer = setTimeout(() => (raf = requestAnimationFrame(frame)), delay);
+    return () => {
+      clearTimeout(timer);
+      cancelAnimationFrame(raf);
+    };
+  }, [value]);
+  return (
+    <span class={shown === value && value > 0 ? 'count-done' : undefined}>
+      {prefix}
+      {fmt(shown)}
     </span>
   );
 }
