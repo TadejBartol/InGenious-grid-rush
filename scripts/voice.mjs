@@ -18,13 +18,13 @@ mkdirSync(DIR, { recursive: true });
 
 /** Voice casting. InGenious and the Dark Meter also get a character filter in the game. */
 const CAST = {
-  genko: { voice: 'sl-SI-PetraNeural', pitch: '+14%', rate: '+6%' },
-  dark: { voice: 'sl-SI-RokNeural', pitch: '-22%', rate: '-12%' },
-  narrator: { voice: 'sl-SI-RokNeural', pitch: '-4%', rate: '-6%' },
+  genko: { voice: 'sl-SI-PetraNeural', pitch: '+14%', rate: '+12%' },
+  dark: { voice: 'sl-SI-RokNeural', pitch: '-22%', rate: '-4%' },
+  narrator: { voice: 'sl-SI-RokNeural', pitch: '-4%', rate: '+6%' },
 };
 
 /** Bump when the casting or SSML changes, so every line is synthesised again. */
-const VERSION = 2;
+const VERSION = 3;
 const scan = process.argv.includes('--scan');
 const key = process.env.AZURE_SPEECH_KEY;
 const region = process.env.AZURE_SPEECH_REGION ?? 'westeurope';

@@ -61,7 +61,7 @@ export function StoryScene({ scene, onDone }: { scene: Scene; onDone: () => void
       setTalking(true);
       spokenUntil.current = Date.now() + ms;
       // Type along with the voice so the last word lands as it is spoken.
-      if (!reduced) setStep(Math.min(70, Math.max(16, ms / Math.max(1, line.text.length / 2))));
+      if (!reduced) setStep(Math.min(120, Math.max(16, ms / Math.max(1, line.text.length / 2))));
     });
     return () => {
       live = false;
