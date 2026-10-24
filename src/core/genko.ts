@@ -1,7 +1,7 @@
 /** Genko's voice: dry, data-obsessed, never mean to the player. */
 export const GENKO = {
   welcome: [
-    'Živjo, novi inženir. Jaz sem Genko. Grafe imam rad bolj kot ljudi, ampak zate bom naredil izjemo.',
+    'Živjo, novi inženir. Jaz sem InGenious, tvoj robotek za podatke. Grafe imam rad bolj kot ljudi, ampak zate bom naredil izjemo.',
     'Tam zunaj živi Temni števec. Hrani se z energijo, ki jo tovarne zapravijo – ponoči, v konicah, v puščajočih ceveh.',
     'Edino, česar ne prenese, je svetloba podatkov. Priklopi merilnike, ulovi potratnost in ga sestradaj.',
   ],

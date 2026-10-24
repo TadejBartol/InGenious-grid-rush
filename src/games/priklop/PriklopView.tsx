@@ -71,11 +71,20 @@ export function PriklopView(props: GameProps<PriklopParams>) {
           showToast(e.reason === 'address' ? `Iskra! M${e.meter + 1}: naslov ${m!.address} je že zaseden` : `Iskra! M${e.meter + 1}: napačna hitrost`, 'bad');
           setVersion((v) => v + 1);
           break;
+        case 'cut':
+          audio.play('off');
+          buzz(10);
+          setVersion((v) => v + 1);
+          break;
+        case 'unfilled':
+          audio.play('blocked');
+          showToast(`Vsi priklopljeni, a ${e.empty} ${plural(e.empty, 'polje je', 'polji sta', 'polja so', 'polj je')} še ${e.empty === 1 ? 'prazno' : e.empty === 2 ? 'prazni' : 'prazna'}. Kabli morajo zapolniti vse!`, 'bad');
+          break;
         case 'dropout':
           audio.play('alarm');
           buzz([60, 40, 60]);
           fx.current?.spark(e.cell, COLORS.orange);
-          showToast(`Izpad komunikacije! Ponovno priklopi M${e.meter + 1}`, 'bad');
+          showToast(`Izpad! Kabel M${e.meter + 1} je pretrgan, potegni ga do konca`, 'bad');
           setVersion((v) => v + 1);
           break;
         case 'won':
@@ -114,14 +123,15 @@ export function PriklopView(props: GameProps<PriklopParams>) {
     const root = new Container();
     app.stage.addChild(root);
     const board = new Graphics();
-    const labels = new Container();
+    const tint = new Graphics();
     const cables = new Graphics();
     const dots = new Graphics();
     const pieces = new Graphics();
+    const labels = new Container();
     const particles = new Particles();
     particles.reduced = props.reducedMotion;
     const floaters = new Floaters();
-    root.addChild(board, cables, dots, pieces, labels, particles.layer, floaters.layer);
+    root.addChild(board, tint, cables, dots, pieces, labels, particles.layer, floaters.layer);
 
     const { cols, rows } = game.puzzle;
     let cell = 40;
@@ -150,60 +160,39 @@ export function PriklopView(props: GameProps<PriklopParams>) {
     const layout = () => {
       const w = app.screen.width;
       const h = app.screen.height;
-      const top = 54;
-      cell = Math.floor(Math.min((w - 24) / cols, (h - top - 16) / rows));
+      cell = Math.floor(Math.min((w - 28) / cols, (h - 24) / rows));
       ox = Math.floor((w - cell * cols) / 2);
-      // Board hugs the top; the free space below is where Genko's hints live.
-      oy = top;
+      oy = Math.max(12, Math.floor((h - cell * rows) / 2));
       drawBoard();
     };
 
     const drawBoard = () => {
       board.clear();
       for (const t of labels.removeChildren()) t.destroy();
-      // Plant floor
-      board.roundRect(ox - 6, oy + cell - 6, cols * cell + 12, (rows - 1) * cell + 12, 14).fill({ color: 0x0a1028 }).stroke({ color: COLORS.line, width: 1 });
-      for (let y = 1; y < rows; y++)
-        for (let x = 0; x < cols; x++) board.roundRect(ox + x * cell + 3, oy + y * cell + 3, cell - 6, cell - 6, 6).fill({ color: 0x0e1636 });
-      // Gateway housing across the top row
-      board.roundRect(ox - 6, oy - 4, cols * cell + 12, cell + 4, 12).fill({ color: 0x1a2756 }).stroke({ color: COLORS.brand, width: 1.5, alpha: 0.6 });
-      const title = label('InGenious prehod', { fontSize: 13, fontWeight: '700', fill: COLORS.brand, letterSpacing: 1 });
-      title.position.set(ox, oy - 28);
-      labels.addChild(title);
-      const led = new Graphics().circle(ox + cols * cell - 8, oy - 20, 4).fill({ color: COLORS.green });
-      labels.addChild(led);
-      for (const k of game.puzzle.obstacles) {
-        const x = k % cols;
-        const y = Math.floor(k / cols);
-        if (y === 0) continue;
-        const px = ox + x * cell;
-        const py = oy + y * cell;
-        board.roundRect(px + 4, py + 4, cell - 8, cell - 8, 6).fill({ color: 0x232c52 }).stroke({ color: 0x343f74, width: 1 });
-        // hazard stripes: a machine you cannot cable through
-        for (let i = 1; i < 4; i++) board.moveTo(px + 6 + (i * (cell - 12)) / 4, py + cell - 8).lineTo(px + 6 + ((i - 1) * (cell - 12)) / 4, py + 8).stroke({ color: 0x3b4680, width: 2 });
+      const W = cols * cell;
+      const H = rows * cell;
+      // Cable tray: a dark panel with rivets, like the inside of an electrical cabinet.
+      board.roundRect(ox - 10, oy - 10, W + 20, H + 20, 18).fill({ color: 0x050914 }).stroke({ color: 0x2a3a74, width: 2 });
+      board.roundRect(ox - 4, oy - 4, W + 8, H + 8, 14).fill({ color: 0x0a1028 });
+      for (const [rx, ry] of [[ox - 3, oy - 3], [ox + W + 3, oy - 3], [ox - 3, oy + H + 3], [ox + W + 3, oy + H + 3]]) board.circle(rx, ry, 3).fill({ color: 0x3a4a86 });
+      for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) board.roundRect(ox + x * cell + 2, oy + y * cell + 2, cell - 4, cell - 4, cell * 0.18).fill({ color: 0x101a40 });
+      for (const m of game.puzzle.meters) {
+        const c = center(m);
+        const t = label(`M${m.id + 1}`, { fontFamily: MONO, fontSize: Math.max(10, cell * 0.24), fontWeight: '800', fill: 0xffffff });
+        t.anchor.set(0.5);
+        t.position.set(c.x, c.y - cell * 0.05);
+        const id = label(`ID ${m.address}`, { fontFamily: MONO, fontSize: Math.max(7, cell * 0.13), fill: 0xc9d6ff });
+        id.anchor.set(0.5, 0);
+        id.position.set(c.x, c.y + cell * 0.1);
+        (id as Text & { meterId?: number }).meterId = m.id;
+        labels.addChild(t, id);
       }
       for (const port of game.puzzle.ports) {
         const c = center(port);
-        const color = METER_COLORS[port.id % METER_COLORS.length];
-        board.circle(c.x, c.y - 4, cell * 0.26).fill({ color: 0x070b1a }).stroke({ color, width: 3 });
-        const n = label(String(port.id + 1), { fontFamily: MONO, fontSize: Math.max(11, cell * 0.24), fontWeight: '800', fill: color });
-        n.anchor.set(0.5);
-        n.position.set(c.x, c.y - 4);
-        const b = label(`${port.baud}`, { fontFamily: MONO, fontSize: Math.max(8, cell * 0.16), fill: COLORS.muted });
-        b.anchor.set(0.5, 0);
-        b.position.set(c.x, c.y + cell * 0.22);
-        labels.addChild(n, b);
-      }
-      for (const m of game.puzzle.meters) {
-        const c = center(m);
-        const t = label(`M${m.id + 1}`, { fontFamily: MONO, fontSize: Math.max(11, cell * 0.26), fontWeight: '800', fill: 0xffffff });
-        t.anchor.set(0.5);
-        t.position.set(c.x, c.y - cell * 0.06);
-        const id = label(`ID ${m.address}`, { fontFamily: MONO, fontSize: Math.max(8, cell * 0.16), fill: COLORS.muted });
-        id.anchor.set(0.5, 0);
-        id.position.set(c.x, c.y + cell * 0.16);
-        (id as Text & { meterId?: number }).meterId = m.id;
-        labels.addChild(t, id);
+        const b = label(`${port.baud >= 1000 ? `${port.baud / 1000}k` : port.baud}`, { fontFamily: MONO, fontSize: Math.max(8, cell * 0.17), fontWeight: '800', fill: METER_COLORS[port.id % METER_COLORS.length] });
+        b.anchor.set(0.5);
+        b.position.set(c.x, c.y + cell * 0.08);
+        labels.addChild(b);
       }
     };
 
@@ -211,18 +200,41 @@ export function PriklopView(props: GameProps<PriklopParams>) {
       for (const child of labels.children) {
         const t = child as Text & { meterId?: number };
         if (t.meterId !== undefined) {
-          const m = game.puzzle.meters[t.meterId];
-          const text = `ID ${m.address}`;
+          const text = `ID ${game.puzzle.meters[t.meterId].address}`;
           if (t.text !== text) t.text = text;
         }
       }
     };
 
     let clock = 0;
+    let hover: Cell | null = null;
+    let winAt = -1;
+    game.on((e) => {
+      if (e.type === 'won') winAt = clock;
+    });
+
     const draw = () => {
+      tint.clear();
       cables.clear();
       dots.clear();
       pieces.clear();
+      const active = game.active;
+      // Filled cells take the colour of their cable: the board visibly "fills up".
+      for (const [id, path] of game.paths) {
+        const color = METER_COLORS[id % METER_COLORS.length];
+        const online = game.status.get(id) === 'online';
+        for (const c of path) tint.roundRect(ox + c.x * cell + 2, oy + c.y * cell + 2, cell - 4, cell - 4, cell * 0.18).fill({ color, alpha: online ? 0.2 : 0.1 });
+      }
+      if (active !== null && hover) tint.roundRect(ox + hover.x * cell + 1, oy + hover.y * cell + 1, cell - 2, cell - 2, cell * 0.2).stroke({ color: 0xffffff, width: 2, alpha: 0.35 });
+      // Victory sweep: a light wave rolls diagonally over the full board.
+      if (winAt >= 0) {
+        const t = (clock - winAt) * 9;
+        for (let y = 0; y < rows; y++)
+          for (let x = 0; x < cols; x++) {
+            const d = t - (x + y);
+            if (d > 0 && d < 3) tint.roundRect(ox + x * cell + 2, oy + y * cell + 2, cell - 4, cell - 4, cell * 0.18).fill({ color: 0xffffff, alpha: 0.35 * (1 - d / 3) });
+          }
+      }
       for (const [id, path] of game.paths) {
         if (path.length < 2) continue;
         const color = METER_COLORS[id % METER_COLORS.length];
@@ -233,31 +245,59 @@ export function PriklopView(props: GameProps<PriklopParams>) {
           for (const p of pts.slice(1)) cables.lineTo(p.x, p.y);
           cables.stroke({ width, color: c, alpha, cap: 'round', join: 'round' });
         };
-        const flicker = status === 'error' ? 0.5 + 0.5 * Math.sin(clock * 20) : 1;
-        stroke(cell * 0.34, status === 'error' ? COLORS.red : color, 0.18 * flicker);
-        stroke(cell * 0.13, status === 'error' ? COLORS.red : color, 0.95 * flicker);
+        const flicker = 1;
+        const c = color;
+        if (status === 'online') stroke(cell * 0.62, c, 0.12 + 0.05 * Math.sin(clock * 3 + id));
+        if (status === 'error') stroke(cell * 0.62, COLORS.red, 0.35 * (0.5 + 0.5 * Math.sin(clock * 14)));
+        stroke(cell * 0.4, 0x02040c, 0.6);
+        stroke(cell * 0.32, c, 0.95 * flicker);
+        // Highlight stripe gives the cable a round, rubbery look.
+        cables.moveTo(pts[0].x - cell * 0.05, pts[0].y - cell * 0.05);
+        for (const p of pts.slice(1)) cables.lineTo(p.x - cell * 0.05, p.y - cell * 0.05);
+        cables.stroke({ width: cell * 0.07, color: 0xffffff, alpha: 0.35 * flicker, cap: 'round', join: 'round' });
         if (status === 'online') {
-          // Data particles travel from meter to gateway: you literally see acquisition.
           const len = pts.length - 1;
-          for (let k = 0; k < Math.max(2, Math.floor(len / 2)); k++) {
-            const u = ((clock * 2.2 + (k * len) / Math.max(2, Math.floor(len / 2))) % len + len) % len;
+          const n = Math.max(2, Math.floor(len / 2));
+          for (let k = 0; k < n; k++) {
+            const u = (((clock * 2.4 + (k * len) / n) % len) + len) % len;
             const i = Math.floor(u);
             const f = u - i;
             const x = pts[i].x + (pts[i + 1].x - pts[i].x) * f;
             const y = pts[i].y + (pts[i + 1].y - pts[i].y) * f;
-            dots.circle(x, y, cell * 0.09).fill({ color: 0xffffff, alpha: 0.95 });
-            dots.circle(x, y, cell * 0.2).fill({ color, alpha: 0.25 });
+            dots.circle(x, y, cell * 0.07).fill({ color: 0xffffff, alpha: 0.95 });
           }
         }
+      }
+      const partner = (id: number) => {
+        const path = game.paths.get(id);
+        if (!path) return null;
+        const m = game.puzzle.meters[id];
+        return path[0].x === m.x && path[0].y === m.y ? game.puzzle.ports[id] : m;
+      };
+      const target = active !== null ? partner(active) : null;
+      for (const port of game.puzzle.ports) {
+        const c = center(port);
+        const color = METER_COLORS[port.id % METER_COLORS.length];
+        const online = game.status.get(port.id) === 'online';
+        const glow = target === port ? 1 : 0;
+        const r = cell * 0.34 * (1 + glow * 0.12 * Math.sin(clock * 10));
+        if (glow) pieces.circle(c.x, c.y, r * 1.5).fill({ color, alpha: 0.25 });
+        pieces.circle(c.x, c.y, r).fill({ color: 0x050914 }).stroke({ color, width: cell * 0.09 });
+        // Terminal LED on top of the socket: green once its meter talks.
+        pieces.circle(c.x, c.y - r * 0.5, r * 0.16).fill({ color: online ? COLORS.green : 0x2a3566 });
       }
       for (const m of game.puzzle.meters) {
         const c = center(m);
         const color = METER_COLORS[m.id % METER_COLORS.length];
         const status = game.status.get(m.id);
-        const s = cell * 0.8;
+        const glow = target === m;
+        const s = cell * 0.78 * (glow ? 1 + 0.06 * Math.sin(clock * 10) : 1);
         if (status === 'online') pieces.roundRect(c.x - s / 2 - 4, c.y - s / 2 - 4, s + 8, s + 8, 12).fill({ color: COLORS.green, alpha: 0.18 + 0.08 * Math.sin(clock * 4) });
         if (status === 'error') pieces.roundRect(c.x - s / 2 - 4, c.y - s / 2 - 4, s + 8, s + 8, 12).fill({ color: COLORS.red, alpha: 0.25 + 0.2 * Math.sin(clock * 14) });
-        pieces.roundRect(c.x - s / 2, c.y - s / 2, s, s, 10).fill({ color: 0x111a3d }).stroke({ color, width: 3 });
+        if (glow) pieces.roundRect(c.x - s / 2 - 6, c.y - s / 2 - 6, s + 12, s + 12, 14).fill({ color, alpha: 0.25 });
+        pieces.roundRect(c.x - s / 2, c.y - s / 2 + 3, s, s, 10).fill({ color: 0x02040c });
+        pieces.roundRect(c.x - s / 2, c.y - s / 2, s, s, 10).fill({ color }).stroke({ color: 0xffffff, width: 1.5, alpha: 0.4 });
+        pieces.roundRect(c.x - s * 0.38, c.y - s * 0.34, s * 0.76, s * 0.62, 6).fill({ color: 0x0b1330 });
         if (ai && game.configProblem(m.id)) {
           pieces.circle(c.x + s / 2 - 2, c.y - s / 2 + 2, cell * 0.14).fill({ color: COLORS.orange });
           pieces.rect(c.x + s / 2 - 3, c.y - s / 2 - 4, 2, cell * 0.12).fill({ color: 0x1a1000 });
@@ -266,19 +306,23 @@ export function PriklopView(props: GameProps<PriklopParams>) {
       refreshMeterLabels();
     };
 
-    let pending: { meter: number; cell: Cell } | null = null;
+    let pending: { cell: Cell; meter: number } | null = null;
     app.stage.eventMode = 'static';
     app.stage.hitArea = app.screen;
     const onDown = (e: FederatedPointerEvent) => {
       if (pausedRef.current || game.finished) return;
       audio.unlock();
       const c = cellAt(e.global.x, e.global.y);
-      const meter = game.meterAt(c.x, c.y);
-      if (meter) {
-        pending = { meter: meter.id, cell: c };
+      const end = game.endpointAt(c.x, c.y);
+      if (end !== null) {
+        // A tap opens the settings, a drag starts a cable.
+        pending = { cell: c, meter: end };
         return;
       }
-      if (game.startDrag(c.x, c.y)) audio.play('tap');
+      if (game.startDrag(c.x, c.y)) {
+        audio.play('tap');
+        hover = c;
+      }
     };
     const onMove = (e: FederatedPointerEvent) => {
       if (pausedRef.current) return;
@@ -286,11 +330,15 @@ export function PriklopView(props: GameProps<PriklopParams>) {
       if (pending) {
         if (c.x === pending.cell.x && c.y === pending.cell.y) return;
         game.startDrag(pending.cell.x, pending.cell.y);
+        audio.play('tap');
         pending = null;
         setTip(null);
         props.onTipDone?.();
       }
-      if (game.active !== null) game.dragTo(c.x, c.y);
+      if (game.active !== null) {
+        hover = c;
+        game.dragTo(c.x, c.y);
+      }
     };
     const onUp = () => {
       if (pending) {
@@ -298,7 +346,9 @@ export function PriklopView(props: GameProps<PriklopParams>) {
         setConfig(pending.meter);
         pending = null;
       }
+      hover = null;
       game.endDrag();
+      setVersion((v) => v + 1);
     };
     app.stage.on('pointerdown', onDown);
     app.stage.on('globalpointermove', onMove);
@@ -330,6 +380,7 @@ export function PriklopView(props: GameProps<PriklopParams>) {
   });
 
   const meters = game.puzzle.meters;
+  const fillPct = Math.round((game.filled / game.totalCells) * 100);
   const cfgMeter = config !== null ? meters[config] : null;
 
   return (
@@ -339,6 +390,10 @@ export function PriklopView(props: GameProps<PriklopParams>) {
           {game.onlineCount}/{meters.length}
         </span>
       </Hud>
+      <div class="fill-bar" aria-label={`Zapolnjeno ${fillPct} odstotkov plošče`}>
+        <i style={{ width: `${fillPct}%` }} class={fillPct === 100 ? 'full' : ''} />
+        <span>Kabli zapolnjujejo {fillPct} % plošče</span>
+      </div>
       <div class="stage" ref={stageRef}>
         <div class="pixi-host" ref={host} />
         {flash > 0 && <div class="flash-red" key={flash} />}

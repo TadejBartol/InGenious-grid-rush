@@ -4,6 +4,10 @@ import { audio } from '../../audio/sfx';
 import { PriklopView } from '../../games/priklop/PriklopView';
 import { KonicaView } from '../../games/konica/KonicaView';
 import { DetektivView } from '../../games/detektiv/DetektivView';
+import { WmbusView } from '../../games/wmbus/WmbusView';
+import { KogeneratorView } from '../../games/kogenerator/KogeneratorView';
+import { AlarmView } from '../../games/alarm/AlarmView';
+import { SelitevView } from '../../games/selitev/SelitevView';
 import { logEvent } from '../../state/persist';
 import { store, useGame } from '../../state/store';
 import { nav, type Screen } from '../nav';
@@ -11,17 +15,28 @@ import { GenkoSays } from '../components/Genko';
 import { Sheet } from '../components/Common';
 import { IconPlay, IconRetry, IconX } from '../components/Icons';
 
-export const KIND_NAME: Record<Stage['kind'], string> = { priklop: 'Priklop', konica: 'Lov na konico', detektiv: 'Detektiv' };
+export const KIND_NAME: Record<Stage['kind'], string> = { priklop: 'Priklop', konica: 'Lov na konico', detektiv: 'Detektiv', wmbus: 'Radijsko omrežje', kogenerator: 'Kogenerator', alarm: 'Alarm!', selitev: 'Selitev' };
 
 /** First-time tutorial bubbles, keyed by level. */
 const TIPS: Record<string, string> = {
-  'r1-1': 'Povleci kabel od merilnika M1 do vrat 1 na prehodu zgoraj. Kabli se ne smejo križati.',
+  'r1-1': 'Povleci kabel od merilnika M1 do okrogle vtičnice iste barve. Kabli se ne smejo križati in morajo skupaj zapolniti vsa polja.',
   'r1-2': 'Dva merilnika imata isti ID. Tapni merilnik in mu nastavi prost naslov, preden ga priklopiš.',
   'r1-3': 'Tapni porabnika, da ga izklopiš. Drži krivuljo pod rdečo črto, a ne pusti, da se zaloga izprazni.',
-  'r1-5': 'Številka pod vrati je hitrost, ki jo vrata pričakujejo. Merilnik mora imeti enako.',
+  'r1-5': 'Številka v vtičnici je hitrost, ki jo pričakuje. Merilnik mora imeti enako.',
   'r1-6': 'Ko porabnika vklopiš, za trenutek potegne več. Ne vklapljaj vsega naenkrat.',
   'r1-7': 'Pozor, povezava je nestabilna. Ko kabel pade, ga znova povleci.',
-  'r2-1': 'Tapni na graf tam, kjer debela črta odstopa od svetle. Svetla je tipičen teden.',
+  'r2-1': 'Tapni na graf, kjer modra črta uide iz svetlega pasu. Čas se upočasni: izberi, kaj je vzrok. Prej ko opaziš, več DP.',
+  'r2-4': 'Zgoraj je urnik. Kar je na njem, je načrtovano: tega ne prijavi, četudi izgleda kot anomalija.',
+  'r3-1': 'Drži prst na polju in poglej krog dosega. Spusti, ko krog pokrije vse vodomere.',
+  'r3-2': 'Najprej prehod, nato repetitor. Repetitor mora biti v krogu prehoda, sicer ostane oranžen.',
+  'r4-1': 'Motor zaženi, ko je rumena črta (cena) visoko. Toplota mora pokriti oranžne stolpce, sicer se mesto ohladi.',
+  'r4-2': 'Ko motor dela več toplote, kot jo mesto rabi, potisni hranilnik na »polni«. Ko motor stoji, ga prazni.',
+  'r5-1': 'Ko zazvoni alarm, tapni hladilnik in izberi ukrep. Poglej vrata (ikona), napajanje in smer krivulje.',
+  'r5-2': 'Meja alarma je spodaj. Prenizka zvoni ob vsakem odpiranju vrat, previsoka te opozori prepozno.',
+  'r5-4': 'Torbe so na poti. Ko se hladilni vložki stopijo, temperatura raste: kurirju pošlji sveže vložke.',
+  'r6-1': 'Zgoraj je tabela kod. Vsak zapis pošlji na pravi nov merilnik, preden ga čas odnese.',
+  'r6-2': 'Rumen Wh pomeni 1000× večjo številko. Najprej pritisni »Wh → kWh«, nato zapis pošlji.',
+  'r6-4': '##### in negativne vrednosti v koš. Če je mesec pri merilniku že zelen, je zapis dvojnik: tudi v koš.',
 };
 
 export function PlayScreen({ level, from }: { level: LevelDef; from: Screen }) {
@@ -110,8 +125,20 @@ export function PlayScreen({ level, from }: { level: LevelDef; from: Screen }) {
       {stage.kind === 'priklop' && <PriklopView key={key} {...common} params={stage.params} />}
       {stage.kind === 'konica' && <KonicaView key={key} {...common} params={stage.params} />}
       {stage.kind === 'detektiv' && <DetektivView key={key} {...common} params={stage.params} />}
+      {stage.kind === 'wmbus' && <WmbusView key={key} {...common} params={stage.params} />}
+      {stage.kind === 'kogenerator' && <KogeneratorView key={key} {...common} params={stage.params} />}
+      {stage.kind === 'alarm' && <AlarmView key={key} {...common} params={stage.params} />}
+      {stage.kind === 'selitev' && <SelitevView key={key} {...common} params={stage.params} />}
       {phase === 'countdown' && (
-        <div class="countdown" aria-live="assertive">
+        <div class={`countdown${level.boss ? ' boss' : ''}`} aria-live="assertive">
+          {level.boss && (
+            <div class="boss-banner">
+              <b>BOSS</b>
+              <span>
+                Faza {stageIdx + 1} od {level.stages.length} · {KIND_NAME[stage.kind]}
+              </span>
+            </div>
+          )}
           <span key={count}>{count}</span>
         </div>
       )}

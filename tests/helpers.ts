@@ -26,7 +26,10 @@ export function perfectDetektiv(params: DetektivParams) {
   while (!game.finished) {
     game.update(0.1);
     for (const a of game.data.anomalies) {
-      if (!a.found && !a.missed && game.cursor >= a.start + a.len) game.tap(a.start + a.len / 2);
+      if (!a.found && !a.missed && !game.pending && game.cursor >= a.start + a.len) {
+        game.tap(a.start + a.len / 2);
+        game.diagnose(a.kind);
+      }
     }
   }
   return game;

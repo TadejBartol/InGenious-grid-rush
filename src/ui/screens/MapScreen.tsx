@@ -29,6 +29,9 @@ export function MapScreen() {
   const strength = darkMeterStrength(lit);
   // The loop always shows the next goal.
   const next = LEVELS.find((l) => isLevelUnlocked(l, levels, unlocked) && !(levels[l.id]?.stars > 0));
+  // A region whose door is open: the previous one is cleared, it exists, and it is still locked.
+  const canOpen = (r: RegionDef) => !unlocked.includes(r.id) && r.available && regionComplete(r.id - 1, levels);
+  const ready = REGIONS.find((r) => canOpen(r));
   const tip = useMemo(() => (lit === 0 ? 'Začni v Industrijski coni. Livarna nima niti enega merilnika.' : pick(GENKO.idle)), [lit]);
 
   const open = (r: RegionDef) => {
@@ -79,15 +82,42 @@ export function MapScreen() {
           const done = regionComplete(r.id, levels);
           const isOpen = unlocked.includes(r.id);
           const st = regionStars(r.id, levels);
+          const door = canOpen(r);
+          const afford = door && chips >= r.unlockChips;
           return (
-            <button class={`region-node ${done ? 'done' : isOpen ? 'open' : 'locked'}`} style={{ left: `${r.pos.x}%`, top: `${r.pos.y}%` }} onClick={() => open(r)} aria-label={`${r.name}${isOpen ? '' : ', zaklenjeno'}`}>
+            <button
+              class={`region-node ${done ? 'done' : isOpen ? 'open' : 'locked'}${door ? (afford ? ' ready' : ' almost') : ''}`}
+              style={{ left: `${r.pos.x}%`, top: `${r.pos.y}%` }}
+              onClick={() => open(r)}
+              aria-label={`${r.name}${isOpen ? '' : afford ? ', pripravljeno za odklep' : ', zaklenjeno'}`}
+            >
               <span class="dot">{isOpen ? r.id : <IconLock />}</span>
               <span>{r.name}</span>
               {isOpen && st.max > 0 && <span class="tiny mono muted">★ {st.have}/{st.max}</span>}
+              {door && <span class={`region-badge${afford ? '' : ' wait'}`}>{afford ? 'Odkleni!' : `${chips}/${r.unlockChips} čipov`}</span>}
             </button>
           );
         })}
       </div>
+
+      {ready && (
+        <button
+          class={`card level-btn next region-cta${chips >= ready.unlockChips ? '' : ' wait'}`}
+          style={{ marginTop: '4px' }}
+          onClick={() => open(ready)}
+        >
+          <span class="level-num">
+            <IconLock width={14} />
+          </span>
+          <span class="grow">
+            <span class="tiny muted">{chips >= ready.unlockChips ? 'Nova regija je pripravljena' : `Zberi še ${ready.unlockChips - chips} ${ready.unlockChips - chips === 1 ? 'čip' : 'čipe'} (3 zvezdice ali boss)`}</span>
+            <b class="small" style={{ display: 'block' }}>
+              {ready.name}
+            </b>
+            <span class="level-kind">Nova mehanika: {ready.mechanic}</span>
+          </span>
+        </button>
+      )}
 
       {next && (
         <button

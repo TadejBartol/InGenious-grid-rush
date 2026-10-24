@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { checkStars, idleGain, idleRate, rewardFor, isLevelUnlocked } from '../src/core/balance';
+import { checkStars, idleGain, idleRate, rewardFor, isLevelUnlocked, RESEARCH } from '../src/core/balance';
 import { advanceStreak, liveStreak, dailyLevel, dateKey, weekKey } from '../src/core/daily';
 import { LEVELS, levelById } from '../src/core/levels';
 import { freshSave, migrate } from '../src/state/save';
@@ -126,8 +126,30 @@ describe('store', () => {
   it('upgrades cost kWh and raise the rate', () => {
     store.getState().init({ ...freshSave(0), kwh: 1000, levels: { 'r1-1': { stars: 1 }, 'r1-2': { stars: 1 }, 'r1-3': { stars: 1 } } }, 0);
     expect(store.getState().buyUpgrade('livarna')).toBe(true);
-    expect(store.getState().kwh).toBe(880);
+    expect(store.getState().kwh).toBe(760);
     expect(store.getState().buyUpgrade('peskanje')).toBe(false);
+  });
+
+  it('later lab nodes wait for their region', () => {
+    store.getState().init({ ...freshSave(0), dp: 5000 }, 0);
+    expect(store.getState().buyResearch('napoved')).toBe(false);
+    expect(store.getState().buyResearch('vzorcenje')).toBe(true);
+    store.getState().init({ ...freshSave(0), dp: 5000, regionsUnlocked: [1, 2] }, 0);
+    expect(store.getState().buyResearch('napoved')).toBe(true);
+  });
+
+  it('two three-starred regions pay for a good part of their lab, never all of it', () => {
+    const dp = LEVELS.filter((l) => l.region <= 2).reduce((s, l) => s + rewardFor(l, 3, 0).dp, 0);
+    const lab = RESEARCH.filter((r) => (r.region ?? 1) <= 2).reduce((s, r) => s + r.costs.reduce((a, b) => a + b, 0), 0);
+    expect(dp).toBeGreaterThan(lab * 0.12);
+    expect(dp).toBeLessThan(lab * 0.4);
+  });
+
+  it('the whole campaign pays for nearly the whole lab; daily challenges finish it', () => {
+    const dp = LEVELS.reduce((s, l) => s + rewardFor(l, 3, 0).dp, 0);
+    const lab = RESEARCH.reduce((s, r) => s + r.costs.reduce((a, b) => a + b, 0), 0);
+    expect(dp).toBeGreaterThan(lab * 0.9);
+    expect(dp).toBeLessThan(lab * 1.3);
   });
 
   it('daily challenge grows the streak once per day', () => {

@@ -88,7 +88,7 @@ export function dailyLevel(key: string, detektivUnlocked: boolean): LevelDef {
   if (kind === 'priklop') {
     stage = {
       kind,
-      params: { cols: 6, rows: 7, meters: 4 + variant, timeSec: 85, obstacles: 0.27, conflicts: 1 + (variant > 0 ? 1 : 0), baudMismatch: 1, dropouts: variant === 2 ? [45] : [], seed },
+      params: { cols: 6, rows: 6, meters: 4 + variant, timeSec: 100, conflicts: 1 + (variant > 0 ? 1 : 0), baudMismatch: 1, dropouts: variant === 2 ? [45] : [], seed },
     };
     stars = [{ type: 'complete' }, { type: 'timeLeft', min: 25 }, { type: 'mistakes', max: 0 }];
   } else if (kind === 'konica') {
@@ -115,7 +115,7 @@ export function dailyLevel(key: string, detektivUnlocked: boolean): LevelDef {
     };
     stars = [{ type: 'complete' }, { type: 'metric', key: 'peak', op: '<=', value: limit, unit: 'kW', label: `Konica ≤ ${limit} kW` }, { type: 'mistakes', max: 0, label: 'Brez zastoja proizvodnje' }];
   } else {
-    stage = { kind, params: { durationSec: 60, profile: (['livarna', 'mlekarna', 'trafo'] as const)[variant], anomalies: 4 + variant, kinds: ['nocna', 'konica', 'zrak', 'prazniTek', 'hladilnik'], noise: 0.05, seed } };
+    stage = { kind: 'detektiv', params: { durationSec: 60, profile: (['livarna', 'mlekarna', 'trafo'] as const)[variant], anomalies: 4 + variant, kinds: ['nocna', 'konica', 'zrak', 'prazniTek', 'hladilnik'], noise: 0.05, decoys: 2, scale: 0.75, seed } };
     stars = [{ type: 'complete' }, { type: 'metric', key: 'missed', op: '<=', value: 0, unit: '', label: 'Najdi vse anomalije' }, { type: 'mistakes', max: 0 }];
   }
   return {

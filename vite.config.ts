@@ -20,9 +20,10 @@ export default defineConfig({
       injectRegister: false,
       includeAssets: ['icons/*.svg', 'icons/*.png'],
       manifest: {
+        id: 'ingenious-grid-rush',
         name: 'InGenious Grid Rush',
         short_name: 'Grid Rush',
-        description: 'Zgradi energetski nadzorni center, lovi konice in ugasni Temni števec.',
+        description: 'Zgradi energetski nadzorni center, lovi konice, reši hladno verigo in prebudi Temni števec. Šest regij, sedem mini iger, filmska zgodba.',
         lang: 'sl',
         start_url: '.',
         scope: '.',
@@ -31,6 +32,12 @@ export default defineConfig({
         background_color: '#070b1a',
         theme_color: '#070b1a',
         categories: ['games', 'education'],
+        screenshots: [
+          { src: 'screenshots/1-naslov.jpg', sizes: '780x1688', type: 'image/jpeg', form_factor: 'narrow', label: 'Naslovni zaslon' },
+          { src: 'screenshots/2-zemljevid.jpg', sizes: '780x1688', type: 'image/jpeg', form_factor: 'narrow', label: 'Zemljevid šestih regij' },
+          { src: 'screenshots/3-finale.jpg', sizes: '780x1688', type: 'image/jpeg', form_factor: 'narrow', label: 'Filmski prizor: finale' },
+          { src: 'screenshots/4-alarm.jpg', sizes: '780x1688', type: 'image/jpeg', form_factor: 'narrow', label: 'Mini igra Alarm!' },
+        ],
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
@@ -41,6 +48,14 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,json}'],
         navigateFallback: 'index.html',
         cleanupOutdatedCaches: true,
+        // Story voices load on demand and stay cached for offline replays.
+        runtimeCaching: [
+          {
+            urlPattern: /\/voice\/.*\.mp3$/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'voice', expiration: { maxEntries: 400 } },
+          },
+        ],
       },
     }),
   ],

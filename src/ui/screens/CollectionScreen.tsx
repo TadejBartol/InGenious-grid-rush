@@ -4,15 +4,40 @@ import { audio } from '../../audio/sfx';
 import { store, useGame } from '../../state/store';
 import { Genko } from '../components/Genko';
 import { Cost } from '../components/Common';
+import { SCENES, sceneKey } from '../../core/story';
+import { playScene } from '../story';
+import { nav } from '../nav';
+import { IconLock, IconPlay } from '../components/Icons';
 
 export function CollectionScreen() {
   const cards = useGame((s) => s.cards);
   const owned = useGame((s) => s.skinsOwned);
   const skin = useGame((s) => s.skin);
   const chips = useGame((s) => s.chips);
+  const seen = useGame((s) => s.seenTips);
   return (
     <>
-      <div class="section-title">Genko · kozmetika za čipe</div>
+      <div class="section-title">Zgodba · skrivnost Š-0</div>
+      <div class="chronicle">
+        {SCENES.map((sc, i) => {
+          const open = seen.includes(sceneKey(sc.id));
+          return (
+            <button class={`chap ${sc.tone}${open ? '' : ' locked'}`} disabled={!open} onClick={() => (audio.play('tap'), playScene(sc.id, undefined, true))} aria-label={open ? `Ponovno poglej: ${sc.title}` : 'Še zaklenjen prizor'}>
+              <span class="chap-n mono">{String(i + 1).padStart(2, '0')}</span>
+              <span class="grow">{open ? sc.title : '???'}</span>
+              {open ? <IconPlay width={16} height={16} /> : <IconLock width={14} height={14} />}
+            </button>
+          );
+        })}
+        {seen.includes(sceneKey('r6-victory')) && (
+          <button class="chap dawn" onClick={() => (audio.play('tap'), nav.setState({ credits: true }))} aria-label="Ponovno poglej odjavno špico">
+            <span class="chap-n mono">★</span>
+            <span class="grow">Odjavna špica</span>
+            <IconPlay width={16} height={16} />
+          </button>
+        )}
+      </div>
+      <div class="section-title">Robotek InGenious · kozmetika za čipe</div>
       <div class="skins">
         {SKINS.map((sk) => {
           const has = owned.includes(sk.id);
@@ -37,7 +62,7 @@ export function CollectionScreen() {
         })}
       </div>
       <p class="tiny muted" style={{ margin: '8px 2px 0' }}>
-        Imaš {chips} Genko {plural(chips, 'čip', 'čipa', 'čipe', 'čipov')}. Dobiš jih za 3 zvezdice, bossa in dnevni niz.
+        Imaš {chips} InGenious {plural(chips, 'čip', 'čipa', 'čipe', 'čipov')}. Dobiš jih za 3 zvezdice, bossa in dnevni niz.
       </p>
 
       <div class="section-title">

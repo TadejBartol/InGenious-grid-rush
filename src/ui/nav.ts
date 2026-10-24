@@ -17,6 +17,12 @@ interface NavState {
   screen: Screen;
   /** Level whose intro card is open. */
   intro: LevelDef | null;
+  /** Story scene playing on top of everything, and what to do after it. */
+  scene: { id: string; then?: () => void } | null;
+  /** Region victory celebration after a first boss clear. */
+  victory: number | null;
+  /** End credits after the epilogue. */
+  credits: boolean;
   go(screen: Screen): void;
   openIntro(level: LevelDef | null): void;
 }
@@ -24,6 +30,9 @@ interface NavState {
 export const nav = createStore<NavState>()((set) => ({
   screen: { name: 'title' },
   intro: null,
+  scene: null,
+  victory: null,
+  credits: false,
   go: (screen) => set({ screen, intro: null }),
   openIntro: (intro) => set({ intro }),
 }));

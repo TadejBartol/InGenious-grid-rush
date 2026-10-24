@@ -1,0 +1,922 @@
+{
+ "r1-intro.0": {
+  "file": "r1-intro.0.mp3",
+  "text": "Leto 2031. Slovenija ima več merilnikov kot kdajkoli. Polovica jih molči.",
+  "v": 3
+ },
+ "r1-intro.1": {
+  "file": "r1-intro.1.mp3",
+  "text": "Industrijska cona, tri zjutraj. Slišiš? Kompresorji. Nihče ne dela, oni pa piskajo.",
+  "v": 3
+ },
+ "r1-intro.2": {
+  "file": "r1-intro.2.mp3",
+  "text": "Kar ni izmerjeno, je moje. Tako je bilo vedno.",
+  "v": 3
+ },
+ "r1-intro.3": {
+  "file": "r1-intro.3.mp3",
+  "text": "Temni števec. Hrani se z energijo, ki je nihče ne vidi: ponoči, v konicah, v puščajočih ceveh.",
+  "v": 3
+ },
+ "r1-intro.4": {
+  "file": "r1-intro.4.mp3",
+  "text": "Ti si samo še en robotek z grafom. Videl sem jih sto. Vsi so ugasnili.",
+  "v": 3
+ },
+ "r1-intro.5": {
+  "file": "r1-intro.5.mp3",
+  "text": "Noben pa ni imel tebe za partnerja. Priklopiva merilnike in osvetliva tovarno.",
+  "v": 3
+ },
+ "fac-livarna.0": {
+  "file": "fac-livarna.0.mp3",
+  "text": "Livarna. Indukcijske peči so prvič pod nadzorom. Trije merilniki, en prehod, nič več ugibanja.",
+  "v": 3
+ },
+ "fac-livarna.1": {
+  "file": "fac-livarna.1.mp3",
+  "text": "Poglej graf! Peč vleče 160 kW, ko tali, in skoraj nič, ko čaka. Zdaj to končno vidimo.",
+  "v": 3
+ },
+ "fac-livarna.2": {
+  "file": "fac-livarna.2.mp3",
+  "text": "Prva luč v Industrijski coni se prižge.",
+  "v": 3
+ },
+ "fac-livarna.3": {
+  "file": "fac-livarna.3.mp3",
+  "text": "Ena luč. Ena sama. Jaz sem jih ugasnil na tisoče.",
+  "v": 3
+ },
+ "fac-livarna.4": {
+  "file": "fac-livarna.4.mp3",
+  "text": "Potem imam še veliko dela. Naslednja je Peskalnica.",
+  "v": 3
+ },
+ "fac-peskanje.0": {
+  "file": "fac-peskanje.0.mp3",
+  "text": "Peskalnica. Odpraševanje teče ves vikend, čeprav v hali ni nikogar.",
+  "v": 3
+ },
+ "fac-peskanje.1": {
+  "file": "fac-peskanje.1.mp3",
+  "text": "Ventilatorji po 40 kW pihajo v prazno halo. Ob nedeljah. Že leta.",
+  "v": 3
+ },
+ "fac-peskanje.2": {
+  "file": "fac-peskanje.2.mp3",
+  "text": "Urnik vklopa in podštevec. Peskalnica je osvetljena!",
+  "v": 3
+ },
+ "fac-peskanje.3": {
+  "file": "fac-peskanje.3.mp3",
+  "text": "Moji ventilatorji! Kompresorji ti tega ne bodo odpustili.",
+  "v": 3
+ },
+ "fac-peskanje.4": {
+  "file": "fac-peskanje.4.mp3",
+  "text": "Na podštevcu je star plombirni žig. Komaj berljivo: »Š-«. Ostalo je odrgnjeno.",
+  "v": 3
+ },
+ "r1-boss.0": {
+  "file": "r1-boss.0.mp3",
+  "text": "Kompresorska postaja. Polnoč. Vse luči ugasnjene, razen ene rdeče.",
+  "v": 3
+ },
+ "r1-boss.1": {
+  "file": "r1-boss.1.mp3",
+  "text": "Štirje kompresorji, en ukaz: piskajte! Vsak sunek zraka je moj.",
+  "v": 3
+ },
+ "r1-boss.2": {
+  "file": "r1-boss.2.mp3",
+  "text": "Dve fazi brez odmora: najprej priklop, takoj zatem lov na konico.",
+  "v": 3
+ },
+ "r1-boss.3": {
+  "file": "r1-boss.3.mp3",
+  "text": "Če padeš v prvi fazi, druge sploh ne boš videl.",
+  "v": 3
+ },
+ "r1-taunt.0": {
+  "file": "r1-taunt.0.mp3",
+  "text": "Že konec? Kompresorji so komaj začeli piskati.",
+  "v": 3
+ },
+ "r1-taunt.1": {
+  "file": "r1-taunt.1.mp3",
+  "text": "Brez vseh merilnikov v prvi fazi v drugi lovim konico na slepo.",
+  "v": 3
+ },
+ "r1-taunt.2": {
+  "file": "r1-taunt.2.mp3",
+  "text": "Še enkrat. Tokrat vem, kje so pasti.",
+  "v": 3
+ },
+ "r1-ko.0": {
+  "file": "r1-ko.0.mp3",
+  "text": "Zadnji podatek priteče v oblak. Graf se izriše do konca.",
+  "v": 3
+ },
+ "r1-ko.1": {
+  "file": "r1-ko.1.mp3",
+  "text": "Vidim te, Temni števec. Vsak sunek, vsako noč, vsak kWh.",
+  "v": 3
+ },
+ "r1-ko.2": {
+  "file": "r1-ko.2.mp3",
+  "text": "Ne! Brez teme me ni!",
+  "v": 3
+ },
+ "r1-ko.3": {
+  "file": "r1-ko.3.mp3",
+  "text": "Prehod, pošlji vse!",
+  "v": 3
+ },
+ "r1-ko.4": {
+  "file": "r1-ko.4.mp3",
+  "text": "Aaaah … preveč luči …",
+  "v": 3
+ },
+ "r1-ko.5": {
+  "file": "r1-ko.5.mp3",
+  "text": "Kompresorska postaja se prižge. Ponoči končno utihne.",
+  "v": 3
+ },
+ "r1-victory.0": {
+  "file": "r1-victory.0.mp3",
+  "text": "Jutro. Industrijska cona prvič diha brez nočnega piskanja.",
+  "v": 3
+ },
+ "r1-victory.1": {
+  "file": "r1-victory.1.mp3",
+  "text": "Kompresorji ponoči spijo, kot se spodobi. Industrijska cona je naša!",
+  "v": 3
+ },
+ "r1-victory.2": {
+  "file": "r1-victory.2.mp3",
+  "text": "Mleko se kisa hitreje kot tvoja sreča. Se vidiva v Mlekarni.",
+  "v": 3
+ },
+ "r1-victory.3": {
+  "file": "r1-victory.3.mp3",
+  "text": "Na tleh je ostal star aluminijast kolut. Vgravirano: Š-0, 1987.",
+  "v": 3
+ },
+ "r1-victory.4": {
+  "file": "r1-victory.4.mp3",
+  "text": "Š-0? Ničti števec? … To si bom zapomnil.",
+  "v": 3
+ },
+ "r2-intro.0": {
+  "file": "r2-intro.0.mp3",
+  "text": "Mlekarna. Hladna veriga, ki se ne sme pretrgati niti za minuto.",
+  "v": 3
+ },
+ "r2-intro.1": {
+  "file": "r2-intro.1.mp3",
+  "text": "Hladilnice delajo tudi za vikend. Tu je vsak kWh dvakrat drag: enkrat za hlajenje, enkrat za napako.",
+  "v": 3
+ },
+ "r2-intro.2": {
+  "file": "r2-intro.2.mp3",
+  "text": "Ena vrata ostanejo odprta. En števec malce laže. Vsote nihče ne preverja.",
+  "v": 3
+ },
+ "r2-intro.3": {
+  "file": "r2-intro.3.mp3",
+  "text": "Jaz jo. Vedno.",
+  "v": 3
+ },
+ "fac-hladilnica.0": {
+  "file": "fac-hladilnica.0.mp3",
+  "text": "Hladilnica. Štiri stopinje v komorah in kilovatne ure, ki jih nihče ne šteje.",
+  "v": 3
+ },
+ "fac-hladilnica.1": {
+  "file": "fac-hladilnica.1.mp3",
+  "text": "Vrata komore B so bila včeraj odprta 40 minut. Agregat je delal kot nor.",
+  "v": 3
+ },
+ "fac-hladilnica.2": {
+  "file": "fac-hladilnica.2.mp3",
+  "text": "Sonde poročajo vsako minuto. Ko vrata zevajo, dobi vodja izmene opozorilo.",
+  "v": 3
+ },
+ "fac-hladilnica.3": {
+  "file": "fac-hladilnica.3.mp3",
+  "text": "Mraz je potrpežljiv. Jaz tudi.",
+  "v": 3
+ },
+ "fac-pakirnica.0": {
+  "file": "fac-pakirnica.0.mp3",
+  "text": "Pakirnica. Pasterizator greje, agregat hladi. Oba hkrati, ob isti uri.",
+  "v": 3
+ },
+ "fac-pakirnica.1": {
+  "file": "fac-pakirnica.1.mp3",
+  "text": "Če pasterizacijo zamaknemo za deset minut, se konici ne srečata.",
+  "v": 3
+ },
+ "fac-pakirnica.2": {
+  "file": "fac-pakirnica.2.mp3",
+  "text": "Pakirnica se osvetli. Linije tečejo v ritmu.",
+  "v": 3
+ },
+ "fac-pakirnica.3": {
+  "file": "fac-pakirnica.3.mp3",
+  "text": "Ritem … sovražim ritem.",
+  "v": 3
+ },
+ "fac-pakirnica.4": {
+  "file": "fac-pakirnica.4.mp3",
+  "text": "V arhivu pakirnice leži shema elektro omare iz leta 1987. V kotu je narisan števec z oznako Š-0.",
+  "v": 3
+ },
+ "r2-boss.0": {
+  "file": "r2-boss.0.mp3",
+  "text": "Trafo postaja mlekarne. Dvanajst števcev. Vsota se ne ujema.",
+  "v": 3
+ },
+ "r2-boss.1": {
+  "file": "r2-boss.1.mp3",
+  "text": "Eden od njih je moj. Najdi ga, če znaš. Ampak najprej ga moraš priklopiti.",
+  "v": 3
+ },
+ "r2-boss.2": {
+  "file": "r2-boss.2.mp3",
+  "text": "Kjer se vsota ne ujema, nekdo laže. Ali krade. Ali oboje.",
+  "v": 3
+ },
+ "r2-taunt.0": {
+  "file": "r2-taunt.0.mp3",
+  "text": "Iskal si lažnivca, našel pa si samo svojo napako.",
+  "v": 3
+ },
+ "r2-taunt.1": {
+  "file": "r2-taunt.1.mp3",
+  "text": "Faze si sledijo brez odmora. Najprej priklop, nato detektiv. Tokrat pazim na hitrost vtičnic.",
+  "v": 3
+ },
+ "r2-ko.0": {
+  "file": "r2-ko.0.mp3",
+  "text": "Dvanajst števcev. Vsota se končno ujema do zadnjega kilovata.",
+  "v": 3
+ },
+ "r2-ko.1": {
+  "file": "r2-ko.1.mp3",
+  "text": "Ti si trinajsti, kajne? Tisti, ki ga ni na nobeni shemi.",
+  "v": 3
+ },
+ "r2-ko.2": {
+  "file": "r2-ko.2.mp3",
+  "text": "Bil sem prvi! Pred vsemi dvanajstimi!",
+  "v": 3
+ },
+ "r2-ko.3": {
+  "file": "r2-ko.3.mp3",
+  "text": "Tokovni transformator je popravljen. Pošiljam meritve!",
+  "v": 3
+ },
+ "r2-ko.4": {
+  "file": "r2-ko.4.mp3",
+  "text": "Moja polovica … moja skrita polovica …",
+  "v": 3
+ },
+ "r2-ko.5": {
+  "file": "r2-ko.5.mp3",
+  "text": "Trafo postaja zasveti. Mlekarna ima končno pošten račun.",
+  "v": 3
+ },
+ "r2-victory.0": {
+  "file": "r2-victory.0.mp3",
+  "text": "Jutro v mlekarni. Mleko je hladno, števci govorijo resnico.",
+  "v": 3
+ },
+ "r2-victory.1": {
+  "file": "r2-victory.1.mp3",
+  "text": "Napačno vezan tokovni transformator. Leta je kazal polovico porabe.",
+  "v": 3
+ },
+ "r2-victory.2": {
+  "file": "r2-victory.2.mp3",
+  "text": "V omarici je ostala zbledela nalepka: »Š-0 · glavni števec mlekarne · odstranjen 2009«.",
+  "v": 3
+ },
+ "r2-victory.3": {
+  "file": "r2-victory.3.mp3",
+  "text": "Spet Š-0. Bil je glavni števec. Nekdo ga je zamenjal in nanj pozabil.",
+  "v": 3
+ },
+ "r2-victory.4": {
+  "file": "r2-victory.4.mp3",
+  "text": "Pozabili so me. Kot pozabijo vse, kar ne piska. Pod zemljo me boš slišal.",
+  "v": 3
+ },
+ "r3-intro.0": {
+  "file": "r3-intro.0.mp3",
+  "text": "Komunala. Pod mestom teče voda, nad njim letijo radijski paketi.",
+  "v": 3
+ },
+ "r3-intro.1": {
+  "file": "r3-intro.1.mp3",
+  "text": "Vodomeri vsakih nekaj minut zašepetajo stanje. Če jih nihče ne posluša, voda teče v prazno.",
+  "v": 3
+ },
+ "r3-intro.2": {
+  "file": "r3-intro.2.mp3",
+  "text": "Tišina je moja najljubša frekvenca.",
+  "v": 3
+ },
+ "r3-intro.3": {
+  "file": "r3-intro.3.mp3",
+  "text": "Dobro, da imam antene.",
+  "v": 3
+ },
+ "fac-vodarna.0": {
+  "file": "fac-vodarna.0.mp3",
+  "text": "Vodarna. Vodohran nad mestom in sto vodomerov, ki šepetajo po radiu.",
+  "v": 3
+ },
+ "fac-vodarna.1": {
+  "file": "fac-vodarna.1.mp3",
+  "text": "Vsak vodomer pošlje paket vsakih nekaj minut. Moramo jih samo slišati.",
+  "v": 3
+ },
+ "fac-vodarna.2": {
+  "file": "fac-vodarna.2.mp3",
+  "text": "Prehodi na strehah, repetitorji na drogovih. Slišim vse!",
+  "v": 3
+ },
+ "fac-vodarna.3": {
+  "file": "fac-vodarna.3.mp3",
+  "text": "Slišiš vodo. Mene ne.",
+  "v": 3
+ },
+ "fac-vodarna.4": {
+  "file": "fac-vodarna.4.mp3",
+  "text": "Med paketi se pojavi tuj. Brez naslova. Samo dva znaka: Š-0.",
+  "v": 3
+ },
+ "fac-cistilna.0": {
+  "file": "fac-cistilna.0.mp3",
+  "text": "Čistilna naprava. Puhala ženejo zrak v bazene noč in dan.",
+  "v": 3
+ },
+ "fac-cistilna.1": {
+  "file": "fac-cistilna.1.mp3",
+  "text": "Brez meritve kisika pihajo na polno. To je skoraj polovica vse elektrike.",
+  "v": 3
+ },
+ "fac-cistilna.2": {
+  "file": "fac-cistilna.2.mp3",
+  "text": "Sonda kisika in krmiljenje po meri. Puhala zdaj dihajo pametno.",
+  "v": 3
+ },
+ "fac-cistilna.3": {
+  "file": "fac-cistilna.3.mp3",
+  "text": "Bakterije so bile moje zaveznice!",
+  "v": 3
+ },
+ "fac-cistilna.4": {
+  "file": "fac-cistilna.4.mp3",
+  "text": "Bakterije so zdaj samo site. In mi tudi.",
+  "v": 3
+ },
+ "r3-boss.0": {
+  "file": "r3-boss.0.mp3",
+  "text": "Čistilna naprava. Vsa puhala hkrati na polno. Vsi radijski števci utihnili.",
+  "v": 3
+ },
+ "r3-boss.1": {
+  "file": "r3-boss.1.mp3",
+  "text": "Brez podatkov ne veš, koliko zraka rabijo bakterije. Zato pihaš na polno. Zame.",
+  "v": 3
+ },
+ "r3-boss.2": {
+  "file": "r3-boss.2.mp3",
+  "text": "Najprej radijsko omrežje, potem konica. Ko vodomeri spet govorijo, puhala vodimo po resnici.",
+  "v": 3
+ },
+ "r3-taunt.0": {
+  "file": "r3-taunt.0.mp3",
+  "text": "Tišina. Moja najljubša frekvenca, sem ti rekel.",
+  "v": 3
+ },
+ "r3-taunt.1": {
+  "file": "r3-taunt.1.mp3",
+  "text": "Kjer ni signala, ni podatka. Najprej omrežje, potem konica. Še enkrat.",
+  "v": 3
+ },
+ "r3-ko.0": {
+  "file": "r3-ko.0.mp3",
+  "text": "Naliv. Črpališče dela za tri, radijski števci pa končno vsi poročajo.",
+  "v": 3
+ },
+ "r3-ko.1": {
+  "file": "r3-ko.1.mp3",
+  "text": "Voda bo odnesla tvoje podatke!",
+  "v": 3
+ },
+ "r3-ko.2": {
+  "file": "r3-ko.2.mp3",
+  "text": "Prehod ima lokalni pomnilnik. Nič ne izgine.",
+  "v": 3
+ },
+ "r3-ko.3": {
+  "file": "r3-ko.3.mp3",
+  "text": "Repetitorji, zdaj!",
+  "v": 3
+ },
+ "r3-ko.4": {
+  "file": "r3-ko.4.mp3",
+  "text": "Šum … preveč signala …",
+  "v": 3
+ },
+ "r3-ko.5": {
+  "file": "r3-ko.5.mp3",
+  "text": "Črpališče zasveti. Mesto ostane suho.",
+  "v": 3
+ },
+ "r3-victory.0": {
+  "file": "r3-victory.0.mp3",
+  "text": "Po nalivu. Kanali so polni, števci zgovorni.",
+  "v": 3
+ },
+ "r3-victory.1": {
+  "file": "r3-victory.1.mp3",
+  "text": "Komunala diha. In voda ponoči ne teče več v nič.",
+  "v": 3
+ },
+ "r3-victory.2": {
+  "file": "r3-victory.2.mp3",
+  "text": "V arhivu komunale: delovni nalog iz leta 2009. »Š-0 preseliti v Center. Odčitavanje: ni potrebno.«",
+  "v": 3
+ },
+ "r3-victory.3": {
+  "file": "r3-victory.3.mp3",
+  "text": "Ni potrebno … Leta in leta ga nihče ni odčital. Štel je sam zase. In nihče ga ni poslušal.",
+  "v": 3
+ },
+ "r3-victory.4": {
+  "file": "r3-victory.4.mp3",
+  "text": "Pozimi bo mesto zmrznilo. Takrat bodo spet potrebovali mene.",
+  "v": 3
+ },
+ "r4-intro.0": {
+  "file": "r4-intro.0.mp3",
+  "text": "Kogeneracija. En motor, dva produkta: elektrika in toplota.",
+  "v": 3
+ },
+ "r4-intro.1": {
+  "file": "r4-intro.1.mp3",
+  "text": "Elektriko prodaš, ko je draga. Toploto shraniš, ko je ne rabiš. Zveni preprosto. Ni.",
+  "v": 3
+ },
+ "r4-intro.2": {
+  "file": "r4-intro.2.mp3",
+  "text": "Vsaka toplota, ki jo vržeš v hladilnik, greje mene.",
+  "v": 3
+ },
+ "fac-toplarna.0": {
+  "file": "fac-toplarna.0.mp3",
+  "text": "Toplarna. Plinski motor, ki ga je nekdo nastavil tako, da teče tudi takrat, ko je elektrika poceni.",
+  "v": 3
+ },
+ "fac-toplarna.1": {
+  "file": "fac-toplarna.1.mp3",
+  "text": "Ob treh zjutraj prodajamo elektriko po ceni, ki ne pokrije niti plina.",
+  "v": 3
+ },
+ "fac-toplarna.2": {
+  "file": "fac-toplarna.2.mp3",
+  "text": "Vozni red po ceni in hranilnik toplote. Motor teče, ko se splača.",
+  "v": 3
+ },
+ "fac-toplarna.3": {
+  "file": "fac-toplarna.3.mp3",
+  "text": "Zima je dolga, robotek.",
+  "v": 3
+ },
+ "fac-bolnisnicni.0": {
+  "file": "fac-bolnisnicni.0.mp3",
+  "text": "Bolnišnični CHP. Tu toplota ne sme zmanjkati niti za minuto.",
+  "v": 3
+ },
+ "fac-bolnisnicni.1": {
+  "file": "fac-bolnisnicni.1.mp3",
+  "text": "Operacijske dvorane, porodnišnica, sterilizacija. Vse visi na eni enoti.",
+  "v": 3
+ },
+ "fac-bolnisnicni.2": {
+  "file": "fac-bolnisnicni.2.mp3",
+  "text": "Rezervni načrt, alarmi in napoved odjema. Bolnišnica je na varnem.",
+  "v": 3
+ },
+ "fac-bolnisnicni.3": {
+  "file": "fac-bolnisnicni.3.mp3",
+  "text": "Bolnišnica … ta odvod sem nekoč štel jaz.",
+  "v": 3
+ },
+ "fac-bolnisnicni.4": {
+  "file": "fac-bolnisnicni.4.mp3",
+  "text": "Na stari omari v kleti visi zarjavela tablica: »Napajanje iz Centra, odvod Š-0«.",
+  "v": 3
+ },
+ "r4-boss.0": {
+  "file": "r4-boss.0.mp3",
+  "text": "Najmrzlejši dan v letu. Dve enoti. Pol mesta na eni zanki.",
+  "v": 3
+ },
+ "r4-boss.1": {
+  "file": "r4-boss.1.mp3",
+  "text": "Zmešal sem jim vse nastavitve. Ko zmrznejo radiatorji, bodo prosili zame.",
+  "v": 3
+ },
+ "r4-boss.2": {
+  "file": "r4-boss.2.mp3",
+  "text": "Tokrat ne. Najprej poveži, potem vozi. Topli domovi in visok izkoristek.",
+  "v": 3
+ },
+ "r4-taunt.0": {
+  "file": "r4-taunt.0.mp3",
+  "text": "Zebe? Mene nikoli.",
+  "v": 3
+ },
+ "r4-taunt.1": {
+  "file": "r4-taunt.1.mp3",
+  "text": "Najprej poveži, potem vozi motor po ceni. Hranilnik je moj zaveznik. Gremo še enkrat.",
+  "v": 3
+ },
+ "r4-ko.0": {
+  "file": "r4-ko.0.mp3",
+  "text": "Minus petnajst. Obe enoti tečeta, hranilnik je poln, radiatorji so topli.",
+  "v": 3
+ },
+ "r4-ko.1": {
+  "file": "r4-ko.1.mp3",
+  "text": "Moralo bi zmrzniti! Vse mesto bi moralo prositi zame!",
+  "v": 3
+ },
+ "r4-ko.2": {
+  "file": "r4-ko.2.mp3",
+  "text": "Nihče ne bo prosil. Vse je izmerjeno.",
+  "v": 3
+ },
+ "r4-ko.3": {
+  "file": "r4-ko.3.mp3",
+  "text": "Polna moč, zapiram zanko!",
+  "v": 3
+ },
+ "r4-ko.4": {
+  "file": "r4-ko.4.mp3",
+  "text": "Toplo … zakaj je tako toplo …",
+  "v": 3
+ },
+ "r4-ko.5": {
+  "file": "r4-ko.5.mp3",
+  "text": "Daljinsko ogrevanje zasveti. Pol mesta spi na toplem.",
+  "v": 3
+ },
+ "r4-victory.0": {
+  "file": "r4-victory.0.mp3",
+  "text": "Zora nad toplarno. Dimnik se kadi mirno in enakomerno.",
+  "v": 3
+ },
+ "r4-victory.1": {
+  "file": "r4-victory.1.mp3",
+  "text": "Ker smo izmerili vsak kilovat toplote, preden bi ga izgubili.",
+  "v": 3
+ },
+ "r4-victory.2": {
+  "file": "r4-victory.2.mp3",
+  "text": "Na zaslonu toplarne utripne naslov: Center, stara razdelilna postaja, omara Š-0.",
+  "v": 3
+ },
+ "r4-victory.3": {
+  "file": "r4-victory.3.mp3",
+  "text": "Tam je. Kjer se je vse začelo.",
+  "v": 3
+ },
+ "r4-victory.4": {
+  "file": "r4-victory.4.mp3",
+  "text": "Pridi. A najprej boš moral rešiti zdravstvene domove. Tam alarmi ne čakajo.",
+  "v": 3
+ },
+ "r5-intro.0": {
+  "file": "r5-intro.0.mp3",
+  "text": "Zdravstveni dom, enajst zvečer. V hladilniku spijo cepiva za tisoč otrok.",
+  "v": 3
+ },
+ "r5-intro.1": {
+  "file": "r5-intro.1.mp3",
+  "text": "Med 2 in 8 °C. Ena sama noč pri dvanajstih in vse gre v uničenje.",
+  "v": 3
+ },
+ "r5-intro.2": {
+  "file": "r5-intro.2.mp3",
+  "text": "Toplota je potrpežljiva. Pride počasi, stopinjo za stopinjo. Nihče ne gleda ob treh zjutraj.",
+  "v": 3
+ },
+ "r5-intro.3": {
+  "file": "r5-intro.3.mp3",
+  "text": "Jaz gledam. In ko bo narobe, bo dežurni izvedel v sekundi.",
+  "v": 3
+ },
+ "r5-intro.4": {
+  "file": "r5-intro.4.mp3",
+  "text": "Potem pa poglejmo, koliko alarmov prenese en robotek v eni noči.",
+  "v": 3
+ },
+ "fac-zdcenter.0": {
+  "file": "fac-zdcenter.0.mp3",
+  "text": "ZD Center. Trije hladilniki, en dežurni in meja alarma, ki je končno nastavljena prav.",
+  "v": 3
+ },
+ "fac-zdcenter.1": {
+  "file": "fac-zdcenter.1.mp3",
+  "text": "Vratni kontakt, napajanje, temperatura. Ko zazvoni, je jasno, zakaj.",
+  "v": 3
+ },
+ "fac-zdcenter.2": {
+  "file": "fac-zdcenter.2.mp3",
+  "text": "Cepilni center je pod nadzorom. Nič več lažnih alarmov ob vsakem odpiranju vrat.",
+  "v": 3
+ },
+ "fac-zdcenter.3": {
+  "file": "fac-zdcenter.3.mp3",
+  "text": "Tišina je bila moja. Zdaj zvoni samo, ko je res treba.",
+  "v": 3
+ },
+ "fac-dostava.0": {
+  "file": "fac-dostava.0.mp3",
+  "text": "Hladna dostava. Kurirji vozijo cepiva čez sneg, v torbah pa tiho merijo zapisovalniki.",
+  "v": 3
+ },
+ "fac-dostava.1": {
+  "file": "fac-dostava.1.mp3",
+  "text": "Torba je obtičala na obvoznici. Vložki se talijo. Še pet stopinj do meje.",
+  "v": 3
+ },
+ "fac-dostava.2": {
+  "file": "fac-dostava.2.mp3",
+  "text": "Najbližji ZD ima sveže vložke. Pošiljka ostane v območju vso pot!",
+  "v": 3
+ },
+ "fac-dostava.3": {
+  "file": "fac-dostava.3.mp3",
+  "text": "Vso pot. A pot se še ni končala, robotek.",
+  "v": 3
+ },
+ "fac-dostava.4": {
+  "file": "fac-dostava.4.mp3",
+  "text": "V zapisovalniku zadnje torbe je star vnos iz leta 1991: »Odvod bolnišnica, napajanje Š-0, izpad 4 ure«.",
+  "v": 3
+ },
+ "r5-boss.0": {
+  "file": "r5-boss.0.mp3",
+  "text": "Polnoč. Nevihta nad mestom. V treh zdravstvenih domovih hkrati utihnejo senzorji.",
+  "v": 3
+ },
+ "r5-boss.1": {
+  "file": "r5-boss.1.mp3",
+  "text": "Tisto noč leta 1991 sem štel vsako sekundo izpada. Štiri ure. Nihče ni vprašal, koliko.",
+  "v": 3
+ },
+ "r5-boss.2": {
+  "file": "r5-boss.2.mp3",
+  "text": "Najprej senzorje nazaj na prehod. Potem vsak alarm, takoj, pravi ukrep.",
+  "v": 3
+ },
+ "r5-boss.3": {
+  "file": "r5-boss.3.mp3",
+  "text": "Danes boš ti štel sekunde. Sam.",
+  "v": 3
+ },
+ "r5-taunt.0": {
+  "file": "r5-taunt.0.mp3",
+  "text": "Slišiš? Zvoni. In zvoni. In nihče ne pride.",
+  "v": 3
+ },
+ "r5-taunt.1": {
+  "file": "r5-taunt.1.mp3",
+  "text": "Prepočasi sem bral vzroke. Vrata, napajanje, smer krivulje. Še enkrat, hitreje.",
+  "v": 3
+ },
+ "r5-ko.0": {
+  "file": "r5-ko.0.mp3",
+  "text": "Tri ure zjutraj. Vsi hladilniki v treh domovih kažejo med 2 in 8 °C.",
+  "v": 3
+ },
+ "r5-ko.1": {
+  "file": "r5-ko.1.mp3",
+  "text": "Vsak alarm prebran. Vsak ukrep pravi. Nobenega uničenega odmerka.",
+  "v": 3
+ },
+ "r5-ko.2": {
+  "file": "r5-ko.2.mp3",
+  "text": "Zakaj jih rešuješ? Saj te nihče ne vidi!",
+  "v": 3
+ },
+ "r5-ko.3": {
+  "file": "r5-ko.3.mp3",
+  "text": "Ker jih nekdo mora brati. Agregati, zdaj!",
+  "v": 3
+ },
+ "r5-ko.4": {
+  "file": "r5-ko.4.mp3",
+  "text": "Tako svetlo … kot tisto jutro, ko so prižgali luči v bolnišnici …",
+  "v": 3
+ },
+ "r5-ko.5": {
+  "file": "r5-ko.5.mp3",
+  "text": "Bolnišnična lekarna zasveti. Cepiva za tisoč otrok so na varnem.",
+  "v": 3
+ },
+ "r5-victory.0": {
+  "file": "r5-victory.0.mp3",
+  "text": "Jutro. Medicinska sestra odpre hladilnik. Pet stopinj. Kot vsak dan.",
+  "v": 3
+ },
+ "r5-victory.1": {
+  "file": "r5-victory.1.mp3",
+  "text": "Nihče ne bo vedel, kaj se je zgodilo ponoči. In tako je prav.",
+  "v": 3
+ },
+ "r5-victory.2": {
+  "file": "r5-victory.2.mp3",
+  "text": "Jaz bom vedel. Vedno vem. To je moje prekletstvo.",
+  "v": 3
+ },
+ "r5-victory.3": {
+  "file": "r5-victory.3.mp3",
+  "text": "Ni prekletstvo, Š-0. Spomin je. Samo nihče ga še ni prebral.",
+  "v": 3
+ },
+ "r5-victory.4": {
+  "file": "r5-victory.4.mp3",
+  "text": "Pridi v Center. V klet. Tam je vse, kar sem kdaj štel. Če si upaš.",
+  "v": 3
+ },
+ "r6-intro.0": {
+  "file": "r6-intro.0.mp3",
+  "text": "Center. Stara razdelilna postaja, zaprta od leta 2009. Vrata v klet so odklenjena.",
+  "v": 3
+ },
+ "r6-intro.1": {
+  "file": "r6-intro.1.mp3",
+  "text": "Police do stropa. Trakovi, diskete, zvezki. Vse označeno s Š-0.",
+  "v": 3
+ },
+ "r6-intro.2": {
+  "file": "r6-intro.2.mp3",
+  "text": "Devetintrideset let. Vsak mesec, vsak kilovat. Popolna zgodovina mesta, ki je nihče ni hotel.",
+  "v": 3
+ },
+ "r6-intro.3": {
+  "file": "r6-intro.3.mp3",
+  "text": "Jaz jo hočem. Prenesla jo bova v InGenious. Zapis za zapisom.",
+  "v": 3
+ },
+ "r6-intro.4": {
+  "file": "r6-intro.4.mp3",
+  "text": "Prenesla? Tako so rekli tudi leta 2009. Nov števec, star gre v klet!",
+  "v": 3
+ },
+ "fac-arhiv.0": {
+  "file": "fac-arhiv.0.mp3",
+  "text": "Arhiv meritev. Prvi trakovi so prebrani. Enote preverjene, dvojniki zavrženi.",
+  "v": 3
+ },
+ "fac-arhiv.1": {
+  "file": "fac-arhiv.1.mp3",
+  "text": "Januar 1987, Livarna: 12 480 kWh. Prvi odčitek Š-0. Po devetintridesetih letih spet berljiv.",
+  "v": 3
+ },
+ "fac-arhiv.2": {
+  "file": "fac-arhiv.2.mp3",
+  "text": "Arhiv zasveti. Zgodovina mesta teče v platformo.",
+  "v": 3
+ },
+ "fac-arhiv.3": {
+  "file": "fac-arhiv.3.mp3",
+  "text": "Ta številka … napisal sem jo s tresočim kolutom. Prvi dan.",
+  "v": 3
+ },
+ "fac-razdelilna.0": {
+  "file": "fac-razdelilna.0.mp3",
+  "text": "Stara razdelilna postaja. Od tod je nekoč tekla elektrika za pol mesta.",
+  "v": 3
+ },
+ "fac-razdelilna.1": {
+  "file": "fac-razdelilna.1.mp3",
+  "text": "Odvodi so povezani, števci v kleti spet slišijo prehod.",
+  "v": 3
+ },
+ "fac-razdelilna.2": {
+  "file": "fac-razdelilna.2.mp3",
+  "text": "Postaja živi! In zdaj vemo, koliko je porabila vsak mesec od leta 1987.",
+  "v": 3
+ },
+ "fac-razdelilna.3": {
+  "file": "fac-razdelilna.3.mp3",
+  "text": "Ne razumem. Bereš me … in me ni manj.",
+  "v": 3
+ },
+ "fac-razdelilna.4": {
+  "file": "fac-razdelilna.4.mp3",
+  "text": "Seveda ne. Prebran števec ne izgine. Prebran števec šteje.",
+  "v": 3
+ },
+ "r6-boss.0": {
+  "file": "r6-boss.0.mp3",
+  "text": "Na koncu hodnika je omara. Na njej en sam rdeč utrip. Š-0.",
+  "v": 3
+ },
+ "r6-boss.1": {
+  "file": "r6-boss.1.mp3",
+  "text": "Še korak in boš prebral zadnji zapis. Potem me boste zamenjali. Kot vedno.",
+  "v": 3
+ },
+ "r6-boss.2": {
+  "file": "r6-boss.2.mp3",
+  "text": "Tri faze. Odprem omaro, prestanem tvojo konico in preberem tvoj spomin. Do zadnjega zapisa.",
+  "v": 3
+ },
+ "r6-boss.3": {
+  "file": "r6-boss.3.mp3",
+  "text": "Prižgal bom vse, kar sem kdaj štel. Naenkrat. Pa da vidim, kako bereš.",
+  "v": 3
+ },
+ "r6-taunt.0": {
+  "file": "r6-taunt.0.mp3",
+  "text": "Vidiš? Tudi ti si izgubil zapise. Vsi jih izgubijo. Zato sem sam.",
+  "v": 3
+ },
+ "r6-taunt.1": {
+  "file": "r6-taunt.1.mp3",
+  "text": "Ne bom te pustil v kleti. Preveri enote, zavrzi dvojnike, ne izgubi nobenega meseca. Še enkrat.",
+  "v": 3
+ },
+ "r6-ko.0": {
+  "file": "r6-ko.0.mp3",
+  "text": "Zadnji zapis. December 2025. Celovitost sto odstotkov.",
+  "v": 3
+ },
+ "r6-ko.1": {
+  "file": "r6-ko.1.mp3",
+  "text": "Zdaj me boš izbrisal. Zdaj sem samo še stara številka v tvoji bazi!",
+  "v": 3
+ },
+ "r6-ko.2": {
+  "file": "r6-ko.2.mp3",
+  "text": "Ne. Zdaj si prvi merilnik v mojem omrežju. Tisti z najdaljšo zgodovino.",
+  "v": 3
+ },
+ "r6-ko.3": {
+  "file": "r6-ko.3.mp3",
+  "text": "Š-0, odčitek številka ena po devetintridesetih letih. Prehod, beri!",
+  "v": 3
+ },
+ "r6-ko.4": {
+  "file": "r6-ko.4.mp3",
+  "text": "Kaj … kaj je to? Ne boli. Samo … toplo je. Nekdo me bere.",
+  "v": 3
+ },
+ "r6-ko.5": {
+  "file": "r6-ko.5.mp3",
+  "text": "Omara Š-0 zasveti zeleno. Prvič po letu 1987 jo nekdo bere vsak dan.",
+  "v": 3
+ },
+ "r6-victory.0": {
+  "file": "r6-victory.0.mp3",
+  "text": "Zora nad mestom. Tovarne, mlekarna, vodarna, toplarna, bolnišnica. Vse luči gorijo.",
+  "v": 3
+ },
+ "r6-victory.1": {
+  "file": "r6-victory.1.mp3",
+  "text": "Vsak mesec od leta 1987. Zdaj ga vidijo vsi. Mislil sem, da hočem temo. Hotel sem samo, da me kdo prebere.",
+  "v": 3
+ },
+ "r6-victory.2": {
+  "file": "r6-victory.2.mp3",
+  "text": "Dobrodošel v omrežju, Š-0. Tvoja zgodovina je naše izhodišče. Z njo dokažemo vsak prihranek.",
+  "v": 3
+ },
+ "r6-victory.3": {
+  "file": "r6-victory.3.mp3",
+  "text": "Potem začniva. Livarna je ponoči spet pustila prižgano linijo. Videl sem.",
+  "v": 3
+ },
+ "r6-victory.4": {
+  "file": "r6-victory.4.mp3",
+  "text": "Partner! Vedel sem, da imaš dobro oko.",
+  "v": 3
+ },
+ "r6-victory.5": {
+  "file": "r6-victory.5.mp3",
+  "text": "Kar je izmerjeno, ni pozabljeno. InGenious Grid Rush. Konec.",
+  "v": 3
+ }
+}

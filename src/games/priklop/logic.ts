@@ -1,4 +1,5 @@
-import { createRng, type Rng } from '../../core/rng';
+import { createRng } from '../../core/rng';
+import { generateNumberlink } from './numberlink';
 import type { PriklopParams } from '../../core/types';
 
 export interface Cell {
@@ -29,10 +30,10 @@ export interface Port {
 export interface Puzzle {
   cols: number;
   rows: number;
-  obstacles: Set<number>;
   meters: Meter[];
+  /** Each meter's own gateway terminal: the other end of its cable. */
   ports: Port[];
-  /** One known route per meter, from meter to its port. Proves the puzzle is solvable. */
+  /** The unique route per meter, from meter to its port, filling the board together. */
   solution: Cell[][];
 }
 
@@ -41,9 +42,11 @@ export type MeterStatus = 'idle' | 'routing' | 'online' | 'error';
 export type PriklopEvent =
   | { type: 'step'; meter: number }
   | { type: 'blocked'; meter: number; cell: Cell }
+  | { type: 'cut'; meter: number; cell: Cell }
   | { type: 'online'; meter: number }
   | { type: 'spark'; meter: number; reason: 'address' | 'baud' }
   | { type: 'dropout'; meter: number; cell: Cell }
+  | { type: 'unfilled'; empty: number }
   | { type: 'won' }
   | { type: 'timeout' };
 
@@ -56,63 +59,38 @@ const DEVICES = [
   'Temperaturna sonda',
   'Merilnik moči kompresorja',
   'Števec toplote',
+  'Merilnik jalove energije',
+  'Števec vode',
 ];
 
 export const key = (cols: number, x: number, y: number) => y * cols + x;
 
-const DIRS: Cell[] = [
-  { x: 0, y: 1 },
-  { x: 1, y: 0 },
-  { x: -1, y: 0 },
-  { x: 0, y: -1 },
-];
-
-/** Builds a solvable board: routes are carved first, meters placed at their ends, obstacles fill leftovers. */
+/**
+ * Builds a "flow" board: every meter has its own terminal, the cables must fill
+ * every cell, and there is exactly one way to do it.
+ */
 export function generatePuzzle(p: PriklopParams): Puzzle {
-  for (let attempt = 0; attempt < 400; attempt++) {
-    const rng = createRng(p.seed + attempt * 7919);
-    const puzzle = tryGenerate(p, rng);
-    if (puzzle) return puzzle;
-  }
-  throw new Error(`Priklop: no puzzle for seed ${p.seed}`);
-}
-
-function tryGenerate(p: PriklopParams, rng: Rng): Puzzle | null {
-  const { cols, rows, meters: count } = p;
-  if (count > cols) return null;
-  const used = new Set<number>();
-  // Ports spread along the top row so cables fan out.
-  const columns = rng.shuffle([...Array(cols).keys()]).slice(0, count).sort((a, b) => a - b);
-  for (const c of columns) used.add(key(cols, c, 0));
-
-  const minLen = Math.max(3, Math.floor(rows * 0.6));
-  const maxLen = Math.max(minLen + 2, Math.floor((cols * rows) / (count + 1)));
-  const solution: Cell[][] = [];
-  const order = rng.shuffle([...columns.keys()]);
-  const routes: Cell[][] = new Array(count);
-
-  for (const i of order) {
-    const start = { x: columns[i], y: 0 };
-    let route: Cell[] | null = null;
-    for (let tries = 0; tries < 60 && !route; tries++) {
-      route = walk(start, rng.int(minLen, maxLen), cols, rows, used, rng);
-    }
-    if (!route) return null;
-    for (const c of route) used.add(key(cols, c.x, c.y));
-    routes[i] = route;
-  }
-
+  const { cols, rows } = p;
+  const rng = createRng(p.seed);
+  const segs = generateNumberlink(cols, rows, p.meters, rng, p.meters + 1);
+  if (!segs) throw new Error(`Priklop: no unique board for seed ${p.seed}`);
+  const at = (k: number): Cell => ({ x: k % cols, y: Math.floor(k / cols) });
   const meters: Meter[] = [];
   const ports: Port[] = [];
+  const solution: Cell[][] = [];
   const portBaud = rng.pick(BAUDS);
-  routes.forEach((route, i) => {
-    const end = route[route.length - 1];
-    ports.push({ id: i, x: route[0].x, y: 0, baud: i % 3 === 2 ? rng.pick(BAUDS) : portBaud });
-    meters.push({ id: i, device: DEVICES[(i + p.seed) % DEVICES.length], x: end.x, y: end.y, port: i, address: i + 1, baud: 0 });
-    solution.push([...route].reverse());
+  // Longest cables first, so M1 is the backbone of the board.
+  segs.sort((a, b) => b.length - a.length);
+  segs.forEach((seg, i) => {
+    // The terminal is the end nearer the top: the gateway cabinet hangs above the plant.
+    const route = at(seg[0]).y > at(seg[seg.length - 1]).y ? seg.map(at) : [...seg].reverse().map(at);
+    const m = route[0];
+    const port = route[route.length - 1];
+    ports.push({ id: i, x: port.x, y: port.y, baud: i % 3 === 2 ? rng.pick(BAUDS) : portBaud });
+    meters.push({ id: i, device: DEVICES[(i + p.seed) % DEVICES.length], x: m.x, y: m.y, port: i, address: 0, baud: 0 });
+    solution.push(route);
   });
-
-  // Unique, shuffled addresses, then deliberately misconfigure some meters.
+  const count = meters.length;
   const addresses = rng.shuffle([...Array(ADDRESS_MAX).keys()].map((n) => n + 1)).slice(0, count);
   meters.forEach((m, i) => {
     m.address = addresses[i];
@@ -121,66 +99,13 @@ function tryGenerate(p: PriklopParams, rng: Rng): Puzzle | null {
   const victims = rng.shuffle([...meters.keys()]);
   for (let i = 0; i < Math.min(p.conflicts, count - 1); i++) {
     const m = meters[victims[i]];
-    const other = meters[victims[(i + 1) % count]];
-    m.address = other.address;
+    m.address = meters[victims[(i + 1) % count]].address;
   }
   for (let i = 0; i < Math.min(p.baudMismatch, count); i++) {
     const m = meters[victims[count - 1 - i]];
-    const wrong = BAUDS.filter((b) => b !== ports[m.port].baud);
-    m.baud = rng.pick(wrong);
+    m.baud = rng.pick(BAUDS.filter((b) => b !== ports[m.port].baud));
   }
-
-  const obstacles = new Set<number>();
-  const free: number[] = [];
-  for (let y = 1; y < rows; y++) for (let x = 0; x < cols; x++) if (!used.has(key(cols, x, y))) free.push(key(cols, x, y));
-  rng.shuffle(free);
-  const n = Math.floor(free.length * p.obstacles);
-  for (let i = 0; i < n; i++) obstacles.add(free[i]);
-  // Top row cells that are not ports are part of the gateway housing.
-  for (let x = 0; x < cols; x++) if (!columns.includes(x)) obstacles.add(key(cols, x, 0));
-
-  return { cols, rows, obstacles, meters, ports, solution };
-}
-
-function walk(start: Cell, length: number, cols: number, rows: number, used: Set<number>, rng: Rng): Cell[] | null {
-  const route: Cell[] = [start];
-  const mine = new Set<number>([key(cols, start.x, start.y)]);
-  let cur = { x: start.x, y: 1 };
-  if (used.has(key(cols, cur.x, cur.y))) return null;
-  route.push(cur);
-  mine.add(key(cols, cur.x, cur.y));
-  while (route.length < length) {
-    const options = DIRS.map((d) => ({ x: cur.x + d.x, y: cur.y + d.y })).filter((c) => {
-      if (c.x < 0 || c.x >= cols || c.y < 1 || c.y >= rows) return false;
-      const k = key(cols, c.x, c.y);
-      if (used.has(k) || mine.has(k)) return false;
-      // Keep routes one cell wide: no touching our own earlier cells except the one we came from.
-      let touching = 0;
-      for (const d of DIRS) {
-        const nk = key(cols, c.x + d.x, c.y + d.y);
-        if (c.x + d.x >= 0 && c.x + d.x < cols && mine.has(nk)) touching++;
-      }
-      return touching <= 1;
-    });
-    if (options.length === 0) break;
-    // Bias downward so meters end up in the plant, away from the gateway.
-    const weights = options.map((c) => (c.y > cur.y ? 3 : 1));
-    let r = rng.next() * weights.reduce((a, b) => a + b, 0);
-    let next = options[0];
-    for (let i = 0; i < options.length; i++) {
-      r -= weights[i];
-      if (r <= 0) {
-        next = options[i];
-        break;
-      }
-    }
-    cur = next;
-    route.push(cur);
-    mine.add(key(cols, cur.x, cur.y));
-  }
-  const end = route[route.length - 1];
-  if (route.length < Math.min(length, 3) || end.y < 2) return null;
-  return route;
+  return { cols, rows, meters, ports, solution };
 }
 
 /** Game state on top of a puzzle. Pure logic, rendering subscribes to events. */
@@ -227,16 +152,32 @@ export class PriklopGame {
     return this.puzzle.ports.find((p) => p.x === x && p.y === y);
   }
 
+  /** The pair (meter id) whose meter or terminal sits on a cell. */
+  endpointAt(x: number, y: number): number | null {
+    return this.meterAt(x, y)?.id ?? this.portAt(x, y)?.id ?? null;
+  }
+
   /** Which meter's cable runs through a cell, if any. */
   ownerOf(x: number, y: number): number | null {
     for (const [id, path] of this.paths) if (path.some((c) => c.x === x && c.y === y)) return id;
     return null;
   }
 
-  isBlocked(x: number, y: number) {
-    const { cols, rows, obstacles } = this.puzzle;
-    if (x < 0 || y < 0 || x >= cols || y >= rows) return true;
-    return obstacles.has(key(cols, x, y));
+  inside(x: number, y: number) {
+    return x >= 0 && y >= 0 && x < this.puzzle.cols && y < this.puzzle.rows;
+  }
+
+  /** Cells covered by a cable or an endpoint. */
+  get filled() {
+    const seen = new Set<number>();
+    for (const m of this.puzzle.meters) seen.add(key(this.cols, m.x, m.y));
+    for (const p of this.puzzle.ports) seen.add(key(this.cols, p.x, p.y));
+    for (const path of this.paths.values()) for (const c of path) seen.add(key(this.cols, c.x, c.y));
+    return seen.size;
+  }
+
+  get totalCells() {
+    return this.puzzle.cols * this.puzzle.rows;
   }
 
   /** Problems the meter's settings would cause right now. */
@@ -247,18 +188,18 @@ export class PriklopGame {
     return null;
   }
 
+  /** Start a cable from either end of a pair, or pick up an unfinished one mid-way. */
   startDrag(x: number, y: number): boolean {
-    if (this.finished) return false;
-    const meter = this.meterAt(x, y);
-    if (meter) {
-      this.disconnect(meter.id);
-      this.paths.set(meter.id, [{ x, y }]);
-      this.status.set(meter.id, 'routing');
-      this.active = meter.id;
+    if (this.finished || !this.inside(x, y)) return false;
+    const end = this.endpointAt(x, y);
+    if (end !== null) {
+      this.paths.set(end, [{ x, y }]);
+      this.status.set(end, 'routing');
+      this.active = end;
       return true;
     }
     const owner = this.ownerOf(x, y);
-    if (owner !== null && this.status.get(owner) !== 'online') {
+    if (owner !== null) {
       const path = this.paths.get(owner)!;
       const idx = path.findIndex((c) => c.x === x && c.y === y);
       this.paths.set(owner, path.slice(0, idx + 1));
@@ -279,7 +220,6 @@ export class PriklopGame {
       if (last.x === x && last.y === y) return;
       const dx = Math.sign(x - last.x);
       const dy = Math.sign(y - last.y);
-      // Prefer the axis with the larger distance, fall back to the other one if blocked.
       const primary = Math.abs(x - last.x) >= Math.abs(y - last.y) ? { x: last.x + dx, y: last.y } : { x: last.x, y: last.y + dy };
       const secondary = primary.x !== last.x ? { x: last.x, y: last.y + dy } : { x: last.x + dx, y: last.y };
       if (this.step(primary)) continue;
@@ -291,33 +231,37 @@ export class PriklopGame {
   private step(c: Cell): boolean {
     const id = this.active!;
     const path = this.paths.get(id)!;
-    const prev = path[path.length - 2];
-    if (prev && prev.x === c.x && prev.y === c.y) {
-      path.pop();
-      this.emit({ type: 'step', meter: id });
-      return true;
-    }
+    if (!this.inside(c.x, c.y)) return false;
     const ownIdx = path.findIndex((p) => p.x === c.x && p.y === c.y);
     if (ownIdx >= 0) {
+      // Going back over your own cable rewinds it.
       path.length = ownIdx + 1;
       this.emit({ type: 'step', meter: id });
       return true;
     }
-    const meter = this.puzzle.meters[id];
-    const port = this.portAt(c.x, c.y);
-    if (port) {
-      if (port.id !== meter.port) {
-        this.emit({ type: 'blocked', meter: id, cell: c });
-        return false;
+    const end = this.endpointAt(c.x, c.y);
+    if (end !== null) {
+      const start = path[0];
+      const startIsMeter = this.meterAt(start.x, start.y)?.id === id;
+      const target = startIsMeter ? this.puzzle.ports[id] : this.puzzle.meters[id];
+      if (end === id && target.x === c.x && target.y === c.y) {
+        path.push(c);
+        this.active = null;
+        this.testLink(id);
+        return true;
       }
-      path.push(c);
-      this.active = null;
-      this.testLink(id);
-      return true;
-    }
-    if (this.isBlocked(c.x, c.y) || this.meterAt(c.x, c.y) || this.ownerOf(c.x, c.y) !== null) {
       this.emit({ type: 'blocked', meter: id, cell: c });
       return false;
+    }
+    const other = this.ownerOf(c.x, c.y);
+    if (other !== null && other !== id) {
+      // Like a real cable tray: the newer cable pushes the old one out.
+      const op = this.paths.get(other)!;
+      const idx = op.findIndex((p) => p.x === c.x && p.y === c.y);
+      op.length = idx;
+      if (op.length <= 1) this.paths.delete(other);
+      this.status.set(other, op.length > 1 ? 'routing' : 'idle');
+      this.emit({ type: 'cut', meter: other, cell: c });
     }
     path.push(c);
     this.emit({ type: 'step', meter: id });
@@ -332,14 +276,18 @@ export class PriklopGame {
       this.paths.delete(id);
       this.status.set(id, 'idle');
     }
+    this.checkWin();
   }
 
   isConnected(id: number) {
     const path = this.paths.get(id);
-    if (!path) return false;
-    const end = path[path.length - 1];
-    const port = this.puzzle.ports[this.puzzle.meters[id].port];
-    return end.x === port.x && end.y === port.y;
+    if (!path || path.length < 2) return false;
+    const a = path[0];
+    const b = path[path.length - 1];
+    const m = this.puzzle.meters[id];
+    const p = this.puzzle.ports[id];
+    const is = (c: Cell, d: Cell) => c.x === d.x && c.y === d.y;
+    return (is(a, m) && is(b, p)) || (is(a, p) && is(b, m));
   }
 
   private testLink(id: number) {
@@ -361,11 +309,8 @@ export class PriklopGame {
     if (m.address === address && m.baud === baud) return;
     m.address = address;
     m.baud = baud;
-    // A collision knocks out every online meter that shares the address.
     for (const other of this.puzzle.meters) {
-      if (other.id !== id && this.status.get(other.id) === 'online' && this.configProblem(other.id)) {
-        this.status.set(other.id, 'error');
-      }
+      if (other.id !== id && this.status.get(other.id) === 'online' && this.configProblem(other.id)) this.status.set(other.id, 'error');
     }
     if (this.isConnected(id)) this.testLink(id);
     for (const other of this.puzzle.meters) {
@@ -377,17 +322,18 @@ export class PriklopGame {
     this.checkWin();
   }
 
-  private disconnect(id: number) {
-    this.paths.delete(id);
-    this.status.set(id, 'idle');
-  }
-
+  private lastUnfilled = -1;
   private checkWin() {
-    if (this.finished) return;
-    if (this.puzzle.meters.every((m) => this.status.get(m.id) === 'online')) {
-      this.finished = 'won';
-      this.emit({ type: 'won' });
+    if (this.finished || this.active !== null) return;
+    if (!this.puzzle.meters.every((m) => this.status.get(m.id) === 'online')) return;
+    const empty = this.totalCells - this.filled;
+    if (empty > 0) {
+      if (empty !== this.lastUnfilled) this.emit({ type: 'unfilled', empty });
+      this.lastUnfilled = empty;
+      return;
     }
+    this.finished = 'won';
+    this.emit({ type: 'won' });
   }
 
   update(dt: number) {
@@ -405,14 +351,16 @@ export class PriklopGame {
   }
 
   private cutRandomCable(seedish: number) {
-    const online = this.puzzle.meters.filter((m) => this.status.get(m.id) === 'online');
+    const online = this.puzzle.meters.filter((m) => this.status.get(m.id) === 'online' && m.id !== this.active);
     if (!online.length) return;
     const victim = online[Math.floor(seedish * 997) % online.length];
     const path = this.paths.get(victim.id)!;
-    // Cut somewhere in the middle, never on the meter or port itself.
     if (path.length < 3) return;
-    const cell = path[1 + (Math.floor(seedish * 31) % (path.length - 2))];
-    this.disconnect(victim.id);
+    // The cable breaks in the middle; the half still attached to its start stays in place.
+    const idx = 1 + (Math.floor(seedish * 31) % (path.length - 2));
+    const cell = path[idx];
+    path.length = idx;
+    this.status.set(victim.id, 'routing');
     this.emit({ type: 'dropout', meter: victim.id, cell });
   }
 

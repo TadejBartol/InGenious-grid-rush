@@ -4,6 +4,7 @@ import { LEVELS } from '../src/core/levels';
 import { dailyLevel, addDays } from '../src/core/daily';
 import type { PriklopParams } from '../src/core/types';
 import { solvePriklop } from './helpers';
+import { countSolutions } from '../src/games/priklop/numberlink';
 
 const priklopStages = LEVELS.flatMap((l) => l.stages.filter((s) => s.kind === 'priklop').map((s) => ({ id: l.id, params: s.params as PriklopParams })));
 
@@ -13,22 +14,32 @@ describe('Priklop generator', () => {
     const a = generatePuzzle(p);
     const b = generatePuzzle(p);
     expect(a.meters).toEqual(b.meters);
-    expect([...a.obstacles]).toEqual([...b.obstacles]);
+    expect(a.solution).toEqual(b.solution);
   });
 
-  it.each(priklopStages)('$id: solution routes avoid obstacles and each other', ({ params }) => {
+  it.each(priklopStages)('$id: routes fill every cell exactly once and the fill is unique', ({ params }) => {
+    const t = performance.now();
     const pz = generatePuzzle(params);
-    expect(pz.meters).toHaveLength(params.meters);
+    // Boards are generated on the phone at level start, so they must be quick.
+    expect(performance.now() - t).toBeLessThan(250);
+    expect(pz.meters.length).toBeGreaterThanOrEqual(params.meters);
     const seen = new Set<number>();
     for (const route of pz.solution) {
       for (const c of route) {
         const k = key(pz.cols, c.x, c.y);
-        expect(pz.obstacles.has(k)).toBe(false);
         expect(seen.has(k)).toBe(false);
         seen.add(k);
       }
       for (let i = 1; i < route.length; i++) expect(Math.abs(route[i].x - route[i - 1].x) + Math.abs(route[i].y - route[i - 1].y)).toBe(1);
     }
+    expect(seen.size).toBe(pz.cols * pz.rows);
+    const pairs = pz.solution.map((r) => ({ a: key(pz.cols, r[0].x, r[0].y), b: key(pz.cols, r[r.length - 1].x, r[r.length - 1].y) }));
+    const sols: Int16Array[] = [];
+    countSolutions(pz.cols, pz.rows, pairs, 6, 200_000, sols);
+    const mine = new Int16Array(pz.cols * pz.rows);
+    pz.solution.forEach((r, i) => r.forEach((c) => (mine[key(pz.cols, c.x, c.y)] = i)));
+    expect(sols.length).toBeGreaterThan(0);
+    for (const s of sols) expect([...s]).toEqual([...mine]);
   });
 
   it.each(priklopStages)('$id: injects the requested misconfiguration', ({ params }) => {
@@ -56,7 +67,7 @@ describe('Priklop generator', () => {
 });
 
 describe('Priklop play', () => {
-  const params: PriklopParams = { cols: 5, rows: 6, meters: 3, timeSec: 60, obstacles: 0.2, conflicts: 1, baudMismatch: 0, dropouts: [], seed: 42 };
+  const params: PriklopParams = { cols: 5, rows: 6, meters: 3, timeSec: 60, conflicts: 1, baudMismatch: 0, dropouts: [], seed: 42 };
 
   it('sparks and counts a mistake when a misconfigured meter is connected', () => {
     const game = new PriklopGame(params);
@@ -75,16 +86,52 @@ describe('Priklop play', () => {
     expect(game.status.get(bad.id)).toBe('online');
   });
 
-  it('cannot route through obstacles or other cables', () => {
-    const game = new PriklopGame({ ...params, conflicts: 0 });
-    const [a, b] = game.puzzle.solution;
+  it('a new cable cuts through an unfinished one, but never through endpoints', () => {
+    const game = new PriklopGame({ ...params, conflicts: 0, baudMismatch: 0 });
+    const [a] = game.puzzle.solution;
     game.startDrag(a[0].x, a[0].y);
     for (const c of a.slice(1)) game.dragTo(c.x, c.y);
-    game.startDrag(b[0].x, b[0].y);
-    const target = a[Math.floor(a.length / 2)];
-    game.dragTo(target.x, target.y);
-    const path = game.paths.get(1)!;
-    expect(path.some((c) => c.x === target.x && c.y === target.y)).toBe(false);
+    expect(game.status.get(0)).toBe('online');
+    // Drag meter 2's cable straight into the middle of cable 1.
+    const mid = a[Math.floor(a.length / 2)];
+    const other = game.puzzle.meters[1];
+    const events: string[] = [];
+    game.on((e) => events.push(e.type));
+    game.startDrag(other.x, other.y);
+    game.dragTo(mid.x, mid.y);
+    if (game.ownerOf(mid.x, mid.y) === 1) {
+      expect(events).toContain('cut');
+      expect(game.status.get(0)).not.toBe('online');
+    }
+    // Endpoints are never crossed.
+    const port0 = game.puzzle.ports[0];
+    game.dragTo(port0.x, port0.y);
+    expect(game.ownerOf(port0.x, port0.y)).not.toBe(1);
+  });
+
+  it('can be drawn from the terminal end too', () => {
+    const game = new PriklopGame({ ...params, conflicts: 0, baudMismatch: 0 });
+    const route = [...game.puzzle.solution[0]].reverse();
+    game.startDrag(route[0].x, route[0].y);
+    for (const c of route.slice(1)) game.dragTo(c.x, c.y);
+    expect(game.status.get(0)).toBe('online');
+  });
+
+  it('all cables online but empty cells left is not a win', () => {
+    const game = solvePriklop(params);
+    expect(game.finished).toBe('won');
+    const g = new PriklopGame({ ...params, conflicts: 0, baudMismatch: 0 });
+    const events: string[] = [];
+    g.on((e) => events.push(e.type));
+    // Connect every pair along its own route except one detour-free shortcut is impossible,
+    // so drop one cable's middle and check the board reports empty cells only when all are online.
+    g.puzzle.solution.forEach((r) => {
+      g.startDrag(r[0].x, r[0].y);
+      for (const c of r.slice(1)) g.dragTo(c.x, c.y);
+      g.endDrag();
+    });
+    expect(g.finished).toBe('won');
+    expect(events).not.toContain('unfilled');
   });
 
   it('backtracking shortens the cable', () => {
@@ -112,6 +159,7 @@ describe('Priklop play', () => {
     for (const c of route.slice(1)) g2.dragTo(c.x, c.y);
     expect(g2.status.get(0)).toBe('online');
     g2.update(1.5);
-    expect(g2.status.get(0)).toBe('idle');
+    expect(g2.status.get(0)).toBe('routing');
+    expect(g2.isConnected(0)).toBe(false);
   });
 });

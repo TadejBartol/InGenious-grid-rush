@@ -13,6 +13,11 @@ import { baselinePeak, KonicaSim, SAMPLE_DT, WINDOW_MIN } from './logic';
 import { expose } from '../../testHooks';
 
 const SLOWMO_FROM = 2.2;
+/** One colour per consumer: its card, its slice of the load tower and its floaters match. */
+const PALETTE = [0x38e1ff, 0xffb340, 0xb57bff, 0xff7ac6, 0x3dff9a, 0x4f7dff, 0xffe066];
+const CRITICAL = 0x8b98c4;
+const BASE = 0x3a4470;
+const hex = (c: number) => `#${c.toString(16).padStart(6, '0')}`;
 
 export function KonicaView(props: GameProps<KonicaParams>) {
   const drainScale = Math.pow(0.88, props.research.rezervoar ?? 0);
@@ -28,7 +33,11 @@ export function KonicaView(props: GameProps<KonicaParams>) {
   const pausedRef = useRef(props.paused);
   pausedRef.current = props.paused;
   const doneRef = useRef(false);
-  const fx = useRef<{ overBurst(): void } | null>(null);
+  const fx = useRef<{ overBurst(): void; toggled(i: number, kw: number): void } | null>(null);
+  const colors = useMemo(() => {
+    let k = 0;
+    return props.params.consumers.map((c) => (c.critical ? CRITICAL : PALETTE[k++ % PALETTE.length]));
+  }, []);
   const warned = useRef(new Set<string>());
 
   const showToast = (text: string, kind: 'good' | 'bad') => setToast({ text, kind, id: Date.now() });
@@ -52,10 +61,14 @@ export function KonicaView(props: GameProps<KonicaParams>) {
     () =>
       sim.on((e) => {
         switch (e.type) {
-          case 'toggle':
+          case 'toggle': {
             audio.play(e.on ? 'on' : 'off');
             buzz(12);
+            const i = sim.consumers.findIndex((x) => x.def.id === e.id);
+            const c = sim.consumers[i];
+            fx.current?.toggled(i, e.on ? c.def.kw * props.params.inrush : -c.draw);
             break;
+          }
           case 'refused':
             audio.play('blocked');
             showToast(e.reason === 'critical' ? 'Proizvodnja ne sme stati!' : e.reason === 'locked' ? 'Še se ponovno zaganja …' : 'Ta porabnik se še ni zagnal', 'bad');
@@ -135,25 +148,40 @@ export function KonicaView(props: GameProps<KonicaParams>) {
     let W = 0;
     let H = 0;
     const padL = 12;
-    const padR = 12;
-    const padT = 64;
+    const towerW = 46;
+    const padR = towerW + 22;
+    const padT = 70;
     const padB = 26;
     const X = (t: number) => padL + (t / p.durationSec) * (W - padL - padR);
     const Y = (kw: number) => padT + (1 - (Math.max(yMin, kw) - yMin) / (yMax - yMin)) * (H - padT - padB);
 
     const big = label('0 kW', { fontFamily: MONO, fontSize: 30, fontWeight: '800', fill: COLORS.green });
     big.position.set(14, 6);
-    const sub = label('Trenutna moč · bela črta = obračunsko povprečje', { fontSize: 11, fill: COLORS.muted });
-    sub.position.set(16, 42);
-    const peakT = label('', { fontFamily: MONO, fontSize: 13, fontWeight: '700', fill: COLORS.text });
+    const room = label('', { fontFamily: MONO, fontSize: 13, fontWeight: '800', fill: COLORS.green });
+    room.position.set(16, 44);
+    const peakT = label('', { fontFamily: MONO, fontSize: 12, fontWeight: '700', fill: COLORS.text });
     peakT.anchor.set(1, 0);
-    const limitT = label(`Obračunska moč ${p.limitKw} kW`, { fontSize: 11, fontWeight: '700', fill: COLORS.red });
+    const peakSub = label('obračunska konica', { fontSize: 10, fill: COLORS.muted });
+    peakSub.anchor.set(1, 0);
+    const legend = label('bela črta = povprečje, ki ga zaračuna elektro', { fontSize: 10, fill: COLORS.muted });
+    legend.anchor.set(1, 0);
+    const limitT = label(`Meja ${p.limitKw} kW`, { fontSize: 11, fontWeight: '700', fill: COLORS.red });
     limitT.anchor.set(1, 1);
-    texts.addChild(big, sub, peakT, limitT);
+    const towerT = label('ZDAJ', { fontFamily: MONO, fontSize: 9, fontWeight: '800', fill: COLORS.muted, letterSpacing: 1 });
+    towerT.anchor.set(0.5, 0);
+    texts.addChild(big, room, peakT, peakSub, legend, limitT, towerT);
+    const tower = new Graphics();
+    root.addChildAt(tower, 1);
     const axis: Text[] = [];
 
     fx.current = {
       overBurst: () => particles.burst(X(sim.t), Y(sim.power), COLORS.red, 26, 260, { gravity: 200 }),
+      toggled: (i, kw) => {
+        const x = W - towerW / 2 - 8;
+        const y = Y(sim.power) - 14;
+        floaters.add(`${kw > 0 ? '+' : '−'}${Math.round(Math.abs(kw))} kW`, x - 30, y, colors[i], 14);
+        particles.burst(x, Y(sim.power), colors[i], 12, 140, { gravity: 0, life: 0.5 });
+      },
     };
 
     const layout = () => {
@@ -172,8 +200,11 @@ export function KonicaView(props: GameProps<KonicaParams>) {
         texts.addChild(t);
         axis.push(t);
       }
-      peakT.position.set(W - 14, 12);
+      peakT.position.set(W - 14, 10);
+      peakSub.position.set(W - 14, 27);
+      legend.position.set(W - padR - 4, padT + 4);
       limitT.position.set(W - padR - 2, Y(p.limitKw) - 4);
+      towerT.position.set(W - 8 - towerW / 2, padT - 14);
     };
 
     let clock = 0;
@@ -184,9 +215,36 @@ export function KonicaView(props: GameProps<KonicaParams>) {
       curve.clear();
       overlay.clear();
       const ly = Y(p.limitKw);
-      // limit line with glow
-      overlay.moveTo(padL, ly).lineTo(W - padR, ly).stroke({ color: COLORS.red, width: 6, alpha: 0.15 });
-      overlay.moveTo(padL, ly).lineTo(W - padR, ly).stroke({ color: COLORS.red, width: 2, alpha: 0.9 });
+      // Load tower: what makes up the power right now, slice by slice, in the cards' colours.
+      tower.clear();
+      const tx = W - 8 - towerW;
+      const bottom = H - padB;
+      tower.roundRect(tx - 3, padT - 3, towerW + 6, bottom - padT + 6, 10).fill({ color: COLORS.panel, alpha: 0.9 });
+      const ramp = sim.ramp(sim.t);
+      let acc = sim.baseAt(sim.t) * ramp;
+      tower.rect(tx, Y(acc), towerW, bottom - Y(acc)).fill({ color: BASE });
+      sim.consumers.forEach((c, i) => {
+        const kw = c.draw * ramp;
+        if (kw < 1) return;
+        const y0 = Y(acc);
+        const y1 = Y(acc + kw);
+        tower.rect(tx, y1, towerW, y0 - y1).fill({ color: colors[i], alpha: c.surgeFor > 0 ? 1 : 0.82 });
+        tower.moveTo(tx, y1).lineTo(tx + towerW, y1).stroke({ color: COLORS.bg, width: 1.5 });
+        acc += kw;
+      });
+      // A consumer about to start shows up as a dashed slice on top of the stack.
+      const soon = sim.upcoming();
+      if (soon && soon.in < 6) {
+        const y0 = Y(acc);
+        const y1 = Y(acc + soon.def.kw * ramp);
+        const i = sim.consumers.findIndex((c) => c.def === soon.def);
+        const blink = 0.35 + 0.35 * Math.abs(Math.sin(clock * 6));
+        tower.rect(tx + 1, y1, towerW - 2, y0 - y1).fill({ color: colors[i], alpha: blink * 0.3 }).stroke({ color: colors[i], width: 1.5, alpha: blink });
+      }
+      // limit line with glow, across the chart and the tower
+      overlay.moveTo(padL, ly).lineTo(W - 8, ly).stroke({ color: COLORS.red, width: 6, alpha: 0.15 });
+      overlay.moveTo(padL, ly).lineTo(W - 8, ly).stroke({ color: COLORS.red, width: 2, alpha: 0.9 });
+      if (sim.power > p.limitKw) tower.rect(tx, Y(sim.power), towerW, ly - Y(sim.power)).fill({ color: COLORS.red, alpha: 0.35 + 0.2 * Math.sin(clock * 14) });
       if (s.length > 1) {
         const step = Math.max(1, Math.floor(s.length / 600));
         area.moveTo(X(0), Y(yMin));
@@ -232,7 +290,10 @@ export function KonicaView(props: GameProps<KonicaParams>) {
       }
       big.text = `${Math.round(sim.power)} kW`;
       big.style.fill = sim.power > p.limitKw ? COLORS.red : sim.power > p.limitKw * 0.94 ? COLORS.orange : COLORS.green;
-      peakT.text = `Obračunska konica ${Math.round(sim.peak)} kW`;
+      const headroom = Math.round(p.limitKw - sim.power);
+      room.text = headroom >= 0 ? `▲ prostora še ${headroom} kW` : `▼ ${-headroom} kW čez mejo!`;
+      room.style.fill = headroom < 0 ? COLORS.red : headroom < p.limitKw * 0.06 ? COLORS.orange : COLORS.green;
+      peakT.text = `${Math.round(sim.peak)} / ${p.limitKw} kW`;
       peakT.style.fill = sim.peak > p.limitKw ? COLORS.red : COLORS.text;
       // Tempo rises with time and with danger.
       const bpm = Math.round(92 + (sim.t / p.durationSec) * 60 + (sim.over ? 24 : 0));
@@ -304,7 +365,7 @@ export function KonicaView(props: GameProps<KonicaParams>) {
         )}
       </div>
       <div class="consumers">
-        {sim.consumers.map((c) => {
+        {sim.consumers.map((c, i) => {
           const pct = Math.round(c.buffer * 100);
           const pending = !c.active;
           const cls = [
@@ -315,9 +376,22 @@ export function KonicaView(props: GameProps<KonicaParams>) {
             c.lockedFor > 0 ? 'locked' : '',
           ].join(' ');
           const startIn = c.def.startAt !== undefined ? Math.max(0, Math.ceil(c.def.startAt - sim.t)) : 0;
+          // What a tap would do to the load, so every decision can be read before it is made.
+          const add = Math.round(c.def.kw);
+          const fits = sim.power + add <= sim.limit;
+          const hungry = !c.def.critical && !c.on && c.buffer < 0.3;
           return (
-            <button class={cls} onClick={() => toggle(c.def.id)} aria-pressed={c.on} aria-label={`${c.def.name}, ${c.on ? 'vklopljen' : 'izklopljen'}`}>
+            <button
+              class={cls}
+              style={{ '--c': hex(colors[i]) }}
+              onClick={() => toggle(c.def.id)}
+              aria-pressed={c.on}
+              aria-label={`${c.def.name}, ${c.on ? 'vklopljen' : 'izklopljen'}`}
+            >
               {!c.def.critical && <span class="switch" />}
+              {!c.def.critical && c.active && !c.on && (
+                <span class={`consumer-delta ${fits ? 'fits' : 'nofit'}`}>{hungry ? '⚠ vklopi me!' : fits ? `+${add} kW ✓` : `+${add} kW ✕`}</span>
+              )}
               <span class="consumer-name">
                 <ConsumerIcon name={c.def.icon} />
                 {c.def.name}
