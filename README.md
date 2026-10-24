@@ -68,7 +68,7 @@ Igra lokalno beleži dogodke `session_start`, `session_end`, `level_start`, `lev
 - **Stopnje in ekonomija:** `src/core/levels.ts` in `src/core/balance.ts`. Po spremembi meja pri Lovu na konico poženi `npm test`: test balansa preveri, da je vsaka stopnja brez ukrepanja izgubljena in z razumnim igranjem rešljiva.
 - **Replike robotka InGenious:** `src/core/genko.ts`.
 - **Zgodba:** `src/core/story.ts` (prizori in replike).
-- **Glasovi:** v repozitorij dodaj skrivnosti `AZURE_SPEECH_KEY` in `AZURE_SPEECH_REGION` (brezplačni Azure Speech F0 zadošča), nato zaženi akcijo *Glasovi zgodbe* na želeni veji. Posnetki se shranijo v `public/voice/`. Lokalno: `AZURE_SPEECH_KEY=… node scripts/voice.mjs`. Lastne posnetke poimenuj `<prizor>.<vrstica>.mp3` (npr. `r1-intro.0.mp3`) in poženi `node scripts/voice.mjs --scan`. Ko spremeniš besedilo replike, se njen stari posnetek ne predvaja več, dokler ga ne generiraš znova.
+- **Glasovi:** v repozitorij dodaj skrivnosti `AZURE_SPEECH_KEY` in `AZURE_SPEECH_REGION` (brezplačni Azure Speech F0 zadošča), akcija *Glasovi zgodbe* se nato sama zažene ob vsaki spremembi zgodbe (ali ročno v Actions). Posnetki se shranijo v `public/voice/`. Lokalno: `AZURE_SPEECH_KEY=… node scripts/voice.mjs`. Lastne posnetke poimenuj `<prizor>.<vrstica>.mp3` (npr. `r1-intro.0.mp3`) in poženi `node scripts/voice.mjs --scan`. Ko spremeniš besedilo replike, se njen stari posnetek ne predvaja več, dokler ga ne generiraš znova.
 - **Demo podatki:** glej [docs/DEMO-PODATKI.md](docs/DEMO-PODATKI.md).
 
 ## Arhitektura
