@@ -23,6 +23,8 @@ const CAST = {
   narrator: { voice: 'sl-SI-RokNeural', pitch: '-4%', rate: '-6%' },
 };
 
+/** Bump when the casting or SSML changes, so every line is synthesised again. */
+const VERSION = 2;
 const scan = process.argv.includes('--scan');
 const key = process.env.AZURE_SPEECH_KEY;
 const region = process.env.AZURE_SPEECH_REGION ?? 'westeurope';
@@ -37,7 +39,12 @@ const escape = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/
 
 async function synth(text, who) {
   const c = CAST[who];
-  const ssml = `<speak version="1.0" xml:lang="sl-SI"><voice name="${c.voice}"><prosody pitch="${c.pitch}" rate="${c.rate}">${escape(text)}</prosody></voice></speak>`;
+  // Tight silences keep the cutscene snappy: Azure otherwise pads about a second per sentence.
+  const ssml =
+    `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="https://www.w3.org/2001/mstts" xml:lang="sl-SI">` +
+    `<voice name="${c.voice}"><mstts:silence type="Leading-exact" value="40ms"/><mstts:silence type="Tailing-exact" value="120ms"/>` +
+    `<mstts:silence type="Sentenceboundary-exact" value="${who === 'dark' ? 420 : 300}ms"/>` +
+    `<prosody pitch="${c.pitch}" rate="${c.rate}">${escape(text)}</prosody></voice></speak>`;
   for (let attempt = 0; attempt < 4; attempt++) {
     const r = await fetch(`https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`, {
       method: 'POST',
@@ -63,15 +70,15 @@ for (const scene of SCENES) {
     const id = `${scene.id}.${i}`;
     const file = `${id}.mp3`;
     const path = new URL(file, DIR);
-    const fresh = existsSync(path) && (scan || old[id]?.text === line.text);
+    const fresh = existsSync(path) && (scan || (old[id]?.text === line.text && old[id]?.v === VERSION));
     if (fresh) {
-      manifest[id] = { file, text: line.text };
+      manifest[id] = { file, text: line.text, v: old[id]?.v ?? VERSION };
       kept++;
       continue;
     }
     if (scan) continue;
     writeFileSync(path, await synth(line.text, line.who));
-    manifest[id] = { file, text: line.text };
+    manifest[id] = { file, text: line.text, v: VERSION };
     made++;
     process.stdout.write('.');
   }
