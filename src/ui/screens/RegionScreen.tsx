@@ -5,6 +5,8 @@ import { fmt } from '../../core/format';
 import { audio, buzz } from '../../audio/sfx';
 import { useGame } from '../../state/store';
 import { nav, useNav } from '../nav';
+import { playScene } from '../story';
+import { DarkMeter } from '../components/DarkMeter';
 import { Genko, GenkoSays } from '../components/Genko';
 import { IsoFactory } from '../components/IsoFactory';
 import { Sheet } from '../components/Common';
@@ -73,6 +75,11 @@ export function RegionScreen({ region }: { region: number }) {
   const box = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(340);
   const [celebrate, setCelebrate] = useState<string | null>(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => playScene(`r${region}-intro`), 450);
+    return () => clearTimeout(t);
+  }, [region]);
 
   useLayoutEffect(() => {
     const el = box.current!;
@@ -143,7 +150,7 @@ export function RegionScreen({ region }: { region: number }) {
 
         <div class="trail-end" style={{ top: `${height - 110}px` }}>
           {current ? (
-            <span class="muted small">Na koncu poti čaka Temni števec.</span>
+            <span class="muted small">Premagaj bossa in osvetli regijo.</span>
           ) : (
             <span class="trail-trophy">
               <IconTrophy width={28} height={28} /> Regija osvetljena!
@@ -190,9 +197,13 @@ function LevelNode({ item, stars, open, isCurrent, pop, width }: { item: Extract
         onClick={() => {
           audio.play('tap');
           buzz(10);
-          nav.getState().openIntro(level);
+          if (level.boss) {
+            audio.play('alarm');
+            buzz([40, 30, 40]);
+            playScene(`r${level.region}-boss`, () => nav.getState().openIntro(level));
+          } else nav.getState().openIntro(level);
         }}
-        aria-label={`Stopnja ${level.index}: ${level.name}, ${kinds}${open ? `, ${stars} zvezdic` : ', zaklenjena'}`}
+        aria-label={`${level.boss ? 'BOSS · ' : ''}Stopnja ${level.index}: ${level.name}, ${kinds}${open ? `, ${stars} zvezdic` : ', zaklenjena'}`}
       >
         {open ? <Icon /> : <IconLock />}
         <span class="node-num mono">{level.index}</span>
@@ -204,9 +215,18 @@ function LevelNode({ item, stars, open, isCurrent, pop, width }: { item: Extract
           ))}
         </div>
       )}
+      {level.boss && stars === 0 && (
+        <>
+          <div class="boss-zone" aria-hidden="true" />
+          <div class={`boss-lurker ${side === 'left' ? 'right' : 'left'}`} aria-hidden="true">
+            <DarkMeter size={64} mood={open ? 'angry' : 'smirk'} />
+          </div>
+        </>
+      )}
+      {level.boss && <span class="boss-tag">BOSS</span>}
       <div class={`node-label ${side}`}>
         <b>{level.name}</b>
-        <span>{level.boss ? `BOSS · ${kinds}` : kinds}</span>
+        <span>{level.boss ? `${level.stages.length} faze · ${kinds}` : kinds}</span>
       </div>
     </div>
   );
@@ -217,11 +237,36 @@ export function LevelIntro({ level, best }: { level: LevelDef; best: number }) {
   const screen = nav.getState().screen;
   return (
     <Sheet label={level.name} onClose={close}>
-      <div class="tiny muted" style={{ letterSpacing: '0.14em', textTransform: 'uppercase' }}>
-        {level.region > 0 ? `Stopnja ${level.region}-${level.index}` : 'Dnevni izziv'} · {level.stages.map((s) => KIND_NAME[s.kind]).join(' + ')}
-      </div>
-      <h2 style={{ fontSize: '22px', margin: '4px 0 12px' }}>{level.name}</h2>
+      {level.boss ? (
+        <div class="boss-head">
+          <div class="boss-head-art">
+            <DarkMeter size={96} mood="angry" />
+          </div>
+          <div>
+            <div class="boss-kicker">⚠ Boss boj · stopnja {level.region}-{level.index}</div>
+            <h2>{level.name}</h2>
+            <div class="boss-phases">
+              {level.stages.map((st, i) => {
+                const Icon = KIND_ICON[st.kind];
+                return (
+                  <span>
+                    <Icon width={14} height={14} /> {i + 1}. {KIND_NAME[st.kind]}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div class="tiny muted" style={{ letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+            {level.region > 0 ? `Stopnja ${level.region}-${level.index}` : 'Dnevni izziv'} · {level.stages.map((s) => KIND_NAME[s.kind]).join(' + ')}
+          </div>
+          <h2 style={{ fontSize: '22px', margin: '4px 0 12px' }}>{level.name}</h2>
+        </>
+      )}
       <GenkoSays text={level.intro} mood={level.boss ? 'worried' : 'happy'} />
+      {level.boss && <p class="small boss-warn">Faze si sledijo brez odmora. Če pade prva, druge ne boš videl.</p>}
       <div class="lesson" style={{ marginTop: '12px' }}>
         {level.lesson}
       </div>
@@ -234,14 +279,14 @@ export function LevelIntro({ level, best }: { level: LevelDef; best: number }) {
         ))}
       </ul>
       <button
-        class="btn primary big"
+        class={`btn ${level.boss ? 'danger' : 'primary'} big`}
         onClick={() => {
           audio.unlock();
           audio.play('go');
           nav.getState().go({ name: 'play', level, from: screen });
         }}
       >
-        {best > 0 ? 'Igraj znova' : 'Igraj'}
+        {best > 0 ? 'Igraj znova' : level.boss ? 'V boj!' : 'Igraj'}
       </button>
     </Sheet>
   );

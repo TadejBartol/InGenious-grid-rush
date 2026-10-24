@@ -30,6 +30,19 @@ const clearHooks = () =>
     delete window.__gr_wmbus;
     delete window.__gr_kogen;
   });
+// Story scenes pop up on first visits; the playtest watches the first one, then skips.
+let storyShots = 0;
+const skipStory = async () => {
+  await wait(700);
+  while (await page.locator('.story').count()) {
+    if (storyShots++ < 1) {
+      await wait(1500);
+      await shot('02b-story');
+    }
+    await page.getByRole('button', { name: 'Preskoči' }).click();
+    await wait(300);
+  }
+};
 const startLevel = async () => {
   await clearHooks();
   await page.getByRole('button', { name: 'Igraj', exact: true }).click();
@@ -192,6 +205,7 @@ for (let i = 0; i < 3; i++) {
   await page.mouse.click(195, 760);
 }
 await wait(400);
+await skipStory();
 step('tutorial finished, region screen');
 await shot('02-region');
 
@@ -228,7 +242,7 @@ if (!litTag) fail('Livarna should light up after 1-3');
 
 // 5. Tabs
 await page.getByRole('button', { name: 'Na zemljevid regije' }).click();
-await wait(300);
+await skipStory();
 await shot('07-region-lit');
 await page.getByRole('button', { name: 'Zemljevid', exact: true }).click();
 await wait(400);
@@ -237,7 +251,7 @@ await page.getByRole('button', { name: 'Nadgradnje', exact: true }).click();
 await wait(300);
 await shot('09-upgrades');
 const before = await page.evaluate(() => window.__gr_store.getState().upgrades.livarna ?? 0);
-await page.locator('.upgrade').first().getByRole('button').click();
+await page.locator('.fac-buy').click();
 const after = await page.evaluate(() => window.__gr_store.getState().upgrades.livarna ?? 0);
 step(`livarna upgrade ${before} → ${after}`);
 if (after !== before + 1) fail('upgrade purchase did not apply');
@@ -285,7 +299,7 @@ await page.getByRole('button', { name: /Mlekarna in prehrana/ }).click();
 await wait(300);
 await shot('14-unlock-region2');
 await page.getByRole('button', { name: /Odkleni/ }).click();
-await wait(400);
+await skipStory();
 await page.getByRole('button', { name: /Stopnja 1: Kdo je pustil/ }).click();
 await startLevel();
 await wait(2200);
@@ -322,7 +336,7 @@ await page.evaluate(() => {
 await page.getByRole('button', { name: 'Zemljevid', exact: true }).click();
 await page.getByRole('button', { name: /Komunala/ }).click();
 await page.getByRole('button', { name: /Odkleni/ }).click();
-await wait(500);
+await skipStory();
 await shot('19-region3');
 await page.getByRole('button', { name: /Stopnja 1: Tihi vodomeri/ }).click();
 await startLevel();
@@ -342,7 +356,7 @@ await page.getByRole('button', { name: 'Na zemljevid regije' }).click();
 await page.getByRole('button', { name: 'Zemljevid', exact: true }).click();
 await page.getByRole('button', { name: /Kogeneracija/ }).click();
 await page.getByRole('button', { name: /Odkleni/ }).click();
-await wait(400);
+await skipStory();
 await page.getByRole('button', { name: /Stopnja 1: Prvi zagon/ }).click();
 await startLevel();
 await playKogen(12);

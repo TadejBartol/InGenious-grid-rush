@@ -88,7 +88,7 @@ export function dailyLevel(key: string, detektivUnlocked: boolean): LevelDef {
   if (kind === 'priklop') {
     stage = {
       kind,
-      params: { cols: 6, rows: 7, meters: 4 + variant, timeSec: 85, obstacles: 0.27, conflicts: 1 + (variant > 0 ? 1 : 0), baudMismatch: 1, dropouts: variant === 2 ? [45] : [], seed },
+      params: { cols: 6, rows: 6, meters: 4 + variant, timeSec: 100, conflicts: 1 + (variant > 0 ? 1 : 0), baudMismatch: 1, dropouts: variant === 2 ? [45] : [], seed },
     };
     stars = [{ type: 'complete' }, { type: 'timeLeft', min: 25 }, { type: 'mistakes', max: 0 }];
   } else if (kind === 'konica') {

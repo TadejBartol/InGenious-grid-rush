@@ -9,8 +9,11 @@ Igra deluje brez povezave, se namesti na domači zaslon in nima backenda: napred
 | Področje | Vsebina |
 | --- | --- |
 | Regije | **1. Industrijska cona** (boss »Postaja, ki piska ponoči«), **2. Mlekarna in prehrana** (boss »Lažnivec na TP«), **3. Komunala** (boss »Čistilna, ki diha«) in **4. Kogeneracija** (boss »Zimska špica«), vsaka z 10 stopnjami na vijugasti poti z objekti ob njej. Regiji 5–6 sta na zemljevidu napovedani. |
-| Mini igre | **Priklop** (vleci kable od merilnikov do prehoda, nastavi Modbus naslov in hitrost), **Lov na konico** (drži obračunsko moč pod rdečo črto, ne da bi ustavil proizvodnjo), **Detektiv** (najdi anomalije v tednu podatkov, combo podvoji DP), **Radijsko omrežje** (postavi wM-Bus prehode in repetitorje, da vsi vodomeri slišijo signal), **Kogenerator** (vodi motor in hranilnik toplote po ceni elektrike in odjemu, drži omrežje toplo in izkoristek visok). |
-| Napredovanje | 1–3 zvezdice na stopnjo s prikazom »skoraj-zmage«, valute kWh / DP / Genko čipi, osvetljevanje objektov, idle števec (tudi ko je igra zaprta, do 8–16 h), nadgradnje objektov, drevo raziskav, kartice naprav, kozmetika za Genka, zlati Genko za popolno regijo. |
+| Mini igre | **Priklop** (logična uganka s potmi: poveži vsak merilnik z vtičnico iste barve, kabli se ne smejo križati in morajo zapolniti vsa polja; vsaka plošča ima natanko eno rešitev; nato nastavi Modbus naslov in hitrost), **Lov na konico** (drži obračunsko moč pod rdečo črto, ne da bi ustavil proizvodnjo), **Detektiv** (najdi anomalije v tednu podatkov, combo podvoji DP), **Radijsko omrežje** (postavi wM-Bus prehode in repetitorje, da vsi vodomeri slišijo signal), **Kogenerator** (vodi motor in hranilnik toplote po ceni elektrike in odjemu, drži omrežje toplo in izkoristek visok). |
+| Napredovanje | 1–3 zvezdice na stopnjo s prikazom »skoraj-zmage«, valute kWh / DP / InGenious čipi, osvetljevanje objektov, idle števec (tudi ko je igra zaprta, do 8–16 h), nadgradnje objektov, drevo raziskav, kartice naprav, kozmetika za robotka InGenious, zlati robotek InGenious za popolno regijo. |
+| Zgodba | Animirani prizori (»Skrivnost Š-0«) ob vstopu v regijo, pred bossom in po zmagi: robotek InGenious proti Temnemu števcu, s tipkanim besedilom, igralcema na odru in vremenom. Vsi videni prizori so v Zbirki in jih lahko ponoviš. |
+| Boss in zmaga | Boss stopnja ima svoj videz na poti, opozorilni uvod in oznako faze med igro. Po prvi zmagi sledi zaslon »Boss premagan« z osvetljevanjem objektov regije, štetjem nagrad in nadaljevanjem zgodbe. |
+| Nadgradnje | Nadzorna soba (izberi objekt, drži gumb za hitro optimizacijo, mejniki na 5 in 10) in Laboratorij (vezje raziskav okoli jedra InGenious). Dotik kWh, DP, čipov ali niza odpre razlago, kaj je to in kako se pridobi. |
 | Dnevna zanka | Dnevni izziv (enak za vse, deljenje rezultata kot emoji graf), niz dni z enim zamrzovalnikom na teden. Odklene se z bossom regije 1. |
 | Občutek | Sintetiziran zvok (WebAudio, nič prenosov), ambient, ki je bolj harmoničen z več osvetljenimi objekti, BPM, ki pospešuje med Lovom na konico, delci, tresenje, upočasnitev v zadnjih sekundah, vibracije na Androidu, »Manj animacij« za dostopnost. |
 | Etika | Brez nakupov, brez oglasov, brez čakalnih zidov, brez obvestil. |
@@ -62,7 +65,8 @@ Igra lokalno beleži dogodke `session_start`, `session_end`, `level_start`, `lev
 
 - **Barve znamke InGenious:** `src/styles.css` (`--brand`, `--brand-2`) in `COLORS` v `src/games/shared/pixi.ts`.
 - **Stopnje in ekonomija:** `src/core/levels.ts` in `src/core/balance.ts`. Po spremembi meja pri Lovu na konico poženi `npm test`: test balansa preveri, da je vsaka stopnja brez ukrepanja izgubljena in z razumnim igranjem rešljiva.
-- **Genkove replike:** `src/core/genko.ts`.
+- **Replike robotka InGenious:** `src/core/genko.ts`.
+- **Zgodba:** `src/core/story.ts` (prizori in replike).
 - **Demo podatki:** glej [docs/DEMO-PODATKI.md](docs/DEMO-PODATKI.md).
 
 ## Arhitektura

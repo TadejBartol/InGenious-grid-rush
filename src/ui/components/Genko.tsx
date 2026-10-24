@@ -28,7 +28,7 @@ export function Genko({ size = 64, mood = 'happy', skin }: { size?: number; mood
   const mouth =
     mood === 'worried' ? 'M40 56 q10 -6 20 0' : mood === 'smug' ? 'M40 54 q12 6 22 -3' : mood === 'wow' ? 'M46 54 a4 4 0 1 0 8 0 a4 4 0 1 0 -8 0' : 'M40 53 q10 8 20 0';
   return (
-    <svg class="genko" width={size} height={size} viewBox="0 0 100 100" role="img" aria-label="Genko">
+    <svg class="genko" width={size} height={size} viewBox="0 0 100 100" role="img" aria-label="Robotek InGenious">
       <defs>
         <radialGradient id={`gb-${sk.id}`} cx="35%" cy="30%" r="75%">
           <stop offset="0" stop-color="#ffffff" />

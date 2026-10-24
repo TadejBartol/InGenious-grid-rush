@@ -17,10 +17,10 @@ export const KIND_NAME: Record<Stage['kind'], string> = { priklop: 'Priklop', ko
 
 /** First-time tutorial bubbles, keyed by level. */
 const TIPS: Record<string, string> = {
-  'r1-1': 'Povleci kabel od merilnika M1 do vrat 1 na prehodu zgoraj. Kabli se ne smejo križati.',
+  'r1-1': 'Povleci kabel od merilnika M1 do okrogle vtičnice iste barve. Kabli se ne smejo križati in morajo skupaj zapolniti vsa polja.',
   'r1-2': 'Dva merilnika imata isti ID. Tapni merilnik in mu nastavi prost naslov, preden ga priklopiš.',
   'r1-3': 'Tapni porabnika, da ga izklopiš. Drži krivuljo pod rdečo črto, a ne pusti, da se zaloga izprazni.',
-  'r1-5': 'Številka pod vrati je hitrost, ki jo vrata pričakujejo. Merilnik mora imeti enako.',
+  'r1-5': 'Številka v vtičnici je hitrost, ki jo pričakuje. Merilnik mora imeti enako.',
   'r1-6': 'Ko porabnika vklopiš, za trenutek potegne več. Ne vklapljaj vsega naenkrat.',
   'r1-7': 'Pozor, povezava je nestabilna. Ko kabel pade, ga znova povleci.',
   'r2-1': 'Tapni na graf tam, kjer debela črta odstopa od svetle. Svetla je tipičen teden.',
@@ -119,7 +119,15 @@ export function PlayScreen({ level, from }: { level: LevelDef; from: Screen }) {
       {stage.kind === 'wmbus' && <WmbusView key={key} {...common} params={stage.params} />}
       {stage.kind === 'kogenerator' && <KogeneratorView key={key} {...common} params={stage.params} />}
       {phase === 'countdown' && (
-        <div class="countdown" aria-live="assertive">
+        <div class={`countdown${level.boss ? ' boss' : ''}`} aria-live="assertive">
+          {level.boss && (
+            <div class="boss-banner">
+              <b>BOSS</b>
+              <span>
+                Faza {stageIdx + 1} od {level.stages.length} · {KIND_NAME[stage.kind]}
+              </span>
+            </div>
+          )}
           <span key={count}>{count}</span>
         </div>
       )}

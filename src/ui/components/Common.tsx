@@ -6,6 +6,7 @@ import { liveStreak, dateKey } from '../../core/daily';
 import { useGame } from '../../state/store';
 import { audio } from '../../audio/sfx';
 import { IconBolt, IconChip, IconData, IconFlame, IconGear, IconStar } from './Icons';
+import { CurrencyInfo, type Currency } from './CurrencyInfo';
 
 export function Stars({ n, max = 3, big = false, label }: { n: number; max?: number; big?: boolean; label?: string }) {
   return (
@@ -73,37 +74,45 @@ export function SavingsCounter() {
   );
 }
 
-export function Wallet() {
+export function Wallet({ onInfo }: { onInfo: (kind: Currency) => void }) {
   const dp = useGame((s) => Math.floor(s.dp));
   const chips = useGame((s) => s.chips);
   const streak = useGame((s) => liveStreak(s.streak, dateKey(new Date())));
+  const open = (kind: Currency) => () => {
+    audio.play('tap');
+    onInfo(kind);
+  };
   return (
     <div class="wallet">
-      <span class="pill dp" title="Podatkovne točke">
+      <button class="pill dp" onClick={open('dp')} aria-label={`${fmt(dp)} podatkovnih točk, kaj je to?`}>
         <IconData />
         {fmt(dp)} DP
-      </span>
+      </button>
       <span class="row" style={{ gap: '4px' }}>
         {streak > 0 && (
-          <span class="pill streak" title="Niz dni">
+          <button class="pill streak" onClick={open('streak')} aria-label={`Niz ${streak} dni, kaj je to?`}>
             <IconFlame />
             {streak}
-          </span>
+          </button>
         )}
-        <span class="pill chips" title="Genko čipi">
+        <button class="pill chips" onClick={open('chips')} aria-label={`${chips} InGenious čipov, kaj je to?`}>
           <IconChip />
           {chips}
-        </span>
+        </button>
       </span>
     </div>
   );
 }
 
 export function TopBar({ onSettings }: { onSettings: () => void }) {
+  const [info, setInfo] = useState<Currency | null>(null);
   return (
     <header class="topbar">
-      <SavingsCounter />
-      <Wallet />
+      <button class="counter-btn" onClick={() => (audio.play('tap'), setInfo('kwh'))} aria-label="Kaj so prihranjene kWh?">
+        <SavingsCounter />
+      </button>
+      <Wallet onInfo={setInfo} />
+      {info && <CurrencyInfo kind={info} onClose={() => setInfo(null)} />}
       <button class="icon-btn" onClick={onSettings} aria-label="Nastavitve">
         <IconGear />
       </button>

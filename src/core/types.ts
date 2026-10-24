@@ -5,8 +5,6 @@ export interface PriklopParams {
   rows: number;
   meters: number;
   timeSec: number;
-  /** Share of free cells turned into machines/walls. */
-  obstacles: number;
   /** Meters shipped with an address that collides with another meter. */
   conflicts: number;
   /** Meters shipped with the wrong baud rate. */

@@ -31,11 +31,11 @@ export interface SkinDef {
 }
 
 export const SKINS: SkinDef[] = [
-  { id: 'klasicen', name: 'Klasični Genko', cost: 0, body: '#dfe8ff', screen: '#0b1a33', glow: '#38e1ff' },
-  { id: 'neon', name: 'Neon Genko', cost: 3, body: '#ffd6f5', screen: '#1d0b2e', glow: '#ff4fd8' },
+  { id: 'klasicen', name: 'Klasični InGenious', cost: 0, body: '#dfe8ff', screen: '#0b1a33', glow: '#38e1ff' },
+  { id: 'neon', name: 'Neon InGenious', cost: 3, body: '#ffd6f5', screen: '#1d0b2e', glow: '#ff4fd8' },
   { id: 'retro', name: 'Retro terminal', cost: 5, body: '#c9d6b8', screen: '#071a07', glow: '#5dff6a' },
   { id: 'nocni', name: 'Nočna izmena', cost: 8, body: '#5a6b8f', screen: '#03060f', glow: '#ffb340' },
-  { id: 'zlati', name: 'Zlati Genko', cost: 0, body: '#ffd86b', screen: '#2a1a00', glow: '#fff1a8', unlock: 'region1-gold' },
+  { id: 'zlati', name: 'Zlati InGenious', cost: 0, body: '#ffd86b', screen: '#2a1a00', glow: '#fff1a8', unlock: 'region1-gold' },
 ];
 
 export const BASE_OFFLINE_CAP_H = 8;

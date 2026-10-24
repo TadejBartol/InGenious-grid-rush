@@ -33,6 +33,8 @@ export function ResultScreen({ outcome, from }: { outcome: LevelOutcome; from: S
       );
     if (reward.kwh > 0) timers.push(window.setTimeout(() => audio.play('coin'), 450 + stars * 350 + 100));
     if (outcome.litFacility || outcome.regionDone) timers.push(window.setTimeout(() => audio.play('unlock'), 1700));
+    // First boss clear: hand over to the big region celebration.
+    if (outcome.regionDone) timers.push(window.setTimeout(() => nav.setState({ victory: level.region }), 2600));
     return () => timers.forEach(clearTimeout);
   }, []);
 
@@ -140,7 +142,7 @@ export function ResultScreen({ outcome, from }: { outcome: LevelOutcome; from: S
         {reward.chips > 0 && (
           <div class="reward">
             <b style={{ color: 'var(--chip)' }}><CountUp prefix="+" value={reward.chips} delay={750 + stars * 350} ms={400} /></b>
-            <span>Genko čipi</span>
+            <span>InGenious čipi</span>
           </div>
         )}
       </div>
