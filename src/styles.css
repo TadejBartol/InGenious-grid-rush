@@ -6855,3 +6855,36 @@ button.pill:active {
 .cr-crew dd {
   margin-inline-start: 0;
 }
+
+/* ---------- Install ---------- */
+.install-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 18px;
+  border: 1px solid rgba(56, 225, 255, 0.45);
+  background: rgba(56, 225, 255, 0.08);
+  color: var(--brand);
+  font-weight: 700;
+}
+
+.install-btn.big {
+  margin-top: 0;
+  width: 100%;
+}
+
+.install-steps {
+  display: grid;
+  text-align: left;
+  gap: 12px;
+  padding-left: 22px;
+  line-height: 1.45;
+}
+
+.install-steps svg {
+  vertical-align: -4px;
+  margin: 0 4px;
+  color: var(--brand);
+}

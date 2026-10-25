@@ -1,18 +1,16 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 import { store, useGame } from '../../state/store';
 import { allEvents, anonId, clearSave } from '../../state/persist';
 import { nav, type Screen } from '../nav';
 import { Toggle } from '../components/Common';
 import { IconBack } from '../components/Icons';
 import { Genko } from '../components/Genko';
-import { installPrompt, promptInstall } from '../../pwa';
+import { InstallButton } from '../components/InstallButton';
 
 export function SettingsScreen({ from }: { from: Screen }) {
   const settings = useGame((s) => s.settings);
   const stats = useGame((s) => s.stats);
   const [confirm, setConfirm] = useState(false);
-  const [canInstall, setCanInstall] = useState(installPrompt.available);
-  useEffect(() => installPrompt.subscribe(setCanInstall), []);
   const set = store.getState().setSetting;
 
   const exportAnalytics = async () => {
@@ -51,11 +49,9 @@ export function SettingsScreen({ from }: { from: Screen }) {
         </div>
       </div>
 
-      {canInstall && (
-        <button class="btn primary big" style={{ marginTop: '14px' }} onClick={() => void promptInstall()}>
-          Namesti na domači zaslon
-        </button>
-      )}
+      <div style={{ marginTop: '14px', display: 'grid' }}>
+        <InstallButton big always />
+      </div>
 
       <div class="section-title">Napredek</div>
       <div class="card small" style={{ display: 'grid', gap: '6px' }}>

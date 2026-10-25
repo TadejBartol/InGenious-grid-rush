@@ -61,3 +61,16 @@ export async function promptInstall() {
 export function reloadForUpdate() {
   void applyUpdate?.(true);
 }
+
+/** Already running as an installed app (home-screen icon). */
+export function isStandalone() {
+  return window.matchMedia?.('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+}
+
+/** iPhone and iPad (iPadOS reports itself as a Mac with touch); Safari there has no install prompt. */
+export function isIos() {
+  const ua = navigator.userAgent;
+  return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+}
+
+export const isMobile = () => window.matchMedia?.('(pointer: coarse)').matches ?? false;

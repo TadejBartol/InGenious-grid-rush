@@ -4,6 +4,7 @@ import { GENKO } from '../../core/genko';
 import { useGame } from '../../state/store';
 import { nav } from '../nav';
 import { Genko } from '../components/Genko';
+import { InstallButton } from '../components/InstallButton';
 
 export function TitleScreen() {
   const firstRun = useGame((s) => Object.keys(s.levels).length === 0 && s.stats.plays === 0);
@@ -29,6 +30,7 @@ export function TitleScreen() {
           <button class="btn primary big" style={{ maxWidth: '320px' }} onClick={start}>
             {firstRun ? 'Začni' : 'Nadaljuj'}
           </button>
+          <InstallButton />
         </>
       ) : (
         <>
