@@ -11,7 +11,7 @@ Workflow `.github/workflows/deploy.yml` ob vsakem pushu na `main` požene teste,
 1. **Settings → General → Danger Zone → Change visibility → Public.** Pages za zasebne repozitorije zahteva plačljiv GitHub paket. Skrivnosti (npr. ključ za glasove) ostanejo skrite tudi v javnem repozitoriju.
 2. **Settings → Pages → Build and deployment → Source: GitHub Actions.**
 3. **Actions → Test in objava → Run workflow** (veja `main`).
-4. Igra je na `https://tadejbartol.github.io/InGenious-grid-rush/`.
+4. Igra je na `https://ingeniousgame.gbartol.com/` (lastna domena, glej spodaj).
 
 ### B. Cloudflare Pages (koda ostane zasebna, brezplačno)
 
@@ -26,12 +26,13 @@ Netlify in Vercel delujeta enako (build `npm run build`, mapa `dist`, Node 22). 
 
 ## 2. Lastna domena (priporočeno)
 
-Na primer `igra.ingenious.si`:
+Igra je nastavljena na `ingeniousgame.gbartol.com`:
 
-1. Pri gostovanju dodaj domeno (GitHub: **Settings → Pages → Custom domain**, Cloudflare: **Custom domains**).
-2. Pri ponudniku DNS dodaj zapis `CNAME igra → tadejbartol.github.io` (oz. naslov `*.pages.dev`).
-3. Vklopi **Enforce HTTPS**. PWA brez HTTPS ne deluje.
-4. Pri GitHub Pages z lastno domeno v workflowu nastavi `BASE_PATH: /`, ker igra potem teče v korenu domene.
+1. V Cloudflare DNS je zapis `CNAME ingeniousgame → tadejbartol.github.io`, proxy izklopljen (DNS only, siv oblaček), da lahko GitHub izda HTTPS certifikat.
+2. V repozitoriju je `public/CNAME` z domeno, workflow gradi z `BASE_PATH: /`, ker igra teče v korenu domene.
+3. V **Settings → Pages → Custom domain** je vpisana `ingeniousgame.gbartol.com`, vklopljen je **Enforce HTTPS** (PWA brez HTTPS ne deluje). Certifikat se izda v nekaj minutah do ure po prvem preverjanju DNS.
+
+Za drugo domeno zamenjaj vsebino `public/CNAME` in naslov slike v `index.html`.
 
 Lastna domena je potrebna tudi za Google Play (glej spodaj), ker mora biti datoteka `/.well-known/assetlinks.json` v korenu domene.
 
@@ -58,4 +59,4 @@ App Store je zahtevnejši: potrebuješ Mac z Xcode, Apple Developer račun (99 U
 - Igro odigraj na vsaj enem Androidu in enem iPhonu (zvok, vibracije, namestitev, igranje brez povezave).
 - Če želiš meriti retencijo, nastavi spremenljivko `VITE_ANALYTICS_URL` pri gostovanju (glej README).
 - Ko spremeniš besedila zgodbe, akcija *Glasovi zgodbe* sama posname nove glasove in jih doda v repozitorij.
-- Povezava za deljenje ima predogled (`public/screenshots/og.jpg`). Ko imaš končno domeno, v `index.html` vpiši poln naslov slike, npr. `https://igra.ingenious.si/screenshots/og.jpg`, ker nekatera omrežja relativnega ne preberejo.
+- Povezava za deljenje ima predogled (`public/screenshots/og.jpg`), naslov slike v `index.html` je poln, ker nekatera omrežja relativnega ne preberejo.

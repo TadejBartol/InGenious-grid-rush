@@ -55,7 +55,7 @@ Repozitorij že vsebuje workflow `.github/workflows/deploy.yml`, ki ob vsakem pu
 1. GitHub Pages za zasebne repozitorije zahteva plačljiv paket, zato repozitorij nastavi kot javnega (**Settings → General → Danger Zone → Change visibility**). Dokler je zaseben, workflow samo testira in zgradi igro.
 2. Odpri **Settings → Pages** in pod **Build and deployment → Source** izberi **GitHub Actions**.
 3. V zavihku **Actions** ponovno poženi »Test in objava« (ali pushaj na `main`).
-4. Igra bo na voljo na `https://tadejbartol.github.io/InGenious-grid-rush/`.
+4. Igra je na voljo na `https://ingeniousgame.gbartol.com/` (lastna domena, `public/CNAME`).
 
 Če želiš, da koda ostane zasebna, uporabi drugo gostovanje (Netlify, Vercel, Cloudflare Pages): build ukaz `npm run build`, izhodna mapa `dist`, `BASE_PATH` ni potreben.
 
