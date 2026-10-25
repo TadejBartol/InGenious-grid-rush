@@ -1,13 +1,14 @@
-import { useEffect, useState } from "preact/hooks";
-import { audio } from "../../audio/sfx";
-import { isFacilityLit } from "../../core/balance";
-import { fmt } from "../../core/format";
-import { FACILITIES, LEVELS, REGIONS } from "../../core/levels";
-import { useGame } from "../../state/store";
-import { nav } from "../nav";
-import { DarkMeter } from "../components/DarkMeter";
-import { Genko } from "../components/Genko";
-import { IsoFactory } from "../components/IsoFactory";
+import { useEffect, useState } from 'preact/hooks';
+import { audio } from '../../audio/sfx';
+import { isFacilityLit } from '../../core/balance';
+import { fmt } from '../../core/format';
+import { FACILITIES, LEVELS, REGIONS } from '../../core/levels';
+import { useGame } from '../../state/store';
+import { nav } from '../nav';
+import { DarkMeter } from '../components/DarkMeter';
+import { Genko } from '../components/Genko';
+import { IsoFactory } from '../components/IsoFactory';
+import { BrandLogo } from '../components/BrandLogo';
 
 /** How long the roll takes; the stinger plays after it. */
 const ROLL_MS = 46000;
@@ -21,46 +22,39 @@ export function Credits() {
   const lifetime = useGame((s) => s.lifetimeKwh);
   const reduced = useGame((s) => s.settings.reducedMotion);
   const [stinger, setStinger] = useState(false);
-  const campaign = LEVELS.filter((l) => !l.id.startsWith("daily-"));
+  const campaign = LEVELS.filter((l) => !l.id.startsWith('daily-'));
   const cleared = campaign.filter((l) => (levels[l.id]?.stars ?? 0) > 0).length;
   const stars = campaign.reduce((s, l) => s + (levels[l.id]?.stars ?? 0), 0);
   const lit = FACILITIES.filter((f) => isFacilityLit(f, levels)).length;
 
   useEffect(() => {
-    audio.play("win");
+    audio.play('win');
     const t = window.setTimeout(() => setStinger(true), reduced ? 0 : ROLL_MS);
     return () => clearTimeout(t);
   }, []);
 
   const close = () => {
-    audio.play("tap");
+    audio.play('tap');
     nav.setState({ credits: false });
-    nav.getState().go({ name: "tabs", tab: "map" });
+    nav.getState().go({ name: 'tabs', tab: 'map' });
   };
 
   return (
-    <div
-      class={`credits${stinger ? " end" : ""}`}
-      role="dialog"
-      aria-label="Odjavna špica"
-    >
+    <div class={`credits${stinger ? ' end' : ''}`} role="dialog" aria-label="Odjavna špica">
       <div class="credits-city" aria-hidden="true">
         {REGIONS.map((r) => FACILITIES.filter((f) => f.region === r.id).at(-1)!)
           .filter(Boolean)
           .map((f, i) => (
-            <div class="cc-fac" style={{ "--i": i }}>
+            <div class="cc-fac" style={{ '--i': i }}>
               <IsoFactory art={f.art} lit />
             </div>
           ))}
       </div>
       {!stinger && (
         <div class="credits-view">
-          <div
-            class="credits-roll"
-            style={{ animationDuration: `${ROLL_MS}ms` }}
-          >
+          <div class="credits-roll" style={{ animationDuration: `${ROLL_MS}ms` }}>
             <div class="cr-logo">
-              <small>InGenious</small>
+              <BrandLogo height={40} />
               <strong>Grid Rush</strong>
             </div>
             <p class="cr-quote">Kar je izmerjeno, ni pozabljeno.</p>
@@ -141,10 +135,7 @@ export function Credits() {
 
             <section>
               <h3>Posebna zahvala</h3>
-              <p class="cr-thanks">
-                Vsem energetskim managerjem, ki ponoči gledajo grafe, ko vsi
-                drugi spijo.
-              </p>
+              <p class="cr-thanks">Vsem energetskim managerjem, ki ponoči gledajo grafe, ko vsi drugi spijo.</p>
             </section>
 
             <p class="cr-quote big">Hvala, ker si igral.</p>

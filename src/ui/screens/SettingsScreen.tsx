@@ -6,6 +6,7 @@ import { Toggle } from '../components/Common';
 import { IconBack } from '../components/Icons';
 import { Genko } from '../components/Genko';
 import { InstallButton } from '../components/InstallButton';
+import { BrandLogo } from '../components/BrandLogo';
 
 export function SettingsScreen({ from }: { from: Screen }) {
   const settings = useGame((s) => s.settings);
@@ -90,7 +91,10 @@ export function SettingsScreen({ from }: { from: Screen }) {
         {confirm ? 'Res izbrišem ves napredek?' : 'Ponastavi napredek'}
       </button>
 
-      <div class="row" style={{ marginTop: '22px', opacity: 0.8 }}>
+      <div class="settings-brand">
+        <BrandLogo height={26} />
+      </div>
+      <div class="row" style={{ marginTop: '10px', opacity: 0.8 }}>
         <Genko size={40} mood="smug" />
         <p class="tiny muted grow">
           InGenious Grid Rush v{__APP_VERSION__} · igra deluje brez povezave. Brez nakupov, brez oglasov. Vsaka mehanika je funkcija platforme InGenious.

@@ -5,6 +5,7 @@ import { useGame } from '../../state/store';
 import { nav } from '../nav';
 import { Genko } from '../components/Genko';
 import { InstallButton } from '../components/InstallButton';
+import { BrandLogo } from '../components/BrandLogo';
 
 export function TitleScreen() {
   const firstRun = useGame((s) => Object.keys(s.levels).length === 0 && s.stats.plays === 0);
@@ -20,7 +21,7 @@ export function TitleScreen() {
   return (
     <div class="title-screen" onClick={step >= 0 ? start : undefined}>
       <div class="logo">
-        <small>INGENIOUS</small>
+        <BrandLogo height={44} class="title-brand" />
         <span>GRID RUSH</span>
       </div>
       <Genko size={120} mood={step >= 0 ? 'happy' : 'wow'} />

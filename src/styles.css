@@ -1734,6 +1734,30 @@ p {
   line-height: 0.95;
 }
 
+.brand-logo {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.title-brand {
+  margin: 0 auto 14px;
+  filter: drop-shadow(0 0 14px rgba(3, 192, 110, 0.35));
+}
+
+.cr-logo .brand-logo {
+  margin: 0 auto 12px;
+}
+
+.settings-brand {
+  display: grid;
+  justify-items: center;
+  margin-top: 26px;
+  opacity: 0.9;
+}
+
 .logo small {
   display: block;
   font-size: 13px;
