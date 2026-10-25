@@ -8,6 +8,9 @@ import { WmbusView } from '../../games/wmbus/WmbusView';
 import { KogeneratorView } from '../../games/kogenerator/KogeneratorView';
 import { AlarmView } from '../../games/alarm/AlarmView';
 import { SelitevView } from '../../games/selitev/SelitevView';
+import { voice } from '../../audio/voice';
+import { FACILITIES } from '../../core/levels';
+import { sceneById } from '../../core/story';
 import { logEvent } from '../../state/persist';
 import { store, useGame } from '../../state/store';
 import { nav, type Screen } from '../nav';
@@ -15,7 +18,15 @@ import { GenkoSays } from '../components/Genko';
 import { Sheet } from '../components/Common';
 import { IconPlay, IconRetry, IconX } from '../components/Icons';
 
-export const KIND_NAME: Record<Stage['kind'], string> = { priklop: 'Priklop', konica: 'Lov na konico', detektiv: 'Detektiv', wmbus: 'Radijsko omrežje', kogenerator: 'Kogenerator', alarm: 'Alarm!', selitev: 'Selitev' };
+export const KIND_NAME: Record<Stage['kind'], string> = {
+  priklop: 'Priklop',
+  konica: 'Lov na konico',
+  detektiv: 'Detektiv',
+  wmbus: 'Radijsko omrežje',
+  kogenerator: 'Kogenerator',
+  alarm: 'Alarm!',
+  selitev: 'Selitev',
+};
 
 /** First-time tutorial bubbles, keyed by level. */
 const TIPS: Record<string, string> = {
@@ -54,6 +65,18 @@ export function PlayScreen({ level, from }: { level: LevelDef; from: Screen }) {
 
   useEffect(() => {
     void logEvent({ t: Date.now(), name: 'level_start', data: { level: level.id } });
+    // Warm the voices of the scenes that can follow this level, so the result beat starts without a gap.
+    const ids = FACILITIES.filter((f) => f.levels.includes(level.id)).map((f) => `fac-${f.id}`);
+    if (level.boss) ids.push(`r${level.region}-ko`, `r${level.region}-taunt`);
+    const t = window.setTimeout(
+      () =>
+        ids.forEach((id) => {
+          const sc = sceneById(id);
+          if (sc) void voice.preload(sc.id, sc.lines);
+        }),
+      1500,
+    );
+    return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
@@ -94,7 +117,11 @@ export function PlayScreen({ level, from }: { level: LevelDef; from: Screen }) {
     }
     const bonusDp = results.current.reduce((s, x) => s + (x.metrics.bonusDp ?? 0), 0);
     const outcome = store.getState().completeLevel(level, results.current, Date.now(), bonusDp);
-    void logEvent({ t: Date.now(), name: level.id.startsWith('daily-') ? 'daily_end' : 'level_end', data: { level: level.id, stars: outcome.stars, score: outcome.result.score, mistakes: outcome.result.mistakes } });
+    void logEvent({
+      t: Date.now(),
+      name: level.id.startsWith('daily-') ? 'daily_end' : 'level_end',
+      data: { level: level.id, stars: outcome.stars, score: outcome.result.score, mistakes: outcome.result.mistakes },
+    });
     nav.getState().go({ name: 'result', outcome, from });
   };
 

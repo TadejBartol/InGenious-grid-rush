@@ -3282,6 +3282,23 @@ button.pill:active {
   }
 }
 
+.dm-smoke {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dm-smoke 1.6s ease-out infinite;
+}
+
+@keyframes dm-smoke {
+  from {
+    opacity: 0.7;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px) scale(2.2);
+  }
+}
+
 .dm-aura {
   animation: dm-aura 2.2s ease-in-out infinite;
 }
@@ -4685,9 +4702,17 @@ button.pill:active {
 
 .cine-svg {
   position: absolute;
-  left: 0;
-  top: 0;
+  overflow: hidden;
+}
+
+.cine-fx,
+.cine-scan,
+.cine-skybolt,
+.cine-current-plate,
+.cine-link-plate {
+  position: absolute;
   overflow: visible;
+  pointer-events: none;
 }
 
 .sk0 {
@@ -4710,6 +4735,8 @@ button.pill:active {
 }
 
 .cine-warm {
+  position: absolute;
+  background: linear-gradient(180deg, #1d3d6a 0%, #5a6a9a 55%, #f2a35e 76%, #ffd38a 100%);
   opacity: 0;
   transition: opacity 5s ease-in-out 0.6s;
 }
@@ -4719,6 +4746,13 @@ button.pill:active {
 }
 
 .cine-sun {
+  position: absolute;
+  left: 80px;
+  top: 480px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #fff4c4 0%, rgba(255, 210, 122, 0.9) 35%, rgba(255, 154, 74, 0) 100%);
   transform: translateY(230px);
   transition: transform 6s cubic-bezier(0.2, 0.6, 0.3, 1) 0.4s;
 }
@@ -4795,8 +4829,24 @@ button.pill:active {
   stroke-linecap: round;
   stroke-dasharray: 18 260;
   stroke-dashoffset: 278;
-  filter: drop-shadow(0 0 4px #3dff9a);
-  animation: cine-current 1.6s linear infinite;
+  animation: cine-current 1.6s linear 3 both;
+}
+
+.cine-current-glow {
+  fill: none;
+  stroke: #7dffc4;
+  stroke-width: 1.4;
+  opacity: 0.35;
+}
+
+.cine-current-plate {
+  animation: cine-breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes cine-breathe {
+  50% {
+    opacity: 0.6;
+  }
 }
 
 @keyframes cine-current {
@@ -4926,18 +4976,46 @@ button.pill:active {
   position: absolute;
   visibility: hidden;
   opacity: 0;
-  filter: brightness(0.6) saturate(0.7);
-  transition: filter 0.35s;
+  transition: opacity 0.35s;
 }
 
+/* Who listens steps back a little. Opacity, not a filter: the actors animate inside,
+   and a filtered element would be repainted through the filter on every frame. */
 .cine-actor.on {
   visibility: visible;
-  opacity: 1;
-  transition: opacity 0.6s, filter 0.35s;
+  opacity: 0.72;
+  transition: opacity 0.6s;
 }
 
-.cine-actor.talk {
-  filter: none;
+.cine-actor.on.talk {
+  opacity: 1;
+}
+
+/* The speaker's glow is a soft disc behind them, drawn once. */
+.cine-actor::before {
+  content: '';
+  position: absolute;
+  inset: -28%;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.35s;
+  pointer-events: none;
+}
+
+.genko-a::before {
+  background: radial-gradient(closest-side, rgba(56, 225, 255, 0.4), rgba(56, 225, 255, 0));
+}
+
+.dark-a::before {
+  background: radial-gradient(closest-side, rgba(255, 59, 92, 0.42), rgba(255, 59, 92, 0));
+}
+
+.cine.healed .dark-a::before {
+  background: radial-gradient(closest-side, rgba(61, 255, 154, 0.42), rgba(61, 255, 154, 0));
+}
+
+.cine-actor.talk::before {
+  opacity: 1;
 }
 
 .cine-act {
@@ -4952,13 +5030,6 @@ button.pill:active {
   animation: cine-sway 3.4s ease-in-out infinite;
 }
 
-.genko-a.talk .genko {
-  filter: drop-shadow(0 0 14px rgba(56, 225, 255, 0.55));
-}
-
-.dark-a.talk svg {
-  filter: drop-shadow(0 0 16px rgba(255, 59, 92, 0.6));
-}
 
 @keyframes cine-hover {
   50% {
@@ -5231,6 +5302,7 @@ button.pill:active {
 
 .cine-rain {
   inset: -20% 0 0;
+  will-change: transform;
   background: repeating-linear-gradient(105deg, transparent 0 18px, rgba(160, 180, 255, 0.07) 18px 19px);
   animation: cine-rain 0.6s linear infinite;
 }
@@ -5447,25 +5519,27 @@ button.pill:active {
 }
 
 /* Ambient life: clouds, beacons, traffic, birds. */
-.cine-clouds ellipse {
-  fill: rgba(150, 120, 200, 0.07);
-  filter: blur(8px);
+.cine-cloud {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(150, 120, 200, 0.09), rgba(150, 120, 200, 0));
   animation: cine-cloud 60s linear infinite;
+  will-change: transform;
 }
 
-.tone-boss .cine-clouds ellipse {
-  fill: rgba(60, 10, 30, 0.5);
+.tone-boss .cine-cloud {
+  background: radial-gradient(closest-side, rgba(60, 10, 30, 0.6), rgba(60, 10, 30, 0));
 }
 
-.wx-storm .cine-clouds ellipse {
-  fill: rgba(30, 20, 50, 0.65);
+.wx-storm .cine-cloud {
+  background: radial-gradient(closest-side, rgba(30, 20, 50, 0.75), rgba(30, 20, 50, 0));
 }
 
-.tone-dawn .cine-clouds ellipse {
-  fill: rgba(255, 200, 160, 0.18);
+.tone-dawn .cine-cloud {
+  background: radial-gradient(closest-side, rgba(255, 200, 160, 0.22), rgba(255, 200, 160, 0));
 }
 
-.cine-clouds.thin ellipse {
+.cine-cloud.thin {
   opacity: 0.5;
 }
 
@@ -5476,9 +5550,161 @@ button.pill:active {
 }
 
 .cine-beacon {
-  fill: #ff3b4e;
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff3b4e;
+  box-shadow: 0 0 6px 2px rgba(255, 59, 78, 0.7);
   animation: cine-beacon 1.8s steps(1) infinite;
-  filter: drop-shadow(0 0 4px #ff3b4e);
+}
+
+@keyframes cine-beacon {
+  50% {
+    opacity: 0.12;
+  }
+}
+
+.cine-car {
+  position: absolute;
+  left: 0;
+  width: 18px;
+  height: 2.4px;
+  border-radius: 1px;
+  background: linear-gradient(90deg, #ffe7a8 0 7px, transparent 7px 11px, #ffe7a8 11px);
+  box-shadow: 0 0 4px rgba(255, 211, 106, 0.5);
+  animation: cine-car 10s linear infinite;
+  will-change: transform;
+}
+
+.cine-car.rev {
+  animation-direction: reverse;
+  background: linear-gradient(90deg, #ff5a5a 0 7px, transparent 7px 11px, #ff5a5a 11px);
+  box-shadow: 0 0 4px rgba(255, 59, 59, 0.5);
+}
+
+@keyframes cine-card {
+  0% {
+    opacity: 0;
+    letter-spacing: 0.3em;
+  }
+  20%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    letter-spacing: 0.06em;
+  }
+}
+
+.cine.still .cine-layer,
+.cine.still .cine-drift,
+.cine.still .cine-warm,
+.cine.still .cine-sun,
+.cine.still .cine-win {
+  transition: none !important;
+}
+
+.cine.still .cine-act {
+  animation: none !important;
+}
+
+/* Camera language: handheld unease on the villain's turf, dutch tilt on beats. */
+.cine-rig {
+  transition: rotate 1.4s cubic-bezier(0.3, 0, 0.3, 1), scale 1.4s cubic-bezier(0.3, 0, 0.3, 1);
+}
+
+.cine-rig.handheld:not(.shake-0):not(.shake-1) {
+  animation: cine-handheld 7s ease-in-out infinite;
+}
+
+@keyframes cine-handheld {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(1.5px, -1px) rotate(0.15deg);
+  }
+  50% {
+    transform: translate(-1px, 1.5px) rotate(-0.2deg);
+  }
+  75% {
+    transform: translate(-1.5px, -0.5px) rotate(0.1deg);
+  }
+}
+
+.cine-rig.dutch {
+  rotate: -2.6deg;
+  scale: 1.06;
+}
+
+/* Once Š-0 is read, the red storm sky clears to a deep teal night. */
+.cine.healed {
+  --sk0: #040e1e;
+  --sk1: #0a2236;
+  --sk2: #123e48;
+  --sk3: #1a5a4a;
+  --gr0: #0c1e22;
+  --tower: #061218;
+}
+
+.cine .sk0,
+.cine .sk1,
+.cine .sk2,
+.cine .sk3,
+.cine .gr0,
+.cine-glow,
+.cine-tower,
+.cine-stars .cine-moon {
+  transition: stop-color 2.4s ease, fill 2.4s ease, filter 2.4s ease;
+}
+
+.cine.healed .cine-stars .cine-moon {
+  fill: #e6fff2;
+  filter: drop-shadow(0 0 18px rgba(125, 255, 196, 0.6));
+}
+
+/* Ambient life: clouds, beacons, traffic, birds. */
+.cine-cloud {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(150, 120, 200, 0.09), rgba(150, 120, 200, 0));
+  animation: cine-cloud 60s linear infinite;
+  will-change: transform;
+}
+
+.tone-boss .cine-cloud {
+  background: radial-gradient(closest-side, rgba(60, 10, 30, 0.6), rgba(60, 10, 30, 0));
+}
+
+.wx-storm .cine-cloud {
+  background: radial-gradient(closest-side, rgba(30, 20, 50, 0.75), rgba(30, 20, 50, 0));
+}
+
+.tone-dawn .cine-cloud {
+  background: radial-gradient(closest-side, rgba(255, 200, 160, 0.22), rgba(255, 200, 160, 0));
+}
+
+.cine-cloud.thin {
+  opacity: 0.5;
+}
+
+@keyframes cine-cloud {
+  to {
+    transform: translateX(260px);
+  }
+}
+
+.cine-beacon {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff3b4e;
+  box-shadow: 0 0 6px 2px rgba(255, 59, 78, 0.7);
+  animation: cine-beacon 1.8s steps(1) infinite;
 }
 
 @keyframes cine-beacon {
@@ -5507,18 +5733,31 @@ button.pill:active {
 
 @keyframes cine-car {
   from {
-    transform: translateX(-700px);
+    transform: translateX(-260px);
   }
   to {
-    transform: translateX(1340px);
+    transform: translateX(900px);
   }
 }
 
-.cine-birds path {
+.cine-bird {
+  position: absolute;
+  animation: cine-bird 16s linear infinite;
+  will-change: transform;
+}
+
+.cine-bird svg {
+  display: block;
+  overflow: visible;
+  scale: var(--s, 1);
+  animation: cine-flap 0.5s ease-in-out infinite alternate;
+}
+
+.cine-bird path {
   fill: none;
   stroke: #2a1a2a;
+  stroke-width: 2;
   stroke-linecap: round;
-  animation: cine-bird 16s linear infinite, cine-flap 0.5s ease-in-out infinite alternate;
 }
 
 @keyframes cine-bird {
@@ -5529,7 +5768,7 @@ button.pill:active {
 
 @keyframes cine-flap {
   to {
-    scale: 1 0.6;
+    transform: scaleY(0.6);
   }
 }
 
@@ -5549,38 +5788,33 @@ button.pill:active {
 }
 
 .cine-snow {
-  inset: -100px 0 0;
+  inset: -170px 0 0;
   background-image: radial-gradient(1.6px 1.6px at 20px 30px, #fff, transparent), radial-gradient(1.2px 1.2px at 80px 90px, #e8f2ff, transparent),
     radial-gradient(1.4px 1.4px at 140px 50px, #fff, transparent), radial-gradient(1px 1px at 60px 140px, #fff, transparent);
   background-size: 170px 170px;
   opacity: 0.55;
   animation: cine-snow 9s linear infinite;
+  will-change: transform;
 }
 
 .cine-snow.near {
+  inset: -260px 0 0;
   background-image: radial-gradient(2.6px 2.6px at 40px 60px, #fff, transparent), radial-gradient(2.2px 2.2px at 190px 160px, #f4f8ff, transparent);
   background-size: 260px 260px;
   opacity: 0.7;
-  filter: blur(0.6px);
+  animation-name: cine-snow-near;
   animation-duration: 5s;
 }
 
 @keyframes cine-snow {
-  from {
-    background-position: 0 0, 0 0, 0 0, 0 0;
-  }
   to {
-    background-position: 60px 170px, -40px 170px, 30px 170px, -20px 170px;
+    transform: translateY(170px);
   }
-}
-
-.cine-snow.near {
-  animation-name: cine-snow-near;
 }
 
 @keyframes cine-snow-near {
   to {
-    background-position: 90px 260px, -60px 260px;
+    transform: translateY(260px);
   }
 }
 
@@ -5588,7 +5822,6 @@ button.pill:active {
   background: radial-gradient(90% 60% at 80% 10%, rgba(210, 220, 255, 0.85), rgba(160, 170, 255, 0.2) 50%, transparent 75%);
   opacity: 0;
   animation: cine-lightning 7.3s infinite;
-  mix-blend-mode: screen;
 }
 
 @keyframes cine-lightning {
@@ -5605,25 +5838,27 @@ button.pill:active {
   }
 }
 
+.cine-skybolt {
+  opacity: 0;
+  animation: cine-lightning 7.3s infinite;
+}
+
 .cine-skybolt path {
   fill: none;
   stroke: #e8ecff;
   stroke-width: 2.5;
   stroke-linejoin: bevel;
-  opacity: 0;
-  animation: cine-lightning 7.3s infinite;
 }
 
 .cine-skybolt .glow {
-  stroke: #9aa6ff;
-  stroke-width: 10;
-  filter: blur(5px);
+  stroke: rgba(154, 166, 255, 0.45);
+  stroke-width: 9;
 }
 
 /* Beats. */
 .cine-scan {
   animation: cine-scan 2.6s ease-in-out infinite alternate;
-  mix-blend-mode: screen;
+  will-change: transform, opacity;
 }
 
 @keyframes cine-scan {
@@ -5638,26 +5873,25 @@ button.pill:active {
 }
 
 .cine-readout {
+  position: absolute;
+  display: grid;
+  gap: 3px;
+  padding: 6px 8px;
+  border-radius: 5px;
+  border: 1.2px solid #5cf2ff;
+  background: rgba(4, 30, 40, 0.85);
+  font: 700 8px/1 ui-monospace, monospace;
+  letter-spacing: 0.12em;
+  color: #8cefff;
+  white-space: nowrap;
   opacity: 0;
   animation: cine-pop 0.5s ease-out 0.8s forwards;
 }
 
-.cine-readout rect {
-  fill: rgba(4, 30, 40, 0.85);
-  stroke: #5cf2ff;
-  stroke-width: 1.2;
-}
-
-.cine-readout text {
-  font: 700 8px/1 ui-monospace, monospace;
-  fill: #8cefff;
-  letter-spacing: 0.12em;
-}
-
-.cine-readout text.v {
+.cine-readout b {
   font-size: 11px;
-  fill: #e6feff;
   letter-spacing: 0.02em;
+  color: #e6feff;
 }
 
 @keyframes cine-pop {
@@ -5675,7 +5909,6 @@ button.pill:active {
   stroke: rgba(92, 242, 255, 0.35);
   stroke-width: 1.6;
   stroke-dasharray: 4 6;
-  animation: cine-dash 0.8s linear infinite;
 }
 
 @keyframes cine-dash {
@@ -5685,8 +5918,26 @@ button.pill:active {
 }
 
 .cine-packet {
-  fill: #7dffc4;
-  filter: drop-shadow(0 0 4px #3dff9a);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 1.5px;
+  background: #7dffc4;
+  box-shadow: 0 0 5px #3dff9a;
+  offset-rotate: auto;
+  animation: cine-packet 1.4s linear infinite both;
+}
+
+@keyframes cine-packet {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
 }
 
 .cine-spot {
@@ -5703,7 +5954,6 @@ button.pill:active {
 
 .cine-glitch {
   background: repeating-linear-gradient(0deg, rgba(255, 0, 60, 0.18) 0 2px, transparent 2px 7px), linear-gradient(90deg, rgba(0, 255, 240, 0.12), transparent 30%, rgba(255, 0, 80, 0.14) 70%, transparent);
-  mix-blend-mode: screen;
   opacity: 0;
   animation: cine-glitch 1.6s steps(1) 2;
 }
@@ -5733,9 +5983,6 @@ button.pill:active {
   }
 }
 
-.cine-rig.dutch .cine-actor.dark-a {
-  filter: drop-shadow(3px 0 0 rgba(0, 255, 240, 0.45)) drop-shadow(-3px 0 0 rgba(255, 0, 80, 0.5));
-}
 
 /* The meter is read: red to green, light rising off it. */
 .cine-heal {
@@ -6912,4 +7159,39 @@ button.pill:active {
   vertical-align: -4px;
   margin: 0 4px;
   color: var(--brand);
+}
+
+/* While a cutscene, the credits or a level covers the screen, the screen underneath
+   stops painting: its animations were being redrawn behind the film every frame. */
+.shell.covered > .topbar,
+.shell.covered > .content,
+.shell.covered > .tabbar {
+  visibility: hidden;
+}
+
+/* Result buttons arm after a short lock; the bar shows when they can be tapped. */
+.res-actions.locked .btn {
+  opacity: 0.45;
+}
+
+.res-actions .btn {
+  transition: opacity 0.3s;
+}
+
+.res-actions.locked::after {
+  content: '';
+  display: block;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--brand);
+  transform-origin: left;
+  transform: scaleX(0);
+  animation: res-lock 2s linear forwards;
+  animation-delay: calc(var(--d, 0) * 1ms);
+}
+
+@keyframes res-lock {
+  to {
+    transform: scaleX(1);
+  }
 }

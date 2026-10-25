@@ -56,8 +56,10 @@ export function App() {
   const tab = base.name === 'tabs' ? base.tab : base.name === 'region' ? 'map' : 'map';
   const openSettings = () => nav.getState().go({ name: 'settings', from: screen });
 
+  const covered = !!scene || credits || victory !== null || screen.name === 'play' || screen.name === 'result';
+
   return (
-    <div class="shell">
+    <div class={`shell${covered ? ' covered' : ''}`}>
       {screen.name === 'settings' ? (
         <SettingsScreen from={screen.from} />
       ) : (

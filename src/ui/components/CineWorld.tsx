@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
+import { memo } from 'preact/compat';
 import type { Direction, Shot } from '../../core/cinema';
 import type { FacilityDef } from '../../core/types';
 import type { Scene, StoryMood } from '../../core/story';
@@ -45,6 +46,7 @@ function layer(cam: Framing, f: number, w: number, h: number) {
 function rng(seed: number) {
   return () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
 }
+const PLATES_X = { min: -170, max: 810 };
 const SKYLINE = (() => {
   const r = rng(7);
   const towers: { x: number; w: number; h: number }[] = [];
@@ -60,10 +62,12 @@ const SKYLINE = (() => {
         if (r() < 0.55) windows.push({ x: wx, y: wy, th: r(), d: Math.abs(wx - 320) });
     x += w + 4 + r() * 10;
   }
-  return { towers, windows };
+  // Only what a camera can reach; the seeded sequence stays the same, so the city does too.
+  const seen = (x: number, w = 4) => x + w > PLATES_X.min && x < PLATES_X.max;
+  return { towers: towers.filter((t) => seen(t.x, t.w)), windows: windows.filter((w) => seen(w.x)) };
 })();
 
-const PYLONS = [-430, -160, 110, 530, 800, 1070];
+const PYLONS = [-160, 110, 530, 800];
 const PYLON_BASE = 752;
 const TIPS = [
   [-50, -188],
@@ -123,6 +127,24 @@ const CARS = Array.from({ length: 5 }, (_, k) => ({ y: HORIZON + 8 + (k % 3) * 9
 const BIRDS = Array.from({ length: 6 }, (_, k) => ({ x: -80 - k * 26, y: 420 + ((k * 37) % 70), s: 0.7 + (k % 3) * 0.2, delay: k * 0.35 }));
 const HEAL = Array.from({ length: 12 }, (_, k) => ({ dx: ((k * 47) % 110) - 55, delay: (k % 6) * 140, dur: 1300 + ((k * 211) % 900) }));
 
+type Box = { x: number; y: number; w: number; h: number };
+/** World area each plate covers: what any framing can show of that layer, with a margin for shake and tilt. */
+const PLATES: Record<'sky' | 'city' | 'windows' | 'mid' | 'cables' | 'ground' | 'fore', Box> = {
+  sky: { x: -140, y: 40, w: 920, h: 1080 },
+  city: { x: -170, y: HORIZON - 260, w: 980, h: 600 },
+  windows: { x: -170, y: HORIZON - 250, w: 980, h: 250 },
+  mid: { x: -200, y: PYLON_BASE - 250, w: 1040, h: 560 },
+  cables: { x: -200, y: PYLON_BASE - 200, w: 1040, h: 110 },
+  ground: { x: -240, y: HORIZON - 2, w: 1120, h: 360 },
+  fore: { x: -270, y: 840, w: 1180, h: 165 },
+};
+const BOLT_BOX: Box = { x: 380, y: 60, w: 280, h: 600 };
+const LINK_BOX: Box = { x: GENKO.x, y: GENKO.y - 120, w: 160, h: 110 };
+const FX_BOX: Box = { x: 120, y: 520, w: 480, h: 360 };
+const box = (b: Box) => ({ left: `${b.x}px`, top: `${b.y}px`, width: `${b.w}px`, height: `${b.h}px` });
+const vb = (b: Box) => `${b.x} ${b.y} ${b.w} ${b.h}`;
+const CLOUDS = [0, 1, 2, 3].map((k) => ({ x: -300 + k * 260, y: 220 + (k % 2) * 90, w: 360 + (k % 3) * 80, h: 64 + (k % 2) * 20, delay: -k * 9 }));
+
 const genkoMood = (m?: StoryMood): Mood => (m === 'smug' || m === 'worried' || m === 'wow' ? m : 'happy');
 
 interface Props {
@@ -133,7 +155,10 @@ interface Props {
   fac?: FacilityDef;
 }
 
-export function CineWorld({ scene, dirs, i, reduced, fac }: Props) {
+/** Memoised: the caption types out every few milliseconds, the set only changes per line. */
+export const CineWorld = memo(CineWorldImpl);
+
+function CineWorldImpl({ scene, dirs, i, reduced, fac }: Props) {
   const vp = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 390, h: 600 });
   const [ready, setReady] = useState(false);
@@ -197,142 +222,73 @@ export function CineWorld({ scene, dirs, i, reduced, fac }: Props) {
   const sky = scene.weather ?? (scene.tone === 'dark' || scene.tone === 'boss' ? 'rain' : 'clear');
   const weather = healed && sky === 'storm' ? 'rain' : sky;
   const scanTo = fac ? { x: 320, y: HORIZON - 50 } : DARK;
+  const scanTop = Math.min(GENKO.y - 12, scanTo.y - 90) - 40;
+  const scanBox: Box = { x: GENKO.x, y: scanTop, w: scanTo.x + 60 - GENKO.x, h: Math.max(GENKO.y - 12, scanTo.y + 70) + 40 - scanTop };
 
   return (
     <div class={`cine tone-${scene.tone} wx-${weather}${healed ? ' healed' : ''}${reduced ? ' still' : ''}`} ref={vp} aria-hidden="true">
       <div class={`cine-rig${shake ? ` shake-${i % 2}` : ''}${scene.tone === 'boss' && !reduced ? ' handheld' : ''}${d.dutch && !reduced ? ' dutch' : ''}`}>
         <div class="cine-drift" style={{ transform: `scale(${drift.s})`, transitionDuration: `${reduced ? 0 : drift.ms}ms` }}>
-          {/* Sky: gradient, moon or sun, stars. */}
+          {/* Sky: gradient, moon, stars. Everything that moves up here is its own element. */}
           <div class="cine-layer" style={tf(DEPTH.sky)}>
-            <svg class="cine-svg" width="640" height="1000">
-              <defs>
-                <linearGradient id="cine-sky" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" class="sk0" />
-                  <stop offset="0.55" class="sk1" />
-                  <stop offset="0.78" class="sk2" />
-                  <stop offset="1" class="sk3" />
-                </linearGradient>
-                <linearGradient id="cine-dawn" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stop-color="#1d3d6a" />
-                  <stop offset="0.55" stop-color="#5a6a9a" />
-                  <stop offset="0.76" stop-color="#f2a35e" />
-                  <stop offset="1" stop-color="#ffd38a" />
-                </linearGradient>
-                <radialGradient id="cine-sun">
-                  <stop offset="0" stop-color="#fff4c4" />
-                  <stop offset="0.35" stop-color="#ffd27a" stop-opacity="0.9" />
-                  <stop offset="1" stop-color="#ff9a4a" stop-opacity="0" />
-                </radialGradient>
-              </defs>
-              <rect x="-1200" y="-700" width="3040" height="2400" fill="url(#cine-sky)" />
-              {scene.tone === 'dawn' && (
-                <>
-                  <rect class={`cine-warm${warm ? ' on' : ''}`} x="-1200" y="-700" width="3040" height="2400" fill="url(#cine-dawn)" />
-                  <circle class={`cine-sun${warm ? ' up' : ''}`} cx="190" cy="590" r="110" fill="url(#cine-sun)" />
-                </>
-              )}
-              {weather === 'storm' && !reduced && (
-                <g class="cine-skybolt">
-                  <path class="glow" d={SKY_BOLT} />
-                  <path d={SKY_BOLT} />
-                </g>
-              )}
-              <g class={`cine-clouds${weather === 'clear' ? ' thin' : ''}`}>
-                {[0, 1, 2, 3].map((k) => (
-                  <ellipse cx={-120 + k * 260} cy={250 + (k % 2) * 90} rx={180 + (k % 3) * 40} ry={26 + (k % 2) * 10} style={{ animationDelay: `${-k * 9}s` }} />
-                ))}
-              </g>
-              {scene.tone === 'dawn' && !reduced && (
-                <g class="cine-birds">
-                  {BIRDS.map((b) => (
-                    <path d={`M${b.x} ${b.y} q6 -6 12 0 q6 -6 12 0`} style={{ animationDelay: `${b.delay}s`, strokeWidth: 2 * b.s }} />
-                  ))}
-                </g>
-              )}
-              {scene.tone !== 'dawn' && (
-                <g class="cine-stars">
-                  {SKYLINE.windows.slice(0, 46).map((w, k) => (
-                    <circle cx={((w.x * 7) % 1100) - 230} cy={120 + ((w.y * 13) % 420)} r={k % 5 ? 1 : 1.6} />
-                  ))}
-                  <circle class="cine-moon" cx="468" cy="330" r="34" />
-                </g>
-              )}
-            </svg>
+            <SkyPlate tone={scene.tone} />
+            {scene.tone === 'dawn' && (
+              <>
+                <i class={`cine-warm${warm ? ' on' : ''}`} style={box(PLATES.sky)} />
+                <i class={`cine-sun${warm ? ' up' : ''}`} />
+              </>
+            )}
+            {!reduced &&
+              CLOUDS.map((c) => (
+                <i class={`cine-cloud${weather === 'clear' ? ' thin' : ''}`} style={{ left: `${c.x}px`, top: `${c.y}px`, width: `${c.w}px`, height: `${c.h}px`, animationDelay: `${c.delay}s` }} />
+              ))}
+            {weather === 'storm' && !reduced && (
+              <svg class="cine-skybolt" style={box(BOLT_BOX)} width={BOLT_BOX.w} height={BOLT_BOX.h} viewBox={vb(BOLT_BOX)}>
+                <path class="glow" d={SKY_BOLT} />
+                <path d={SKY_BOLT} />
+              </svg>
+            )}
+            {scene.tone === 'dawn' &&
+              !reduced &&
+              BIRDS.map((b) => (
+                <i class="cine-bird" style={{ left: `${b.x}px`, top: `${b.y}px`, animationDelay: `${b.delay}s`, '--s': b.s }}>
+                  <svg width="26" height="10" viewBox="0 -7 26 10">
+                    <path d="M1 0 q6 -6 12 0 q6 -6 12 0" />
+                  </svg>
+                </i>
+              ))}
           </div>
 
           {/* Far: the city. Windows come on outward from the facility as the grid is read. */}
           <div class="cine-layer" style={tf(DEPTH.far)}>
-            <svg class="cine-svg" width="640" height="1000">
-              <rect class="cine-glow" x="-800" y={HORIZON - 160} width="2240" height="220" />
-              {SKYLINE.towers.map((t) => (
-                <rect class="cine-tower" x={t.x} y={HORIZON - t.h} width={t.w} height={t.h + 500} />
-              ))}
-              {SKYLINE.windows.map((w) => (
-                <rect
-                  class={`cine-win${w.th < city ? ' on' : ''}`}
-                  x={w.x}
-                  y={w.y}
-                  width="4"
-                  height="6"
-                  style={{ transitionDelay: `${Math.round(w.d * (city < 0.1 ? 0.6 : 2.2))}ms` }}
-                />
-              ))}
-            </svg>
+            <CityPlate />
+            <Windows city={city} />
           </div>
 
           {/* Mid: pylons and the lines; power runs along them when a facility comes online. */}
           <div class="cine-layer" style={tf(DEPTH.mid)}>
-            <svg class="cine-svg" width="640" height="1000">
-              <rect class="cine-mid-ground" x="-900" y={PYLON_BASE - 6} width="2400" height="700" />
-              {PYLONS.map((x) => (
-                <path class="cine-pylon" d={pylonPath(x)} />
-              ))}
-              {CABLES.map((c) => (
-                <path class="cine-cable" d={c.d} />
-              ))}
-              {PYLONS.map((x, k) => (
-                <circle class="cine-beacon" cx={x} cy={PYLON_BASE - 242} r="3.2" style={{ animationDelay: `${(k % 3) * 0.6}s` }} />
-              ))}
-              {lit &&
-                CABLES.map((c) => (
-                  <path class="cine-current" d={c.d} style={{ animationDelay: `${Math.round(c.d0 * 1.4)}ms` }} />
+            <PylonPlate />
+            {lit && (
+              <svg class="cine-current-plate" style={box(PLATES.cables)} width={PLATES.cables.w} height={PLATES.cables.h} viewBox={vb(PLATES.cables)}>
+                {CABLES.map((c) => (
+                  <path class="cine-current-glow" d={c.d} />
                 ))}
-            </svg>
+                {!reduced &&
+                  CABLES.map((c) => (
+                    <path class="cine-current" d={c.d} style={{ animationDelay: `${Math.round(c.d0 * 1.4)}ms` }} />
+                  ))}
+              </svg>
+            )}
+            {!reduced && PYLONS.map((x, k) => <i class="cine-beacon" style={{ left: `${x - 3}px`, top: `${PYLON_BASE - 245}px`, animationDelay: `${(k % 3) * 0.6}s` }} />)}
           </div>
 
           {/* Stage: ground, the facility, the actors and the action. */}
           <div class="cine-layer" style={tf(DEPTH.stage)}>
-            <svg class="cine-svg" width="640" height="1000">
-              <defs>
-                <linearGradient id="cine-ground" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" class="gr0" />
-                  <stop offset="0.25" class="gr1" />
-                  <stop offset="1" stop-color="#020108" />
-                </linearGradient>
-                <radialGradient id="cine-pool">
-                  <stop offset="0" stop-color="#3dff9a" stop-opacity="0.45" />
-                  <stop offset="1" stop-color="#3dff9a" stop-opacity="0" />
-                </radialGradient>
-              </defs>
-              <rect x="-900" y={HORIZON} width="2440" height="800" fill="url(#cine-ground)" />
-              <path class="cine-rail" d={`M-900 ${HORIZON + 0.5} H1540`} />
-              {!reduced && (
-                <g class="cine-cars">
-                  {CARS.map((c) => (
-                    <g class={c.dir ? 'rev' : ''} style={{ animationDuration: `${c.dur}s`, animationDelay: `${c.delay}s` }}>
-                      <rect x="0" y={c.y} width="7" height="2.4" rx="1" />
-                      <rect x="11" y={c.y} width="7" height="2.4" rx="1" />
-                    </g>
-                  ))}
-                </g>
-              )}
-              {[-3, -2, -1, 0, 1, 2, 3].map((k) => (
-                <path class="cine-lane" d={`M${320 + k * 40} ${HORIZON} L${320 + k * 260} 1100`} />
+            <GroundPlate lit={lit} genkoOn={d.genkoOn} darkOn={d.darkOn} />
+            {!reduced &&
+              CARS.map((c) => (
+                <i class={`cine-car${c.dir ? ' rev' : ''}`} style={{ top: `${c.y}px`, animationDuration: `${c.dur}s`, animationDelay: `${c.delay}s` }} />
               ))}
-              <ellipse class={`cine-pool${lit ? ' on' : ''}`} cx="320" cy="780" rx="230" ry="44" fill="url(#cine-pool)" />
-              <ellipse class={`cine-shadow${d.genkoOn ? ' on' : ''}`} cx={GENKO.x} cy="798" rx="34" ry="7" />
-              <ellipse class={`cine-shadow${d.darkOn ? ' on' : ''}`} cx={DARK.x} cy="796" rx="44" ry="8" />
-            </svg>
 
             {fac && (
               <div class={`cine-fac${lit ? ' on' : ''}${act === 'power' ? ' act-power' : ''}`} key={act === 'power' ? `p${i}` : 'fac'}>
@@ -359,34 +315,31 @@ export function CineWorld({ scene, dirs, i, reduced, fac }: Props) {
             </div>
 
             {beat === 'scan' && !reduced && (
-              <svg class="cine-svg cine-fx" width="640" height="1000" key={`sc${i}`}>
-                <defs>
-                  <linearGradient id="cine-scan-g" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0" stop-color="#5cf2ff" stop-opacity="0.75" />
-                    <stop offset="1" stop-color="#5cf2ff" stop-opacity="0" />
-                  </linearGradient>
-                </defs>
-                <g class="cine-scan" style={{ transformOrigin: `${GENKO.x + 16}px ${GENKO.y - 12}px` }}>
+              <>
+                <svg class="cine-scan" key={`sc${i}`} style={{ ...box(scanBox), transformOrigin: `${GENKO.x + 16 - scanBox.x}px ${GENKO.y - 12 - scanBox.y}px` }} width={scanBox.w} height={scanBox.h} viewBox={vb(scanBox)}>
+                  <defs>
+                    <linearGradient id="cine-scan-g" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0" stop-color="#5cf2ff" stop-opacity="0.75" />
+                      <stop offset="1" stop-color="#5cf2ff" stop-opacity="0" />
+                    </linearGradient>
+                  </defs>
                   <path d={`M${GENKO.x + 16} ${GENKO.y - 12} L${scanTo.x + 40} ${scanTo.y - 90} L${scanTo.x + 40} ${scanTo.y + 70} Z`} fill="url(#cine-scan-g)" />
-                </g>
-                <g class="cine-readout" transform={`translate(${scanTo.x + 34} ${scanTo.y - 96})`}>
-                  <rect width="104" height="34" rx="5" />
-                  <text x="8" y="14">ODČITEK</text>
-                  <text x="8" y="28" class="v">
-                    {(1000 + ((i * 7919) % 8999)).toLocaleString('sl-SI')} kWh
-                  </text>
-                </g>
-              </svg>
+                </svg>
+                <div class="cine-readout" key={`rd${i}`} style={{ left: `${scanTo.x + 34}px`, top: `${scanTo.y - 96}px` }}>
+                  <small>ODČITEK</small>
+                  <b>{(1000 + ((i * 7919) % 8999)).toLocaleString('sl-SI')} kWh</b>
+                </div>
+              </>
             )}
             {beat === 'connect' && !reduced && (
-              <svg class="cine-svg cine-fx" width="640" height="1000" key={`cn${i}`}>
-                <path class="cine-link" d={LINK} />
+              <>
+                <svg class="cine-link-plate" style={box(LINK_BOX)} width={LINK_BOX.w} height={LINK_BOX.h} viewBox={vb(LINK_BOX)}>
+                  <path class="cine-link" d={LINK} />
+                </svg>
                 {[0, 1, 2, 3, 4, 5].map((k) => (
-                  <rect class="cine-packet" width="7" height="7" rx="1.5" x="-3.5" y="-3.5">
-                    <animateMotion dur="1.4s" begin={`${k * 0.22}s`} repeatCount="indefinite" rotate="auto" {...({ path: LINK } as Record<string, string>)} />
-                  </rect>
+                  <i class="cine-packet" key={`pk${i}-${k}`} style={{ offsetPath: `path('${LINK}')`, animationDelay: `${k * 0.22}s` }} />
                 ))}
-              </svg>
+              </>
             )}
             {act === 'heal' && !reduced && (
               <div class="cine-heal" key={`hl${i}`} style={{ left: `${DARK.x}px`, top: `${DARK.y}px` }}>
@@ -398,7 +351,7 @@ export function CineWorld({ scene, dirs, i, reduced, fac }: Props) {
               </div>
             )}
             {(act === 'zap' || act === 'hit') && !reduced && (
-              <svg class="cine-svg cine-fx" width="640" height="1000" key={`fx${i}`}>
+              <svg class="cine-fx" key={`fx${i}`} style={box(FX_BOX)} width={FX_BOX.w} height={FX_BOX.h} viewBox={vb(FX_BOX)}>
                 {act === 'zap' && (
                   <g class="cine-bolt">
                     <path class="glow" d={BOLT} />
@@ -420,11 +373,7 @@ export function CineWorld({ scene, dirs, i, reduced, fac }: Props) {
 
           {/* Foreground: dark shapes close to the lens give depth on push-ins. */}
           <div class="cine-layer" style={tf(DEPTH.fore)}>
-            <svg class="cine-svg" width="640" height="1000">
-              <path class="cine-fore" d="M-260 1000 L-260 880 L-40 892 L40 928 L80 1000 Z" />
-              <path class="cine-fore" d="M900 1000 L900 870 L700 884 L612 930 L580 1000 Z" />
-              <path class="cine-fore post" d="M58 1000 L66 860 L74 860 L82 1000 Z M552 1000 L560 850 L568 850 L576 1000 Z" />
-            </svg>
+            <ForePlate />
           </div>
         </div>
       </div>
@@ -452,6 +401,96 @@ export function CineWorld({ scene, dirs, i, reduced, fac }: Props) {
     </div>
   );
 }
+
+/*
+ * Static plates. Each one is drawn once and never changes while a line plays, and each
+ * is clipped to the part of the world a camera can ever see: on a phone at 3x a plate
+ * becomes a big texture, and anything animated inside it would repaint the whole thing
+ * every frame (that was the flicker). Moving things live in their own small elements.
+ */
+const SkyPlate = memo(({ tone }: { tone: Scene['tone'] }) => (
+  <svg class="cine-svg" style={box(PLATES.sky)} width={PLATES.sky.w} height={PLATES.sky.h} viewBox={vb(PLATES.sky)}>
+    <defs>
+      <linearGradient id="cine-sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" class="sk0" />
+        <stop offset="0.55" class="sk1" />
+        <stop offset="0.78" class="sk2" />
+        <stop offset="1" class="sk3" />
+      </linearGradient>
+    </defs>
+    <rect x={PLATES.sky.x} y={PLATES.sky.y} width={PLATES.sky.w} height={PLATES.sky.h} fill="url(#cine-sky)" />
+    {tone !== 'dawn' && (
+      <g class="cine-stars">
+        {SKYLINE.windows.slice(0, 46).map((w, k) => (
+          <circle cx={((w.x * 7) % 1100) - 230} cy={120 + ((w.y * 13) % 420)} r={k % 5 ? 1 : 1.6} />
+        ))}
+        <circle class="cine-moon" cx="468" cy="330" r="34" />
+      </g>
+    )}
+  </svg>
+));
+
+const CityPlate = memo(() => (
+  <svg class="cine-svg" style={box(PLATES.city)} width={PLATES.city.w} height={PLATES.city.h} viewBox={vb(PLATES.city)}>
+    <rect class="cine-glow" x={PLATES.city.x} y={HORIZON - 160} width={PLATES.city.w} height="220" />
+    {SKYLINE.towers.map((t) => (
+      <rect class="cine-tower" x={t.x} y={HORIZON - t.h} width={t.w} height={t.h + 500} />
+    ))}
+  </svg>
+));
+
+/** Windows sit in their own plate, so a cascade of lights repaints only them. */
+const Windows = memo(({ city }: { city: number }) => (
+  <svg class="cine-svg" style={box(PLATES.windows)} width={PLATES.windows.w} height={PLATES.windows.h} viewBox={vb(PLATES.windows)}>
+    {SKYLINE.windows.map((w) => (
+      <rect class={`cine-win${w.th < city ? ' on' : ''}`} x={w.x} y={w.y} width="4" height="6" style={{ transitionDelay: `${Math.round(w.d * (city < 0.1 ? 0.6 : 2.2))}ms` }} />
+    ))}
+  </svg>
+));
+
+const PylonPlate = memo(() => (
+  <svg class="cine-svg" style={box(PLATES.mid)} width={PLATES.mid.w} height={PLATES.mid.h} viewBox={vb(PLATES.mid)}>
+    <rect class="cine-mid-ground" x={PLATES.mid.x} y={PYLON_BASE - 6} width={PLATES.mid.w} height="700" />
+    {PYLONS.map((x) => (
+      <path class="cine-pylon" d={pylonPath(x)} />
+    ))}
+    {CABLES.map((c) => (
+      <path class="cine-cable" d={c.d} />
+    ))}
+  </svg>
+));
+
+const GroundPlate = memo(({ lit, genkoOn, darkOn }: { lit: boolean; genkoOn: boolean; darkOn: boolean }) => (
+  <svg class="cine-svg" style={box(PLATES.ground)} width={PLATES.ground.w} height={PLATES.ground.h} viewBox={vb(PLATES.ground)}>
+    <defs>
+      <linearGradient id="cine-ground" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" class="gr0" />
+        <stop offset="0.25" class="gr1" />
+        <stop offset="1" stop-color="#020108" />
+      </linearGradient>
+      <radialGradient id="cine-pool">
+        <stop offset="0" stop-color="#3dff9a" stop-opacity="0.45" />
+        <stop offset="1" stop-color="#3dff9a" stop-opacity="0" />
+      </radialGradient>
+    </defs>
+    <rect x={PLATES.ground.x} y={HORIZON} width={PLATES.ground.w} height="800" fill="url(#cine-ground)" />
+    <path class="cine-rail" d={`M${PLATES.ground.x} ${HORIZON + 0.5} h${PLATES.ground.w}`} />
+    {[-3, -2, -1, 0, 1, 2, 3].map((k) => (
+      <path class="cine-lane" d={`M${320 + k * 40} ${HORIZON} L${320 + k * 260} 1100`} />
+    ))}
+    <ellipse class={`cine-pool${lit ? ' on' : ''}`} cx="320" cy="780" rx="230" ry="44" fill="url(#cine-pool)" />
+    <ellipse class={`cine-shadow${genkoOn ? ' on' : ''}`} cx={GENKO.x} cy="798" rx="34" ry="7" />
+    <ellipse class={`cine-shadow${darkOn ? ' on' : ''}`} cx={DARK.x} cy="796" rx="44" ry="8" />
+  </svg>
+));
+
+const ForePlate = memo(() => (
+  <svg class="cine-svg" style={box(PLATES.fore)} width={PLATES.fore.w} height={PLATES.fore.h} viewBox={vb(PLATES.fore)}>
+    <path class="cine-fore" d="M-260 1000 L-260 880 L-40 892 L40 928 L80 1000 Z" />
+    <path class="cine-fore" d="M900 1000 L900 870 L700 884 L612 930 L580 1000 Z" />
+    <path class="cine-fore post" d="M58 1000 L66 860 L74 860 L82 1000 Z M552 1000 L560 850 L568 850 L576 1000 Z" />
+  </svg>
+));
 
 /** Opening title, like the first seconds of an episode. */
 function ChapterCard({ title }: { title: string }) {

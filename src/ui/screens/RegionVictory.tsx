@@ -50,7 +50,8 @@ export function RegionVictory({ region }: { region: number }) {
     audio.play('tap');
     playScene(`r${region}-victory`, () => {
       nav.setState({ victory: null, credits: !nextRegion });
-      nav.getState().go({ name: 'tabs', tab: 'map' });
+      // Back to the level's result, which waited underneath with its rewards.
+      if (nav.getState().screen.name !== 'result') nav.getState().go({ name: 'tabs', tab: 'map' });
     });
   };
 

@@ -28,11 +28,8 @@ export function DarkMeter({ size = 120, mood = 'smirk' }: { size?: number; mood?
       <ellipse cx="50" cy="56" rx="50" ry="52" fill={`url(#dm-glow-${healed ? 'g' : 'r'})`} class="dm-aura" />
       {/* smoke */}
       {!healed && [0, 1, 2].map((i) => (
-        <circle cx={34 + i * 16} cy="10" r="5" fill="#4a1a2a" opacity="0.6">
-          <animate attributeName="cy" values="14;-6" dur={`${1.6 + i * 0.3}s`} repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.7;0" dur={`${1.6 + i * 0.3}s`} repeatCount="indefinite" />
-          <animate attributeName="r" values="4;9" dur={`${1.6 + i * 0.3}s`} repeatCount="indefinite" />
-        </circle>
+        // Transform and opacity only: animating cy and r re-laid out the whole drawing every frame.
+        <circle class="dm-smoke" cx={34 + i * 16} cy="14" r="4" fill="#4a1a2a" style={{ animationDuration: `${1.6 + i * 0.3}s` }} />
       ))}
       {/* body */}
       <rect x="14" y="16" width="72" height="86" rx="14" fill="url(#dm-body)" stroke="#6b2a44" stroke-width="2" />

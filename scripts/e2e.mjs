@@ -259,6 +259,9 @@ async function playKogen(screenshotAt) {
 
 async function resultStars() {
   await page.waitForSelector('.result');
+  // A facility lighting up, a boss KO or a taunt plays before the result appears.
+  await skipStory();
+  await page.waitForSelector('.result .stars');
   await wait(3400);
   return page.locator('.result .stars').getAttribute('aria-label');
 }
@@ -310,9 +313,7 @@ if (stars?.startsWith('0')) fail('1-3 should be beatable by the scripted player'
 const litTag = await page.locator('text=Livarna je osvetljena').count();
 if (!litTag) fail('Livarna should light up after 1-3');
 
-// 5. Tabs (the facility's lighting scene opens over the result a moment later)
-await wait(2500);
-await skipStory();
+// 5. Tabs
 await page.locator('.result').getByRole('button', { name: /Zemljevid/ }).click();
 await skipStory();
 await shot('07-region-lit');

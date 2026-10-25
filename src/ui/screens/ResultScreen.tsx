@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'preact/hooks';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { audio, buzz } from '../../audio/sfx';
 import { GENKO, pick } from '../../core/genko';
 import { FACILITIES, facilityById, LEVELS } from '../../core/levels';
@@ -6,7 +6,7 @@ import { facilityRate } from '../../core/balance';
 import { fmt } from '../../core/format';
 import { dailyNumber } from '../../core/daily';
 import type { LevelOutcome } from '../../state/store';
-import { nav, type Screen } from '../nav';
+import { nav, useNav, type Screen } from '../nav';
 import { playScene } from '../story';
 import { IsoFactory } from '../components/IsoFactory';
 import { BATTLE_MS, LevelBattle } from '../components/LevelBattle';
@@ -19,14 +19,33 @@ const EUR_PER_KW_YEAR = 48;
 
 /** The battle plays first; everything else is timed after it. */
 const T0 = BATTLE_MS;
+/** After the buttons appear they stay locked this long, so taps carried over from the game do not skip the result. */
+const LOCK_MS = 2000;
 
 export function ResultScreen({ outcome, from }: { outcome: LevelOutcome; from: Screen }) {
   const { level, result, checks, stars, reward } = outcome;
   const isDaily = level.id.startsWith('daily-');
   const [shown, setShown] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [armed, setArmed] = useState(false);
+  const actionsAt = useRef(0);
+
+  // Story first: a facility coming online, the boss KO (then the region celebration) or
+  // the Dark Meter gloating after a lost boss plays before the result is shown at all.
+  const beatId = outcome.regionDone ? `r${level.region}-ko` : outcome.litFacility ? `fac-${outcome.litFacility}` : level.boss && stars === 0 && !isDaily ? `r${level.region}-taunt` : null;
+  const [beatDone, setBeatDone] = useState(!beatId);
+  useEffect(() => {
+    if (!beatId) return;
+    playScene(beatId, () => {
+      if (outcome.regionDone) nav.setState({ victory: level.region });
+      setBeatDone(true);
+    });
+  }, []);
+  const { scene, victory, credits } = useNav();
+  const ready = beatDone && !scene && victory === null && !credits;
 
   useEffect(() => {
+    if (!ready) return;
     const timers: number[] = [];
     for (let i = 0; i < stars; i++)
       timers.push(
@@ -38,23 +57,9 @@ export function ResultScreen({ outcome, from }: { outcome: LevelOutcome; from: S
       );
     if (reward.kwh > 0) timers.push(window.setTimeout(() => audio.play('coin'), T0 + 300 + stars * 350));
     if (outcome.litFacility || outcome.regionDone) timers.push(window.setTimeout(() => audio.play('unlock'), T0 + 1300));
-    // Story beats: the boss KO into the region celebration, a facility coming online,
-    // or the Dark Meter gloating after a lost boss. Leaving early still plays the rewards.
-    let beat: (() => void) | null = null;
-    if (outcome.regionDone) beat = () => playScene(`r${level.region}-ko`, () => nav.setState({ victory: level.region }));
-    else if (outcome.litFacility) beat = () => playScene(`fac-${outcome.litFacility}`);
-    if (level.boss && stars === 0 && !isDaily) timers.push(window.setTimeout(() => playScene(`r${level.region}-taunt`), T0 + 1400));
-    const fire = () => {
-      const b = beat;
-      beat = null;
-      b?.();
-    };
-    if (beat) timers.push(window.setTimeout(fire, T0 + 2600));
-    return () => {
-      timers.forEach(clearTimeout);
-      fire();
-    };
-  }, []);
+    timers.push(window.setTimeout(() => setArmed(true), actionsAt.current + LOCK_MS));
+    return () => timers.forEach(clearTimeout);
+  }, [ready]);
 
   const line = useMemo(() => (stars === 3 ? pick(GENKO.perfect) : stars > 0 ? pick(GENKO.win) : pick(GENKO.fail)), []);
   const next = !isDaily ? LEVELS.find((l) => l.region === level.region && l.index === level.index + 1) : undefined;
@@ -64,6 +69,11 @@ export function ResultScreen({ outcome, from }: { outcome: LevelOutcome; from: S
   /** Staggered entrance delay (ms) for the sections below the battle. */
   let d = T0 - 200;
   const nextD = (step = 120) => ({ '--d': (d += step) });
+  const nextActions = () => {
+    const st = nextD(150);
+    actionsAt.current = d;
+    return st;
+  };
   const share = async () => {
     const key = level.id.slice(6);
     const text = `InGenious Grid Rush ⚡ Dnevni izziv #${dailyNumber(key)}\n${KIND_NAME[level.stages[0].kind]} ${'⭐'.repeat(stars)}${'☆'.repeat(3 - stars)}\n${result.emoji}${outcome.daily?.streak ? `\n🔥 Niz: ${outcome.daily.streak}` : ''}`;
@@ -79,6 +89,9 @@ export function ResultScreen({ outcome, from }: { outcome: LevelOutcome; from: S
   };
 
   const playAgain = () => nav.getState().go({ name: 'play', level, from });
+
+  // Nothing to show yet: the scene or the celebration is on top.
+  if (!ready) return <div class="result" aria-hidden="true" />;
 
   return (
     <div class="result" role="dialog" aria-label="Rezultat">
@@ -180,14 +193,15 @@ export function ResultScreen({ outcome, from }: { outcome: LevelOutcome; from: S
       )}
       {outcome.daily?.usedFreeze && <p class="small" style={{ textAlign: 'center', color: 'var(--orange)' }}>Zamrzovalnik niza je rešil tvoj niz. 🧊</p>}
 
-      <div class="res-actions res-in" style={nextD(150)}>
+      <div class={`res-actions res-in${armed ? '' : ' locked'}`} style={nextActions()}>
         {isDaily && stars > 0 && (
-          <button class="btn primary big" onClick={share}>
+          <button disabled={!armed} class="btn primary big" onClick={share}>
             <IconShare width={18} /> {copied ? 'Kopirano!' : 'Deli rezultat'}
           </button>
         )}
         {next && stars > 0 && (
           <button
+            disabled={!armed}
             class="btn green big"
             onClick={() => {
               nav.getState().go({ name: 'region', region: next.region });
@@ -198,17 +212,17 @@ export function ResultScreen({ outcome, from }: { outcome: LevelOutcome; from: S
           </button>
         )}
         {stars === 0 && (
-          <button class="btn primary big" onClick={playAgain}>
+          <button disabled={!armed} class="btn primary big" onClick={playAgain}>
             <IconRetry width={18} /> Poskusi znova
           </button>
         )}
         <div class={stars > 0 && stars < 3 ? 'row2' : ''} style={stars > 0 && stars < 3 ? undefined : { display: 'grid' }}>
           {stars > 0 && stars < 3 && (
-            <button class="btn" onClick={playAgain}>
+            <button disabled={!armed} class="btn" onClick={playAgain}>
               <IconRetry width={16} /> Za 3 zvezdice
             </button>
           )}
-          <button class="btn" onClick={() => nav.getState().go(from)}>
+          <button disabled={!armed} class="btn" onClick={() => nav.getState().go(from)}>
             {isDaily ? 'Nazaj' : <><IconMap width={16} /> Zemljevid</>}
           </button>
         </div>
