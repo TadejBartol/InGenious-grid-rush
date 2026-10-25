@@ -22,7 +22,7 @@ export default defineConfig({
       manifest: {
         id: 'ingenious-grid-rush',
         name: 'InGenious Grid Rush',
-        short_name: 'Grid Rush',
+        short_name: 'InGenious Grid Rush',
         description: 'Zgradi energetski nadzorni center, lovi konice, reši hladno verigo in prebudi Temni števec. Šest regij, sedem mini iger, filmska zgodba.',
         lang: 'sl',
         start_url: '.',

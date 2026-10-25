@@ -2599,6 +2599,7 @@ button.pill:active {
 
 .counter-btn {
   all: unset;
+  flex: 1;
   cursor: pointer;
   min-width: 0;
 }
