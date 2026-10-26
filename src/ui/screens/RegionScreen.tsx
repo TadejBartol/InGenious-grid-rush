@@ -10,7 +10,7 @@ import { DarkMeter } from '../components/DarkMeter';
 import { Genko, GenkoSays } from '../components/Genko';
 import { IsoFactory } from '../components/IsoFactory';
 import { Cost, Sheet } from '../components/Common';
-import { IconBack, IconBell, IconChart, IconCogen, IconDark, IconDatabase, IconLock, IconPlug, IconSearch, IconStar, IconTrophy, IconWave } from '../components/Icons';
+import { IconBack, IconBell, IconCar, IconChart, IconDark, IconDatabase, IconDrop, IconLock, IconPipe, IconPlug, IconSearch, IconStar, IconTrophy, IconWave } from '../components/Icons';
 import { KIND_NAME } from './PlayScreen';
 import type { FacilityDef, LevelDef, Stage } from '../../core/types';
 
@@ -19,7 +19,9 @@ const KIND_ICON: Record<Stage['kind'], typeof IconPlug> = {
   konica: IconChart,
   detektiv: IconSearch,
   wmbus: IconWave,
-  urnik: IconCogen,
+  toplovod: IconPipe,
+  puscanje: IconDrop,
+  polnilnica: IconCar,
   alarm: IconBell,
   selitev: IconDatabase,
 };

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { audio } from '../../audio/sfx';
-import { isFacilityLit } from '../../core/balance';
+import { isFacilityLit, regionComplete } from '../../core/balance';
 import { fmt } from '../../core/format';
 import { FACILITIES, LEVELS, REGIONS } from '../../core/levels';
 import { useGame } from '../../state/store';
@@ -26,6 +26,7 @@ export function Credits() {
   const cleared = campaign.filter((l) => (levels[l.id]?.stars ?? 0) > 0).length;
   const stars = campaign.reduce((s, l) => s + (levels[l.id]?.stars ?? 0), 0);
   const lit = FACILITIES.filter((f) => isFacilityLit(f, levels)).length;
+  const brothers = regionComplete(7, levels);
 
   useEffect(() => {
     audio.play('win');
@@ -144,9 +145,18 @@ export function Credits() {
       )}
       {stinger && (
         <div class="credits-stinger">
-          <i class="cs-blink" aria-hidden="true" />
-          <p>Na podeželju, v kleti stare zadruge, utripne rdeča lučka.</p>
-          <p>Števca Š-1 ni še nihče prebral.</p>
+          <i class={`cs-blink${brothers ? ' ok' : ''}`} aria-hidden="true" />
+          {brothers ? (
+            <>
+              <p>V kleti zadruge utripa zelena lučka. Š-0 in Š-1 spet štejeta skupaj.</p>
+              <p>Pred zadrugo se polni prvi avto. Nekdo ga bere.</p>
+            </>
+          ) : (
+            <>
+              <p>Na podeželju, v kleti stare zadruge, utripne rdeča lučka.</p>
+              <p>Števca Š-1 ni še nihče prebral.</p>
+            </>
+          )}
           <button class="btn green big" onClick={close}>
             Nazaj na zemljevid
           </button>

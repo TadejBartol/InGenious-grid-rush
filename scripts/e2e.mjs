@@ -28,7 +28,9 @@ const clearHooks = () =>
     delete window.__gr_konica;
     delete window.__gr_detektiv;
     delete window.__gr_wmbus;
-    delete window.__gr_urnik;
+    delete window.__gr_toplovod;
+    delete window.__gr_puscanje;
+    delete window.__gr_polnilnica;
     delete window.__gr_alarm;
     delete window.__gr_selitev;
   });
@@ -223,17 +225,95 @@ async function playWmbus() {
   }
 }
 
-async function playUrnik() {
-  await page.waitForFunction(() => window.__gr_urnik);
+async function playToplovod() {
+  await page.waitForFunction(() => window.__gr_toplovod);
   await wait(2300);
-  // Tap the known best plan through the real motor buttons, like a player who solved it.
-  const cells = await page.evaluate(() => window.__gr_urnik.day.bestPlan.flatMap((row, u) => row.map((on, i) => (on ? [u, i] : null)).filter(Boolean)));
-  for (const [u, i] of cells) {
-    await page.locator(`.urn-motor button[data-unit="${u}"][data-block="${i}"]`).click();
-    await wait(60);
+  // Turn every pipe into its planned position through the real tiles.
+  const taps = await page.evaluate(() => {
+    const out = [];
+    window.__gr_toplovod.board.tiles.forEach((t, i) => {
+      if (t.kind !== 'pipe' || t.locked) return;
+      let m = t.mask;
+      for (let k = 0; k < 4 && m !== t.solved; k++) {
+        m = ((m << 1) | (m >> 3)) & 15;
+        out.push(i);
+      }
+    });
+    return out;
+  });
+  for (const [k, i] of taps.entries()) {
+    await page.locator('.tp-cell').nth(i).click();
+    if (k === Math.floor(taps.length / 2)) await shot('21-toplovod');
   }
-  await shot('21-urnik');
-  await page.getByRole('button', { name: 'Zaženi dan ▶' }).click();
+}
+
+async function playPuscanje() {
+  await page.waitForFunction(() => window.__gr_puscanje);
+  await wait(2300);
+  for (let r = 0; r < 300; r++) {
+    // Only moves that follow from the meters, like a careful player.
+    const step = await page.evaluate(() => {
+      const g = window.__gr_puscanje;
+      if (g.finished) return null;
+      const f = g.field;
+      const st = g.state;
+      const nb = (c) => {
+        const x = c % f.cols, y = Math.floor(c / f.cols), o = [];
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const nx = x + dx, ny = y + dy;
+          if ((dx || dy) && nx >= 0 && ny >= 0 && nx < f.cols && ny < f.rows) o.push(ny * f.cols + nx);
+        }
+        return o;
+      };
+      for (let c = 0; c < f.leak.length; c++) {
+        if (st[c] !== 'open') continue;
+        const n = nb(c);
+        const hid = n.filter((k) => st[k] === 'hidden');
+        const known = n.filter((k) => st[k] === 'closed' || st[k] === 'burst').length;
+        if (!hid.length) continue;
+        if (f.count[c] === known) return { cell: hid[0], tool: 'inspect' };
+        if (f.count[c] - known === hid.length) return { cell: hid[0], tool: 'valve' };
+      }
+      // Subset reasoning is beyond this bot: use the thermal camera, else the known answer.
+      const k = f.leak.findIndex((l, i) => !l && st[i] === 'hidden' && nb(i).some((j) => st[j] === 'open'));
+      return { cell: k, tool: 'inspect' };
+    });
+    if (!step) break;
+    await page.getByRole('radio', { name: step.tool === 'inspect' ? /Preglej/ : /Ventil/ }).click();
+    await page.locator('.ps-cell').nth(step.cell).click();
+    if (r === 6) await shot('21b-puscanje');
+  }
+}
+
+async function playPolnilnica() {
+  await page.waitForFunction(() => window.__gr_polnilnica);
+  await wait(2300);
+  for (let r = 0; r < 60; r++) {
+    const m = await page.evaluate(() => {
+      const g = window.__gr_polnilnica;
+      if (g.finished) return null;
+      const mv = g.route()[0];
+      const v = g.lot.vehicles[mv.vehicle];
+      const c = mv.charger !== undefined ? g.lot.chargers[mv.charger] : null;
+      const to = c ? (c.side === 'W' || c.side === 'N' ? -v.len - 0.2 : 6 - v.len + 1.2) : mv.to;
+      return { vehicle: mv.vehicle, delta: to - g.state.pos[mv.vehicle], dir: v.dir };
+    });
+    if (!m) break;
+    const car = page.locator('.pn-car').nth(m.vehicle);
+    const box = await car.boundingBox();
+    const lot = await page.locator('.pn-lot').boundingBox();
+    const cell = lot.width / 6;
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height / 2;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    const tx = m.dir === 'h' ? x + m.delta * cell : x;
+    const ty = m.dir === 'v' ? y + m.delta * cell : y;
+    await page.mouse.move(tx, ty, { steps: 6 });
+    await page.mouse.up();
+    await wait(250);
+    if (r === 1) await shot('21c-polnilnica');
+  }
 }
 
 async function resultStars() {
@@ -414,11 +494,11 @@ await page.getByRole('button', { name: /Odkleni/ }).click();
 await skipStory();
 await page.getByRole('button', { name: /Stopnja 1: Prvi zagon/ }).click();
 await startLevel();
-await playUrnik();
+await playToplovod();
 stars = await resultStars();
 step(`4-1 result: ${stars}`);
-await shot('22-result-kogen');
-if (stars?.startsWith('0')) fail('4-1 should be beatable by tapping the best plan');
+await shot('22-result-toplovod');
+if (stars?.startsWith('0')) fail('4-1 should be beatable by turning the planned pipes');
 
 // 10. Healthcare and the Dark Meter's centre
 const jump = (id) =>
@@ -427,8 +507,8 @@ const jump = (id) =>
     const levels = { ...st.levels };
     const region = Number(id[1]);
     for (const l of window.__gr_levels) if (l.region < region) levels[l.id] = levels[l.id] ?? { stars: 2, best: 0, plays: 1 };
-    const seenTips = [...st.seenTips, 'scene:r5-intro', 'scene:r6-intro'];
-    window.__gr_store.setState({ levels, regionsUnlocked: [1, 2, 3, 4, 5, 6], seenTips });
+    const seenTips = [...st.seenTips, 'scene:r5-intro', 'scene:r6-intro', 'scene:r7-intro'];
+    window.__gr_store.setState({ levels, regionsUnlocked: [1, 2, 3, 4, 5, 6, 7], seenTips });
     const level = window.__gr_levels.find((l) => l.id === id);
     window.__gr_nav.getState().go({ name: 'play', level, from: { name: 'region', region } });
   }, id);
@@ -450,6 +530,25 @@ step(`6-2 result: ${stars}`);
 await shot('24-result-selitev');
 // A slow CI browser can let a record or two time out, so only a clean pass is required.
 if (!stars || stars.startsWith('0') || stars.startsWith('1')) fail('6-2 should pass cleanly through the real buttons');
+
+// 11. New thinking games: leaks under the street and the charging park
+await clearHooks();
+await jump('r4-3');
+await skipStory();
+await playPuscanje();
+stars = await resultStars();
+step(`4-3 result: ${stars}`);
+await shot('25-result-puscanje');
+if (!stars?.startsWith('3')) fail('4-3 should be 3 stars when played by the meters');
+
+await clearHooks();
+await jump('r7-1');
+await skipStory();
+await playPolnilnica();
+stars = await resultStars();
+step(`7-1 result: ${stars}`);
+await shot('26-result-polnilnica');
+if (!stars?.startsWith('3')) fail('7-1 should be 3 stars along the shortest route');
 
 if (errors.length) fail(`console errors:\n  ${errors.join('\n  ')}`);
 await browser.close();

@@ -27,6 +27,8 @@ export const RESEARCH: ResearchDef[] = [
   { id: 'spomin', name: 'Pomnilnik prehoda', text: 'Pasivni števec polni do 4 ure dlje, ko te ni.', costs: [300, 800], feature: 'Lokalni pomnilnik', region: 3 },
   { id: 'ai', name: 'AI analiza', text: 'Opozori na napačne nastavitve merilnikov in namigne anomalije v Detektivu.', costs: [1000], feature: 'Analize', region: 3 },
   { id: 'pragovi', name: 'Pametni alarmi', text: 'Pri Alarmu! imajo cepiva 1,5 s več, preden se pokvarijo, na stopnjo.', costs: [900, 2200], feature: 'Alarmi in obvestila', region: 5 },
+  { id: 'termokamera', name: 'Termokamera', text: 'Pri Lovu na puščanje dobiš en posnetek termokamere več na stopnjo.', costs: [1200, 2400], feature: 'Analiza izgub', region: 4 },
+  { id: 'baterija', name: 'Pametno polnjenje', text: 'Električni avtomobili v Polnilnici zmorejo en premik več.', costs: [1500], feature: 'Upravljanje polnilnic', region: 7 },
   { id: 'validacija', name: 'Preverjanje uvoza', text: 'Pri Selitvi platforma označi pokvarjene zapise in dvojnike.', costs: [2600], feature: 'Uvoz meritev', region: 6 },
 ];
 

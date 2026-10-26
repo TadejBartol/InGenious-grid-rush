@@ -305,8 +305,8 @@ export const SCENES: Scene[] = [
     weather: 'snow',
     lines: [
       { who: 'narrator', text: 'Kogeneracija. En motor, dva produkta: elektrika in toplota.' },
-      { who: 'genko', mood: 'happy', text: 'Elektriko prodaš, ko je draga. Toploto shraniš, ko je ne rabiš. Zveni preprosto. Ni.' },
-      { who: 'dark', mood: 'smirk', text: 'Vsaka toplota, ki jo vržeš v hladilnik, greje mene.' },
+      { who: 'genko', mood: 'happy', text: 'Toplota mora po ceveh do vsake stavbe. In nobena kaplja ne sme pobegniti v zemljo.' },
+      { who: 'dark', mood: 'smirk', text: 'Vsaka kaplja, ki uide v zemljo, greje mene.' },
     ],
   },
   {
@@ -318,7 +318,7 @@ export const SCENES: Scene[] = [
     lines: [
       { who: 'narrator', text: 'Toplarna. Plinski motor, ki ga je nekdo nastavil tako, da teče tudi takrat, ko je elektrika poceni.' },
       { who: 'genko', mood: 'worried', text: 'Ob treh zjutraj prodajamo elektriko po ceni, ki ne pokrije niti plina.', act: 'scan' },
-      { who: 'genko', mood: 'smug', fx: 'light', text: 'Vozni red po ceni in hranilnik toplote. Motor teče, ko se splača.' },
+      { who: 'genko', mood: 'smug', fx: 'light', text: 'Nove cevi, zaprti konci, nič puščanja. Toplota pride do zadnjega radiatorja.' },
       { who: 'dark', mood: 'smirk', text: 'Zima je dolga, robotek.' },
     ],
   },
@@ -343,8 +343,8 @@ export const SCENES: Scene[] = [
     weather: 'snow',
     lines: [
       { who: 'narrator', text: 'Najmrzlejši dan v letu. Dve enoti. Pol mesta na eni zanki.' },
-      { who: 'dark', mood: 'angry', text: 'Zmešal sem jim vse nastavitve. Ko zmrznejo radiatorji, bodo prosili zame.', act: 'glitch' },
-      { who: 'genko', mood: 'smug', text: 'Tokrat ne. Najprej poveži, potem vozi. Topli domovi in visok izkoristek.' },
+      { who: 'dark', mood: 'angry', text: 'Sukal bom cevi, ko jih boš ravno poravnal. Ko zmrznejo radiatorji, bodo prosili zame.', act: 'glitch' },
+      { who: 'genko', mood: 'smug', text: 'Tokrat ne. Vsako cev zasukam nazaj, potem po števcih najdem vsako puščanje.' },
     ],
   },
   {
@@ -354,7 +354,7 @@ export const SCENES: Scene[] = [
     weather: 'snow',
     lines: [
       { who: 'dark', mood: 'smirk', text: 'Zebe? Mene nikoli.', act: 'laugh' },
-      { who: 'genko', mood: 'worried', text: 'Najprej poveži, potem vozi motor po ceni. Hranilnik je moj zaveznik. Gremo še enkrat.' },
+      { who: 'genko', mood: 'worried', text: 'Hitreje zasukam, kot on zmeša. In števci povedo, kje pušča. Gremo še enkrat.' },
     ],
   },
   {
@@ -364,7 +364,7 @@ export const SCENES: Scene[] = [
     facility: 'daljinsko',
     weather: 'snow',
     lines: [
-      { who: 'narrator', text: 'Minus petnajst. Obe enoti tečeta, hranilnik je poln, radiatorji so topli.' },
+      { who: 'narrator', text: 'Minus petnajst. Zanka je sklenjena, puščanja zaprta, radiatorji so topli.' },
       { who: 'dark', mood: 'angry', text: 'Moralo bi zmrzniti! Vse mesto bi moralo prositi zame!' },
       { who: 'genko', mood: 'smug', text: 'Nihče ne bo prosil. Vse je izmerjeno.' },
       { who: 'genko', mood: 'wow', fx: 'zap', text: 'Polna moč, zapiram zanko!' },
@@ -560,6 +560,91 @@ export const SCENES: Scene[] = [
       { who: 'dark', mood: 'healed', text: 'Potem začniva. Livarna je ponoči spet pustila prižgano linijo. Videl sem.', shot: 'dark' },
       { who: 'genko', mood: 'wow', text: 'Partner! Vedel sem, da imaš dobro oko.', act: 'flyin', shot: 'two' },
       { who: 'narrator', text: 'Kar je izmerjeno, ni pozabljeno. InGenious Grid Rush. Konec.', shot: 'establish' },
+    ],
+  },
+  // ── Poglavje 7 · Š-1 ──────────────────────────────────────────────
+  {
+    id: 'r7-intro',
+    title: 'Poglavje 7 · Brat v kleti',
+    tone: 'dark',
+    lines: [
+      { who: 'narrator', text: 'Podeželje. Stara kmetijska zadruga, pred njo novo parkirišče s polnilnicami.' },
+      { who: 'genko', mood: 'worried', text: 'Polnilnice delajo, a avtomobili ne pridejo do njih. Nekdo je parkiral tako, da je vse zaprto.', act: 'scan' },
+      { who: 'dark', mood: 'smirk', text: 'Jaz sem Š-1. Brat tistega, ki si ga prebral v mestu. Mene ni bral nihče.' },
+      { who: 'genko', mood: 'smug', text: 'Potem bom pa začel. Avto za avtom, polnilnico za polnilnico.' },
+      { who: 'dark', mood: 'angry', text: 'Parkirišče je moje. Vsak kilovat, ki gre v avto, gre mimo mene.', act: 'glitch' },
+    ],
+  },
+  {
+    id: 'fac-zadruga',
+    title: 'Parkirišče zadruge se prižge',
+    tone: 'lit',
+    facility: 'zadruga',
+    weather: 'clear',
+    lines: [
+      { who: 'narrator', text: 'Parkirišče zadruge. Dve polnilnici, ki sta pol leta stali prazni.' },
+      { who: 'genko', mood: 'happy', text: 'Avtomobili so na polnilnicah, števci so priklopljeni.', act: 'connect' },
+      { who: 'genko', mood: 'wow', fx: 'light', text: 'Vsaka polnitev izmerjena in zaračunana. Zadruga prvič zasluži z elektriko!' },
+      { who: 'dark', mood: 'hurt', text: 'Dve polnilnici sta malo. Na avtocesti jih je šest.' },
+    ],
+  },
+  {
+    id: 'fac-hub',
+    title: 'Polnilni hub se prižge',
+    tone: 'lit',
+    facility: 'hub',
+    weather: 'clear',
+    lines: [
+      { who: 'narrator', text: 'Hitri hub ob avtocesti. Šest polnilnic, en priključek in petkova gneča.' },
+      { who: 'genko', mood: 'worried', text: 'Če se vsi priklopijo hkrati, priključek odpove.', act: 'scan' },
+      { who: 'genko', mood: 'smug', fx: 'light', text: 'Upravljanje obremenitve. Moč se deli, nihče ne čaka predolgo.' },
+      { who: 'dark', mood: 'angry', text: 'Pridi v klet, robotek. Tam ni signala in ni pomoči.' },
+      { who: 'narrator', text: 'Na kleti zadruge visi tablica: »Š-1, odvod zadruga, mlin, vaška razsvetljava«.', shot: 'facility', act: 'reveal' },
+    ],
+  },
+  {
+    id: 'r7-boss',
+    title: 'Boss · Š-1',
+    tone: 'boss',
+    lines: [
+      { who: 'narrator', text: 'Klet zadruge. Š-1 utripa rdeče, zunaj se gnete deset avtomobilov.' },
+      { who: 'dark', mood: 'angry', text: 'Najprej bom prižgal vse naenkrat. Potem bo moj črni avto zaprl vsako pot.', act: 'glitch' },
+      { who: 'genko', mood: 'smug', text: 'Najprej ukrotim konico. Potem prehitim tvoj avto. Vidim, kam bo zapeljal.' },
+    ],
+  },
+  {
+    id: 'r7-taunt',
+    title: 'Parkirišče je zaprto',
+    tone: 'boss',
+    lines: [
+      { who: 'dark', mood: 'smirk', text: 'Zaprto! Nihče ne bo polnil.', act: 'laugh' },
+      { who: 'genko', mood: 'worried', text: 'Njegov avto se premakne po vsakih nekaj mojih potezah. Moram ga predvideti. Še enkrat.' },
+    ],
+  },
+  {
+    id: 'r7-ko',
+    title: 'Boss · Odprto parkirišče',
+    tone: 'boss',
+    facility: 'klet',
+    lines: [
+      { who: 'narrator', text: 'Zadnji avto zapelje na polnilnico. Črni avto stoji v kotu, brez poti.' },
+      { who: 'dark', mood: 'angry', text: 'Kako? Zaprl sem vse!' },
+      { who: 'genko', mood: 'smug', text: 'Ker sem videl vsako potezo, preden si jo naredil. Tako kot bratovo zgodovino.', act: 'connect' },
+      { who: 'genko', mood: 'wow', fx: 'zap', text: 'Š-1, odčitek številka ena. Prehod, beri!' },
+      { who: 'dark', mood: 'healed', fx: 'flash', text: 'Brat … ti si tisti, ki je bral brata? Potem … beri še mene.', act: 'heal' },
+      { who: 'narrator', fx: 'light', text: 'Klet zadruge zasveti zeleno. Polnilni park je osvetljen.' },
+    ],
+  },
+  {
+    id: 'r7-victory',
+    title: 'Polnilni park je osvetljen',
+    tone: 'dawn',
+    weather: 'clear',
+    lines: [
+      { who: 'narrator', text: 'Jutro na podeželju. Pred zadrugo se polnijo avtomobili, traktor in dostavni kombi.', act: 'dawn' },
+      { who: 'dark', mood: 'healed', text: 'Brat mi je povedal, da je v omrežju lepo. Da te kdo pogleda vsak dan.' },
+      { who: 'genko', mood: 'happy', text: 'Dobrodošel, Š-1. Zdaj štejeta oba. Mesto in vas.', shot: 'two' },
+      { who: 'narrator', text: 'Kar je izmerjeno, ni pozabljeno. Tudi na podeželju.', shot: 'establish' },
     ],
   },
 ];

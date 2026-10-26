@@ -149,6 +149,21 @@ export function IsoFactory({ art, lit, level = 0 }: { art: FacilityDef['art']; l
         <path d="M60 122 C 90 112 100 124 118 112 M200 124 C 180 112 168 122 152 108" stroke={glow} stroke-width="2" fill="none" opacity="0.6" />
       </g>
     ),
+    polnilnica: (
+      <g>
+        {box(150, 120, 46, 30, 16)}
+        <path d="M70 92 l70 -30 l64 30 l-70 30 z" fill={top} opacity="0.9" />
+        <path d="M84 100 v26 M190 98 v24 M140 70 v20" stroke={left} stroke-width="3" />
+        {[0, 1, 2].map((i) => (
+          <g>
+            <rect x={92 + i * 24} y={104 - i * 6} width="9" height="18" rx="2" fill={left} />
+            <rect x={94 + i * 24} y={107 - i * 6} width="5" height="4" rx="1" fill={lit ? '#3dff9a' : '#ff3b5c'} />
+          </g>
+        ))}
+        <path d="M104 126 l12 -6 h14 l6 4 v6 l-14 7 h-14 z" fill={lit ? '#38e1ff' : '#3a4785'} />
+        <path d="M128 80 l-6 9 h6 l-5 9" stroke={lit ? '#ffe68a' : '#3a4785'} stroke-width="2.5" fill="none" stroke-linejoin="round" />
+      </g>
+    ),
     trafo: (
       <g>
         {box(110, 120, 40, 40, 30)}

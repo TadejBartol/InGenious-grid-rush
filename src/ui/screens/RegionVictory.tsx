@@ -49,7 +49,8 @@ export function RegionVictory({ region }: { region: number }) {
   const finish = () => {
     audio.play('tap');
     playScene(`r${region}-victory`, () => {
-      nav.setState({ victory: null, credits: !nextRegion });
+      // Credits roll after the story finale (Š-0) and again after the last region.
+      nav.setState({ victory: null, credits: region === 6 || !nextRegion });
       // Back to the level's result, which waited underneath with its rewards.
       if (nav.getState().screen.name !== 'result') nav.getState().go({ name: 'tabs', tab: 'map' });
     });

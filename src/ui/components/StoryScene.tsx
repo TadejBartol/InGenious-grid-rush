@@ -133,7 +133,7 @@ export function StoryScene({ scene, onDone }: { scene: Scene; onDone: () => void
         ) : (
           <div class={`story-bubble ${line.who}`} key={i}>
             <b>
-              {line.who === 'genko' ? 'InGenious' : 'Temni števec'}
+              {line.who === 'genko' ? 'InGenious' : scene.id.startsWith('r7-') || scene.id === 'fac-zadruga' || scene.id === 'fac-hub' ? 'Š-1' : 'Temni števec'}
               {talking && <span class="voice-wave" aria-hidden="true"><i /><i /><i /><i /></span>}
             </b>
             <p>

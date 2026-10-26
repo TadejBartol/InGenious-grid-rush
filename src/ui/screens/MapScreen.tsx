@@ -15,9 +15,9 @@ import type { RegionDef } from '../../core/types';
 const SLOVENIA =
   'M14 14 L24 10 L34 9 L44 11 L52 8 L60 10 L68 8 L76 6 L84 2 L92 4 L96 10 L94 16 L88 18 L88 24 L84 28 L80 34 L76 36 L72 42 L66 44 L62 50 L58 52 L52 56 L46 58 L40 62 L34 60 L30 56 L24 58 L20 56 L14 58 L10 56 L6 52 L8 46 L12 42 L10 36 L6 30 L8 24 L12 20 Z';
 
-/** The Dark Meter weakens as facilities light up across the whole campaign (6 regions × 3 facilities). */
+/** The Dark Meter weakens as facilities light up across the whole campaign. */
 export function darkMeterStrength(lit: number) {
-  return Math.max(0, Math.round(100 - (lit / 18) * 100));
+  return Math.max(0, Math.round(100 - (lit / FACILITIES.length) * 100));
 }
 
 export function MapScreen() {

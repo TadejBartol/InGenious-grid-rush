@@ -42,19 +42,42 @@ export const HELP: Record<GameKind, Help> = {
     how: ['Spodaj izberi prehod ali repetitor, nato tapni prosto polje.', 'Drži prst na polju, da vidiš krog dosega, in spusti, ko pokriva prave merilnike.'],
     watch: ['Repetitor deluje le, če je v dosegu prehoda ali drugega repetitorja.', 'Na stavbe naprav ne moreš postaviti.', 'Za tretjo zvezdico porabi čim manj naprav.'],
   },
-  urnik: {
-    goal: 'Sestavi vozni red motorja za ves dan: mesto naj ima toplo, dobiček naj doseže cilj.',
+  toplovod: {
+    goal: 'Zasukaj cevi, da vroča voda iz toplarne pride do vseh stavb in noben konec ne pušča.',
+    how: ['Tapni cev, da se zasuka za četrt obrata v smeri urinega kazalca.', 'Cevi z vročo vodo so oranžne, mrzle so temne.', 'Ko so vse stavbe tople in ni odprtih koncev, je zanka sklenjena.'],
+    watch: [
+      'Para ob robu ploščice pomeni odprt konec: tam voda teče v zemljo.',
+      'Cevi z zlatim robom so že privarjene in se ne vrtijo.',
+      'Začni ob robovih in vogalih: tam ima cev pogosto le eno možno lego.',
+      'Pri bossu Temni števec občasno zasuka cev, ki že nosi vodo.',
+    ],
+  },
+  puscanje: {
+    goal: 'Poišči vse puščajoče odseke pod ulico in jim zapri ventil.',
     how: [
-      'Tapni blok v vrstici Motor, da tam teče. Povleci prst čez več blokov naenkrat.',
-      'Rumena številka je zaslužek, če motor teče v tem bloku. Negativna pomeni izgubo.',
-      'Motor da toploto v hranilnik, mesto jo vsak blok porabi (vrstica Odjem).',
-      'Ko je urnik veljaven, pritisni Zaženi dan.',
+      'Orodje Preglej odkrije odsek in nanj postavi števec toplote.',
+      'Številka pove, koliko od 8 sosednjih odsekov pušča. Prazen odsek pomeni nič puščanja okoli.',
+      'Orodje Zapri ventil (ali dolg pritisk) zapre odsek, za katerega veš, da pušča.',
     ],
     watch: [
-      'Hranilnik ne sme biti prazen (❄ mrzli radiatorji) ne prepoln (! toplota gre v nič).',
-      'Toploto za poceni ure pripravi vnaprej, ko je elektrika draga.',
-      'Če je navedeno, vsak zagon motorja stane obrabo, hranilnik pa mora zvečer ostati poln za jutri.',
-      'Najboljši možni dobiček je napisan zgoraj. Če ga dosežeš, dobiš zvezdico.',
+      'Pregled odseka, ki pušča, je napaka (prekop na slepo).',
+      'Zapiranje zdravega odseka je tudi napaka.',
+      'Vsako ploščo je mogoče rešiti brez ugibanja. Ko se zatakne, primerjaj dva sosednja števca.',
+      'Termokamera enkrat pokaže varen odsek.',
+    ],
+  },
+  polnilnica: {
+    goal: 'Pripelji vse električne avtomobile (s strelo) do polnilnic ob robu parkirišča.',
+    how: [
+      'Povleci vozilo naprej ali nazaj po njegovi smeri. Bočno se ne premika.',
+      'Ko električni avto zapelje v polnilnico, se polni in čez nekaj potez odpelje.',
+      'Gumb Razveljavi vrne zadnjo potezo, Namig pokaže naslednjo dobro potezo.',
+    ],
+    watch: [
+      'Baterija (🔋) pove, koliko premikov še zmore električni avto. Pri nič obstane.',
+      'Polnilnice imajo moč (kW), priključek parkirišča pa mejo. Ko je meja polna, mora naslednji avto počakati.',
+      'Sivi avtomobili in tovornjaki se ne polnijo, so le v napoto.',
+      'Pri bossu se črn avto Temnega števca premakne sam po nekaj tvojih potezah.',
     ],
   },
   alarm: {

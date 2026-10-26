@@ -1,5 +1,5 @@
 import { hashString } from './rng';
-import type { AlarmParams, ConsumerDef, DetektivParams, FacilityDef, KonicaParams, LevelDef, PriklopParams, RegionDef, SelitevParams, StarGoal, UrnikParams, WmbusParams } from './types';
+import type { AlarmParams, ConsumerDef, DetektivParams, FacilityDef, KonicaParams, LevelDef, PriklopParams, RegionDef, PolnilnicaParams, PuscanjeParams, SelitevParams, StarGoal, ToplovodParams, WmbusParams } from './types';
 
 const seed = (id: string, salt = '') => hashString(`grid-rush:${id}${salt}`);
 
@@ -7,7 +7,9 @@ const priklop = (id: string, p: Omit<PriklopParams, 'seed'>, salt = ''): Priklop
 const konica = (id: string, p: Omit<KonicaParams, 'seed'>): KonicaParams => ({ ...p, seed: seed(id) });
 const detektiv = (id: string, p: Omit<DetektivParams, 'seed'>): DetektivParams => ({ ...p, seed: seed(id) });
 const wmbus = (id: string, p: Omit<WmbusParams, 'seed'>): WmbusParams => ({ ...p, seed: seed(id) });
-const urnik = (id: string, p: Omit<UrnikParams, 'seed'>): UrnikParams => ({ ...p, seed: seed(id) });
+const toplovod = (id: string, p: Omit<ToplovodParams, 'seed'>, salt = ''): ToplovodParams => ({ ...p, seed: seed(id, salt) });
+const puscanje = (id: string, p: Omit<PuscanjeParams, 'seed'>, salt = ''): PuscanjeParams => ({ ...p, seed: seed(id, salt) });
+const polnilnica = (id: string, p: Omit<PolnilnicaParams, 'seed'>, salt = ''): PolnilnicaParams => ({ ...p, seed: seed(id, salt) });
 const alarm = (id: string, p: Omit<AlarmParams, 'seed'>): AlarmParams => ({ ...p, seed: seed(id) });
 const selitev = (id: string, p: Omit<SelitevParams, 'seed'>): SelitevParams => ({ ...p, seed: seed(id) });
 
@@ -18,7 +20,10 @@ const noStall: StarGoal = { type: 'mistakes', max: 0, label: 'Brez zastoja proiz
 const timeLeft = (s: number): StarGoal => ({ type: 'timeLeft', min: s });
 const noMoves: StarGoal = { type: 'mistakes', max: 0, label: 'Brez prestavljanja naprav' };
 const devicesMax = (n: number): StarGoal => ({ type: 'metric', key: 'used', op: '<=', value: n, unit: '', label: `Največ ${n} ${n === 1 ? 'naprava' : n === 2 ? 'napravi' : n < 5 ? 'naprave' : 'naprav'}` });
-const bestPlan: StarGoal = { type: 'metric', key: 'gap', op: '<=', value: 0, unit: '€', label: 'Najboljši možni urnik' };
+const fewTurns = (n: number): StarGoal => ({ type: 'metric', key: 'extra', op: '<=', value: n, unit: '', label: n ? `Največ ${n} odvečnih obratov` : 'Brez odvečnega obrata' });
+const noDig: StarGoal = { type: 'mistakes', max: 0, label: 'Brez prekopa na slepo' };
+const parMoves = (n: number): StarGoal => ({ type: 'metric', key: 'overPar', op: '<=', value: n, unit: '', label: n ? `Največ ${n} ${n === 1 ? 'poteza' : n === 2 ? 'potezi' : n < 5 ? 'poteze' : 'potez'} nad najboljšo rešitvijo` : 'Najmanj možnih potez' });
+const noHint: StarGoal = { type: 'metric', key: 'hints', op: '<=', value: 0, unit: '', label: 'Brez namiga' };
 const foundAll: StarGoal = { type: 'metric', key: 'missed', op: '<=', value: 0, unit: '', label: 'Najdi vse anomalije' };
 const fastResponse = (s: number): StarGoal => ({ type: 'metric', key: 'response', op: '<=', value: s, unit: 's', label: `Povprečni odziv ≤ ${String(s).replace('.', ',')} s` });
 const fewFalse = (n: number): StarGoal => ({ type: 'metric', key: 'falseAlarms', op: '<=', value: n, unit: '', label: `Največ ${n} ${n === 1 ? 'lažni alarm' : n === 2 ? 'lažna alarma' : 'lažne alarme'}` });
@@ -51,15 +56,21 @@ const operacije: ConsumerDef = { id: 'operacije', name: 'Operacijski blok', icon
 const sterilizator: ConsumerDef = { id: 'sterilizator', name: 'Sterilizacija', icon: 'pec', kw: 120, bufferLabel: 'Sterilni material', drain: 1 / 15, fill: 1 / 10 };
 const pralnica: ConsumerDef = { id: 'pralnica', name: 'Pralnica', icon: 'susilnik', kw: 100, bufferLabel: 'Čisto perilo', drain: 1 / 18, fill: 1 / 11 };
 const agregat: ConsumerDef = { id: 'agregat', name: 'Hladilni agregat lekarne', icon: 'hladilnik', kw: 80, bufferLabel: 'Hlad v lekarni', drain: 1 / 14, fill: 1 / 9 };
+// Charging park: fast chargers can wait a little, the shop and the lights cannot.
+const hitri = (n: number, kw = 160): ConsumerDef => ({ id: `hitri${n}`, name: `Hitra polnilnica ${n}`, icon: 'pec', kw, bufferLabel: 'Potrpežljivost voznika', drain: 1 / 16, fill: 1 / 11 });
+const pocasna: ConsumerDef = { id: 'pocasna', name: 'Počasne polnilnice', icon: 'kompresor', kw: 90, bufferLabel: 'Polnjenje čez noč', drain: 1 / 12, fill: 1 / 9 };
+const pralnica2: ConsumerDef = { id: 'avtopralnica', name: 'Avtopralnica', icon: 'klima', kw: 85, bufferLabel: 'Vrsta pred pralnico', drain: 1 / 16, fill: 1 / 10 };
+const trgovina: ConsumerDef = { id: 'trgovina', name: 'Trgovina in razsvetljava', icon: 'linija', kw: 90, critical: true };
 const mr: ConsumerDef = { id: 'mr', name: 'Magnetna resonanca', icon: 'klima', kw: 95, critical: true, startAt: 25, cycle: { period: 7, depth: 0.3 } };
 
 export const REGIONS: RegionDef[] = [
   { id: 1, name: 'Industrijska cona', theme: 'Konične moči in puščanje zraka', mechanic: 'Priklop · Lov na konico', pos: { x: 52, y: 52 }, available: true, unlockChips: 0 },
   { id: 2, name: 'Mlekarna in prehrana', theme: 'Hladna veriga in števci na TP', mechanic: 'Detektiv', pos: { x: 81, y: 22 }, available: true, unlockChips: 3 },
   { id: 3, name: 'Komunala', theme: 'Radijski vodomeri, puhala in puščanje', mechanic: 'Radijsko omrežje', pos: { x: 27, y: 80 }, available: true, unlockChips: 5 },
-  { id: 4, name: 'Kogeneracija', theme: 'Elektrika, toplota in cena na borzi', mechanic: 'Vozni red toplarne', pos: { x: 17, y: 44 }, available: true, unlockChips: 8 },
+  { id: 4, name: 'Kogeneracija', theme: 'Elektrika, toplota in cena na borzi', mechanic: 'Toplovod · Lov na puščanje', pos: { x: 17, y: 44 }, available: true, unlockChips: 8 },
   { id: 5, name: 'Zdravstvo', theme: 'Hladna veriga cepiv in alarmi v realnem času', mechanic: 'Alarm!', pos: { x: 78, y: 68 }, available: true, unlockChips: 11 },
   { id: 6, name: 'Center Temnega števca', theme: 'Selitev zgodovine in finale', mechanic: 'Selitev · vse mehanike', pos: { x: 43, y: 13 }, available: true, unlockChips: 14 },
+  { id: 7, name: 'Polnilni park', theme: 'Električni avtomobili, polnilnice in moč priključka', mechanic: 'Polnilnica', pos: { x: 47, y: 81 }, available: true, unlockChips: 17 },
 ];
 
 export const FACILITIES: FacilityDef[] = [
@@ -80,6 +91,9 @@ export const FACILITIES: FacilityDef[] = [
   { id: 'arhiv', region: 6, name: 'Arhiv meritev', description: 'Trideset let zapisov na trakovih in disketah.', levels: ['r6-1', 'r6-2', 'r6-3'], baseRate: 2200, upgradeBaseCost: 52000, art: 'arhiv' },
   { id: 'razdelilna', region: 6, name: 'Stara razdelilna postaja', description: 'Od tod je nekoč tekla elektrika za pol mesta.', levels: ['r6-4', 'r6-5', 'r6-6'], baseRate: 2600, upgradeBaseCost: 65000, art: 'trafo' },
   { id: 'omara', region: 6, name: 'Omara Š-0', description: 'Prvi števec omrežja. Štel je sam, 39 let.', levels: ['r6-7', 'r6-8', 'r6-9', 'r6-10'], baseRate: 3200, upgradeBaseCost: 80000, art: 'omara' },
+  { id: 'zadruga', region: 7, name: 'Parkirišče zadruge', description: 'Stara kmetijska zadruga, zdaj parkirišče s prvimi polnilnicami.', levels: ['r7-1', 'r7-2', 'r7-3'], baseRate: 3800, upgradeBaseCost: 95000, art: 'polnilnica' },
+  { id: 'hub', region: 7, name: 'Hitri polnilni hub', description: 'Ob avtocesti, hitre polnilnice na enem priključku.', levels: ['r7-4', 'r7-5', 'r7-6'], baseRate: 4400, upgradeBaseCost: 115000, art: 'polnilnica' },
+  { id: 'klet', region: 7, name: 'Klet Š-1', description: 'Pod zadrugo je omara z drugim števcem starega omrežja.', levels: ['r7-7', 'r7-8', 'r7-9', 'r7-10'], baseRate: 5200, upgradeBaseCost: 140000, art: 'omara' },
   { id: 'daljinsko', region: 4, name: 'Daljinsko ogrevanje', description: 'Dve enoti, velik hranilnik in pol mesta na zanki.', levels: ['r4-7', 'r4-8', 'r4-9', 'r4-10'], baseRate: 1050, upgradeBaseCost: 19000, art: 'toplarna' },
 ];
 
@@ -662,10 +676,10 @@ export const LEVELS: LevelDef[] = [
     index: 1,
     name: 'Prvi zagon',
     facilityId: 'toplarna',
-    intro: 'Plinski motor daje elektriko in toploto hkrati. Elektriko prodaš, toploto potrebuje mesto.',
-    lesson: 'Kogeneracija (CHP) izkoristi do 90 % energije plina, a le, če toploto res porabiš. Motor naj teče, ko je elektrika draga.',
-    stages: [{ kind: 'urnik', params: urnik('r4-1', { blocks: 8, capacity: 6, start: 3, profile: 'mesto', swing: 0.8, pass: 0.75, timeSec: 120 }) }],
-    stars: [complete, bestPlan, timeLeft(40)],
+    intro: 'Stara toplovodna zanka je razmetana. Zasukaj cevi, da vroča voda pride do vsake stavbe.',
+    lesson: 'Daljinsko ogrevanje je drevo cevi od toplarne do stavb. Vsak odprt konec pomeni toploto, ki gre v zemljo.',
+    stages: [{ kind: 'toplovod', params: toplovod('r4-1', { cols: 4, rows: 4, houses: [2, 4], locked: 2, timeSec: 90 }) }],
+    stars: [complete, fewTurns(4), timeLeft(40)],
     reward: { kwh: 2000, dp: 230 },
     card: { id: 'c-chp', name: 'Kogeneracijska enota', rarity: 'navadna', text: 'Motor, generator in toplotni izmenjevalnik v enem zabojniku.' },
   },
@@ -673,12 +687,12 @@ export const LEVELS: LevelDef[] = [
     id: 'r4-2',
     region: 4,
     index: 2,
-    name: 'Toplota za pozneje',
+    name: 'Zanka skozi sosesko',
     facilityId: 'toplarna',
-    intro: 'Elektrika je draga zvečer, toplota pa se rabi zjutraj. Hranilnik je most med njima.',
-    lesson: 'Hranilnik toplote loči proizvodnjo od porabe. Motor teče, ko se splača, toplota pa počaka v rezervoarju.',
-    stages: [{ kind: 'urnik', params: urnik('r4-2', { blocks: 12, capacity: 5, start: 2, profile: 'mesto', swing: 1, pass: 0.8, timeSec: 150 }) }],
-    stars: [complete, bestPlan, timeLeft(40)],
+    intro: 'Več blokov, nekaj ovir in šola, ki ne sme ostati mrzla.',
+    lesson: 'Najprej obrni cevi ob robu in vogalih: tam ima vsaka le eno smiselno lego.',
+    stages: [{ kind: 'toplovod', params: toplovod('r4-2', { cols: 5, rows: 5, houses: [3, 6], obstacles: 0.08, locked: 1, timeSec: 110 }) }],
+    stars: [complete, fewTurns(6), timeLeft(35)],
     reward: { kwh: 2150, dp: 240 },
     card: { id: 'c-hranilnik', name: 'Hranilnik toplote', rarity: 'redka', text: 'Velik izoliran rezervoar vroče vode. Najcenejša baterija, kar jih poznamo.' },
   },
@@ -686,12 +700,12 @@ export const LEVELS: LevelDef[] = [
     id: 'r4-3',
     region: 4,
     index: 3,
-    name: 'Cenovni skok',
+    name: 'Kje izginja voda',
     facilityId: 'toplarna',
-    intro: 'Borza se je zbudila nervozna. Ko cena poskoči, bodi pripravljen.',
-    lesson: 'Cene elektrike na borzi se menjajo vsakih 15 minut. Kdor ima podatke in prostor v hranilniku, ujame najboljše ure.',
-    stages: [{ kind: 'urnik', params: urnik('r4-3', { blocks: 12, capacity: 5, start: 2, profile: 'mesto', swing: 1, spikes: 2, pass: 0.8, timeSec: 150 }) }],
-    stars: [complete, bestPlan, timeLeft(40)],
+    intro: 'Toplarna pošlje več vode, kot je pride nazaj. Nekje pod ulico pušča.',
+    lesson: 'Števec toplote na vsakem vozlišču pove, koliko sosednjih odsekov pušča. Tako koplješ samo tam, kjer je treba.',
+    stages: [{ kind: 'puscanje', params: puscanje('r4-3', { cols: 5, rows: 6, leaks: 5, extraMeters: 1, camera: 1, timeSec: 120 }) }],
+    stars: [complete, noDig, timeLeft(40)],
     reward: { kwh: 2300, dp: 250 },
     card: { id: 'c-borza', name: 'Borzna cena', rarity: 'redka', text: 'Zvečer je elektrika lahko desetkrat dražja kot opoldne, ko sije sonce.' },
   },
@@ -712,12 +726,12 @@ export const LEVELS: LevelDef[] = [
     id: 'r4-5',
     region: 4,
     index: 5,
-    name: 'Mrzlo jutro',
+    name: 'Toplota za bolnišnico',
     facilityId: 'bolnisnicni',
-    intro: 'Bolnišnica ne sme nikoli ostati brez toplote. Jutranja konica odjema je huda.',
-    lesson: 'Pri CHP je toplota pogosto glavni produkt, elektrika pa bonus. Najprej zagotovi odjem, potem lovi ceno.',
-    stages: [{ kind: 'urnik', params: urnik('r4-5', { blocks: 12, capacity: 4, start: 2, profile: 'bolnisnica', swing: 1, spikes: 1, keepEnd: true, pass: 0.8, timeSec: 150 }) }],
-    stars: [complete, bestPlan, timeLeft(40)],
+    intro: 'Bolnišnični CHP je na novi veji omrežja. Bolnišnica mora biti topla prva.',
+    lesson: 'Pri CHP je toplota pogosto glavni produkt. Brez dobrega omrežja do odjemalca je motor brez smisla.',
+    stages: [{ kind: 'toplovod', params: toplovod('r4-5', { cols: 5, rows: 6, houses: [3, 7], obstacles: 0.1, timeSec: 130 }) }],
+    stars: [complete, fewTurns(6), timeLeft(35)],
     reward: { kwh: 2600, dp: 270 },
     card: { id: 'c-odjem', name: 'Toplotni odjem', rarity: 'navadna', text: 'Bolnišnica potrebuje toploto vse leto: ogrevanje pozimi, topla voda in sterilizacija vedno.' },
   },
@@ -752,12 +766,12 @@ export const LEVELS: LevelDef[] = [
     id: 'r4-7',
     region: 4,
     index: 7,
-    name: 'Nervozna borza',
+    name: 'Mokra ulica',
     facilityId: 'daljinsko',
-    intro: 'Dva cenovna skoka, večji hranilnik in obraba motorja: vsak zagon nekaj stane. Zdaj načrtuješ kot pravi dispečer.',
-    lesson: 'Dispečer CHP gleda tri krivulje hkrati: ceno, odjem in hranilnik. InGenious jih prikaže na enem zaslonu.',
-    stages: [{ kind: 'urnik', params: urnik('r4-7', { blocks: 12, capacity: 6, start: 2, profile: 'mesto', swing: 1, spikes: 2, startCost: 15, pass: 0.8, timeSec: 150 }) }],
-    stars: [complete, bestPlan, timeLeft(40)],
+    intro: 'Asfalt se pozimi ne zasneži, ker pod njim teče vroča voda. Lepo, a drago.',
+    lesson: 'Zaznava puščanja iz razlike med proizvedeno in prodano toploto je ena najdonosnejših analiz v InGenious.',
+    stages: [{ kind: 'puscanje', params: puscanje('r4-7', { cols: 6, rows: 8, leaks: 10, camera: 1, timeSec: 170 }) }],
+    stars: [complete, noDig, timeLeft(40)],
     reward: { kwh: 2900, dp: 290 },
     card: { id: 'c-dispecer', name: 'Dispečerski pult', rarity: 'redka', text: 'Kjer se srečata trg elektrike in toplotno omrežje.' },
   },
@@ -778,12 +792,12 @@ export const LEVELS: LevelDef[] = [
     id: 'r4-9',
     region: 4,
     index: 9,
-    name: 'Majhen hranilnik',
+    name: 'Velika zanka',
     facilityId: 'daljinsko',
-    intro: 'Hranilnik je v remontu, na voljo je le majhen. Vsaka odločitev šteje dvakrat.',
-    lesson: 'Brez hranilnika mora motor slediti odjemu. Ravno tu se vidi, koliko je vredna prožnost.',
-    stages: [{ kind: 'urnik', params: urnik('r4-9', { blocks: 12, capacity: 3, start: 1, profile: 'mesto', swing: 1, spikes: 1, startCost: 10, keepEnd: true, pass: 0.8, timeSec: 150 }) }],
-    stars: [complete, bestPlan, timeLeft(40)],
+    intro: 'Pol mesta na eni zanki in nobenega privarjenega kosa. Vse je na tebi.',
+    lesson: 'Dobro omrežje je kratko in zaprto. Vsak odvečen meter cevi je izguba toplote.',
+    stages: [{ kind: 'toplovod', params: toplovod('r4-9', { cols: 6, rows: 7, houses: [4, 9], obstacles: 0.1, timeSec: 160 }) }],
+    stars: [complete, fewTurns(8), timeLeft(35)],
     reward: { kwh: 3200, dp: 310 },
     card: { id: 'c-proznost', name: 'Prožnost', rarity: 'redka', text: 'Sposobnost, da porabo ali proizvodnjo premakneš v čas, ko se najbolj splača.' },
   },
@@ -794,13 +808,13 @@ export const LEVELS: LevelDef[] = [
     name: 'Zimska špica',
     facilityId: 'daljinsko',
     boss: true,
-    intro: 'Najmrzlejši dan v letu, dve enoti in Temni števec, ki je zmešal vse nastavitve. Najprej poveži, potem vozi.',
-    lesson: 'Boss: brez zanesljivega zajema podatkov ni dispečiranja. Ko vse teče, ena platforma vodi elektriko, toploto in plin.',
+    intro: 'Najmrzlejši dan v letu. Temni števec suče cevi, ko jih poravnaš, in pod mestom pušča. Najprej zanka, potem puščanja.',
+    lesson: 'Boss: najprej zapri omrežje, nato po števcih poišči vsa puščanja. Ena platforma vidi elektriko, toploto in vodo.',
     stages: [
-      { kind: 'priklop', params: priklop('r4-10', { cols: 6, rows: 8, meters: 6, timeSec: 110, conflicts: 2, dropouts: [55] }, '#6') },
-      { kind: 'urnik', params: urnik('r4-10', { blocks: 12, capacity: 4, start: 2, units: 2, profile: 'mesto', swing: 1, spikes: 2, startCost: 15, keepEnd: true, service: 2, pass: 0.8, timeSec: 180 }) },
+      { kind: 'toplovod', params: toplovod('r4-10', { cols: 6, rows: 8, houses: [4, 12], obstacles: 0.1, sabotage: 9, timeSec: 180 }) },
+      { kind: 'puscanje', params: puscanje('r4-10', { cols: 7, rows: 9, leaks: 13, camera: 1, timeSec: 180 }) },
     ],
-    stars: [complete, bestPlan, clean],
+    stars: [complete, noDig, fewTurns(10)],
     reward: { kwh: 4000, dp: 400 },
     card: { id: 'c-zima', name: 'Zimska konica', rarity: 'epska', text: 'Ko je zunaj –15 °C, je vsak kilovat toplote vreden zlata. In vsak izgubljen dvojno.' },
   },
@@ -1052,10 +1066,10 @@ export const LEVELS: LevelDef[] = [
     index: 7,
     name: 'Toplota za Center',
     facilityId: 'omara',
-    intro: 'Center ogreva ista toplarna kot pol mesta. Borza je nervozna, noč pa dolga.',
+    intro: 'Center ogreva ista toplarna kot pol mesta. Pod staro razdelilno postajo pušča na vse strani.',
     lesson: 'Ko imaš zgodovino in napoved v isti platformi, dispečer ne ugiba. Ve, kaj se je zgodilo lani na tak dan.',
-    stages: [{ kind: 'urnik', params: urnik('r6-7', { blocks: 12, capacity: 4, start: 2, units: 2, profile: 'bolnisnica', swing: 1, spikes: 3, startCost: 15, keepEnd: true, service: 3, pass: 0.85, timeSec: 180 }) }],
-    stars: [complete, bestPlan, timeLeft(40)],
+    stages: [{ kind: 'puscanje', params: puscanje('r6-7', { cols: 8, rows: 10, leaks: 16, camera: 1, timeSec: 220 }) }],
+    stars: [complete, noDig, timeLeft(30)],
     reward: { kwh: 7200, dp: 670 },
     card: { id: 'c-napoved-odjema', name: 'Napoved odjema', rarity: 'redka', text: 'Jutri bo mrzlo. Lani je bilo na tak dan potrebnih 31 MWh toplote.' },
   },
@@ -1117,6 +1131,167 @@ export const LEVELS: LevelDef[] = [
     stars: [complete, intact(95), clean],
     reward: { kwh: 9000, dp: 900 },
     card: { id: 'c-s0', name: 'Š-0, 1987', rarity: 'epska', text: 'Aluminijast kolut, mehanski števec, 39 let brez enega odčitka. Zdaj ga bere vsak dan.' },
+  },
+  // ── Region 7: Polnilni park ────────────────────────────────────────
+  {
+    id: 'r7-1',
+    region: 7,
+    index: 1,
+    name: 'Prvi priklop',
+    facilityId: 'zadruga',
+    intro: 'Pred staro zadrugo stoji nova polnilnica. Parkirišče pa je zabito do zadnjega kotička.',
+    lesson: 'Polnilnica brez meritev je samo vtičnica. InGenious ve, koliko je vsak avto porabil in komu to zaračunati.',
+    stages: [{ kind: 'polnilnica', params: polnilnica('r7-1', { evs: 1, cars: 3, trucks: 1, chargers: [50], minMoves: [3, 5] }) }],
+    stars: [complete, parMoves(2), noHint],
+    reward: { kwh: 7800, dp: 720 },
+    card: { id: 'c-ac', name: 'AC polnilnica', rarity: 'navadna', text: 'Do 22 kW. Avto ob njej prespi noč in zjutraj je poln.' },
+  },
+  {
+    id: 'r7-2',
+    region: 7,
+    index: 2,
+    name: 'Prazna baterija',
+    facilityId: 'zadruga',
+    intro: 'Električni avto je prišel s skoraj prazno baterijo. Vsak premik ga stane.',
+    lesson: 'Baterija električnega avta je energija na kolesih. Merjenje polnjenja pove, kdaj se polni najceneje.',
+    stages: [{ kind: 'polnilnica', params: polnilnica('r7-2', { evs: 1, cars: 5, trucks: 2, battery: 3, chargers: [50], minMoves: [5, 8] }) }],
+    stars: [complete, parMoves(2), noHint],
+    reward: { kwh: 8000, dp: 730 },
+    card: { id: 'c-baterija', name: 'Baterija 60 kWh', rarity: 'navadna', text: 'Toliko porabi povprečno gospodinjstvo v petih dneh.' },
+  },
+  {
+    id: 'r7-3',
+    region: 7,
+    index: 3,
+    name: 'Dva na enkrat',
+    facilityId: 'zadruga',
+    intro: 'Dva električna avtomobila, dve polnilnici in kup sosedov, ki so parkirali kar tako.',
+    lesson: 'Vsaka polnilnica ima svoj števec. Tako veš, katera je zasedena, katera stoji in katera je v okvari.',
+    stages: [{ kind: 'polnilnica', params: polnilnica('r7-3', { evs: 2, cars: 4, trucks: 2, chargers: [50, 50], minMoves: [6, 10] }) }],
+    stars: [complete, parMoves(2), noHint],
+    reward: { kwh: 8200, dp: 740 },
+    card: { id: 'c-dc', name: 'DC polnilnica', rarity: 'redka', text: 'Do 150 kW. Kava v bližnjem bistroju in avto je skoraj poln.' },
+  },
+  {
+    id: 'r7-4',
+    region: 7,
+    index: 4,
+    name: 'Priključek ni neskončen',
+    facilityId: 'hub',
+    intro: 'Dve hitri polnilnici po 150 kW, priključek pa zdrži 200. Oba hkrati ne gresta.',
+    lesson: 'Upravljanje obremenitve razdeli razpoložljivo moč med polnilnice. Drag nadgrajen priključek ni vedno potreben.',
+    stages: [{ kind: 'polnilnica', params: polnilnica('r7-4', { evs: 2, cars: 4, trucks: 2, chargers: [150, 150], limitKw: 200, chargeMoves: 3, minMoves: [7, 11] }) }],
+    stars: [complete, parMoves(2), noHint],
+    reward: { kwh: 8400, dp: 750 },
+    card: { id: 'c-load', name: 'Upravljanje obremenitve', rarity: 'redka', text: 'Ko se priklopi tretji avto, vsi trije dobijo malo manj. Nihče ne ostane brez.' },
+  },
+  {
+    id: 'r7-5',
+    region: 7,
+    index: 5,
+    name: 'Petkova konica',
+    facilityId: 'hub',
+    intro: 'Petek popoldne. Vsi hočejo polniti hkrati, avtopralnica dela s polno paro.',
+    lesson: 'Polnilni hub je največji porabnik v okolici. Obračunska moč se tu zlahka podvoji, če nihče ne gleda.',
+    stages: [
+      {
+        kind: 'konica',
+        params: konica('r7-5', {
+          durationSec: 80,
+          limitKw: 720,
+          tolerance: 0.05,
+          baseKw: 200,
+          baseNoise: 0.05,
+          baseSteps: [{ t: 40, kw: 40 }],
+          consumers: [trgovina, hitri(1), pocasna, hitri(2, 110), pralnica2, klima],
+          inrush: 1.5,
+        }),
+      },
+    ],
+    stars: [complete, peakUnder(720), noStall],
+    reward: { kwh: 8600, dp: 760 },
+    card: { id: 'c-petek', name: 'Petkova konica', rarity: 'redka', text: 'Ob petkih ob štirih vsi hkrati odidejo z dela. In vsi hočejo poln avto.' },
+  },
+  {
+    id: 'r7-6',
+    region: 7,
+    index: 6,
+    name: 'Ena za dva',
+    facilityId: 'hub',
+    intro: 'Dva avtomobila, ena prosta polnilnica. Prvi se mora napolniti, preden pride drugi na vrsto.',
+    lesson: 'Rezervacije in podatki o zasedenosti skrajšajo čakanje. Polnilnica, ki stoji prazna, ne zasluži nič.',
+    stages: [{ kind: 'polnilnica', params: polnilnica('r7-6', { evs: 2, cars: 4, trucks: 2, battery: 4, chargers: [50], chargeMoves: 2, minMoves: [8, 12] }) }],
+    stars: [complete, parMoves(3), noHint],
+    reward: { kwh: 8800, dp: 770 },
+    card: { id: 'c-zasedenost', name: 'Zasedenost', rarity: 'navadna', text: 'Povprečna javna polnilnica je zasedena manj kot petino dneva.' },
+  },
+  {
+    id: 'r7-7',
+    region: 7,
+    index: 7,
+    name: 'Števci na polnilnicah',
+    facilityId: 'klet',
+    intro: 'Vsaka polnilnica dobi svoj števec, vsi pa gredo na prehod v kleti zadruge. Tam nekaj utripa rdeče.',
+    lesson: 'Zaračunavanje polnjenja zahteva overjen števec na vsaki polnilnici. InGenious jih bere vse prek enega prehoda.',
+    stages: [{ kind: 'priklop', params: priklop('r7-7', { cols: 6, rows: 7, meters: 6, timeSec: 110, conflicts: 2, dropouts: [60] }) }],
+    stars: [complete, timeLeft(25), clean],
+    reward: { kwh: 9000, dp: 780 },
+    card: { id: 'c-overjen', name: 'Overjen števec', rarity: 'redka', text: 'Kdor prodaja kilovatne ure, mora imeti števec z žigom.' },
+  },
+  {
+    id: 'r7-8',
+    region: 7,
+    index: 8,
+    name: 'Gneča pred zadrugo',
+    facilityId: 'klet',
+    intro: 'Trije električni avtomobili, tri polnilnice različnih moči in priključek, ki komaj diha.',
+    lesson: 'Hitra polnilnica je dobra za voznika, počasna pa za omrežje. Pravi avto na pravo polnilnico je pol uspeha.',
+    stages: [{ kind: 'polnilnica', params: polnilnica('r7-8', { evs: 3, cars: 4, trucks: 2, battery: 5, chargers: [150, 50, 50], limitKw: 200, chargeMoves: 3, minMoves: [9, 14] }) }],
+    stars: [complete, parMoves(3), noHint],
+    reward: { kwh: 9200, dp: 790 },
+    card: { id: 'c-moc', name: 'Prava moč', rarity: 'epska', text: 'Kdor polni čez noč, ne potrebuje 150 kW. Potrebuje le, da je zjutraj poln.' },
+  },
+  {
+    id: 'r7-9',
+    region: 7,
+    index: 9,
+    name: 'Tovornjaki na poti',
+    facilityId: 'klet',
+    intro: 'Zadruga dobi dostavo. Trije tovornjaki in dva avta, ki ju je treba spraviti na polnilnico.',
+    lesson: 'Tudi tovorni promet se elektrificira. Polnilnica za tovornjak potrebuje toliko moči kot cela vas.',
+    stages: [{ kind: 'polnilnica', params: polnilnica('r7-9', { evs: 2, cars: 6, trucks: 3, battery: 4, chargers: [50, 50], minMoves: [12, 18] }) }],
+    stars: [complete, parMoves(4), noHint],
+    reward: { kwh: 9400, dp: 800 },
+    card: { id: 'c-tovornjak', name: 'Električni tovornjak', rarity: 'redka', text: 'Baterija 500 kWh. Ena polnitev bi napajala hišo pol leta.' },
+  },
+  {
+    id: 'r7-10',
+    region: 7,
+    index: 10,
+    name: 'Š-1',
+    facilityId: 'klet',
+    boss: true,
+    intro: 'Š-1, drugi števec starega omrežja, je prevzel parkirišče. Najprej ukroti konico, nato prehiti njegov črni avto.',
+    lesson: 'Boss: ko vidiš porabo vsake polnilnice in priključka v realnem času, ti tudi Š-1 ne more zapreti poti.',
+    stages: [
+      {
+        kind: 'konica',
+        params: konica('r7-10', {
+          durationSec: 70,
+          limitKw: 700,
+          tolerance: 0.05,
+          baseKw: 210,
+          baseNoise: 0.05,
+          baseSteps: [{ t: 30, kw: 40 }],
+          consumers: [trgovina, hitri(1), pocasna, kompresor(2, 80), hitri(2, 110), klima],
+          inrush: 1.5,
+        }),
+      },
+      { kind: 'polnilnica', params: polnilnica('r7-10', { evs: 2, cars: 4, trucks: 2, battery: 5, chargers: [150, 50], limitKw: 160, chargeMoves: 3, darkEvery: 3, minMoves: [8, 14] }) },
+    ],
+    stars: [complete, parMoves(4), noHint],
+    reward: { kwh: 10000, dp: 950 },
+    card: { id: 'c-s1', name: 'Š-1, 1987', rarity: 'epska', text: 'Brat Š-0. Štel je zadrugo, mlin in vaško razsvetljavo. Zdaj šteje polnilnice.' },
   },
 ];
 

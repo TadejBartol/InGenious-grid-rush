@@ -5,7 +5,9 @@ import { PriklopView } from '../../games/priklop/PriklopView';
 import { KonicaView } from '../../games/konica/KonicaView';
 import { DetektivView } from '../../games/detektiv/DetektivView';
 import { WmbusView } from '../../games/wmbus/WmbusView';
-import { UrnikView } from '../../games/urnik/UrnikView';
+import { ToplovodView } from '../../games/toplovod/ToplovodView';
+import { PuscanjeView } from '../../games/puscanje/PuscanjeView';
+import { PolnilnicaView } from '../../games/polnilnica/PolnilnicaView';
 import { AlarmView } from '../../games/alarm/AlarmView';
 import { SelitevView } from '../../games/selitev/SelitevView';
 import { voice } from '../../audio/voice';
@@ -24,7 +26,9 @@ export const KIND_NAME: Record<Stage['kind'], string> = {
   konica: 'Lov na konico',
   detektiv: 'Detektiv',
   wmbus: 'Radijsko omrežje',
-  urnik: 'Vozni red',
+  toplovod: 'Toplovod',
+  puscanje: 'Lov na puščanje',
+  polnilnica: 'Polnilnica',
   alarm: 'Alarm!',
   selitev: 'Selitev',
 };
@@ -40,10 +44,12 @@ const TIPS: Record<string, string> = {
   'r2-4': 'Zgoraj je urnik. Kar je na njem, je načrtovano: tega ne prijavi, četudi izgleda kot anomalija.',
   'r3-1': 'Drži prst na polju in poglej krog dosega. Spusti, ko krog pokrije vse vodomere.',
   'r3-2': 'Najprej prehod, nato repetitor. Repetitor mora biti v krogu prehoda, sicer ostane oranžen.',
-  'r4-1': 'Tapni blok v vrstici Motor, da tam teče. Vsak blok vožnje prinese rumeni znesek in toploto v hranilnik. Hranilnik ne sme biti prazen ne prepoln. Ko je urnik veljaven, zaženi dan.',
-  'r4-2': 'Negativni zneski pomenijo poceni elektriko: tam motor raje ugasni. Toploto za te ure pripravi vnaprej v hranilniku.',
-  'r4-7': 'Vsak zagon motorja stane obrabo. Raje en daljši tek kot trije kratki.',
-  'r4-10': 'Dva motorja, vsak s svojo vrstico. Ob servisu (ključ) motor ne more teči.',
+  'r4-1': 'Tapni cev, da jo zasukaš. Vroča voda iz toplarne mora priti do vseh stavb, noben konec cevi ne sme ostati odprt.',
+  'r4-3': 'Številka na števcu pove, koliko od 8 sosednjih odsekov pušča. Kjer si prepričan, da pušča, zapri ventil. Kjer je varno, preglej.',
+  'r4-10': 'Temni števec bo med igro sukal cevi, ki že nosijo vodo. Pazi na rdeč blisk in jih vrni.',
+  'r7-1': 'Povleci avto naprej ali nazaj po njegovi vrsti. Avto s strelo pripelji do polnilnice ob robu parkirišča.',
+  'r7-2': 'Številka na bateriji pove, koliko premikov še zmore električni avto. Ko pade na nič, obstane.',
+  'r7-4': 'Polnilnice imajo moč, priključek pa mejo. Dva hitra polnilnika hkrati lahko presežeta mejo, zato počakaj, da se en avto napolni.',
   'r5-1': 'Ko zazvoni alarm, tapni hladilnik in izberi ukrep. Poglej vrata (ikona), napajanje in smer krivulje.',
   'r5-2': 'Meja alarma je spodaj. Prenizka zvoni ob vsakem odpiranju vrat, previsoka te opozori prepozno.',
   'r5-4': 'Torbe so na poti. Ko se hladilni vložki stopijo, temperatura raste: kurirju pošlji sveže vložke.',
@@ -157,7 +163,9 @@ export function PlayScreen({ level, from }: { level: LevelDef; from: Screen }) {
         {stage.kind === 'konica' && <KonicaView key={key} {...common} params={stage.params} />}
         {stage.kind === 'detektiv' && <DetektivView key={key} {...common} params={stage.params} />}
         {stage.kind === 'wmbus' && <WmbusView key={key} {...common} params={stage.params} />}
-        {stage.kind === 'urnik' && <UrnikView key={key} {...common} params={stage.params} />}
+        {stage.kind === 'toplovod' && <ToplovodView key={key} {...common} params={stage.params} />}
+        {stage.kind === 'puscanje' && <PuscanjeView key={key} {...common} params={stage.params} />}
+        {stage.kind === 'polnilnica' && <PolnilnicaView key={key} {...common} params={stage.params} />}
         {stage.kind === 'alarm' && <AlarmView key={key} {...common} params={stage.params} />}
         {stage.kind === 'selitev' && <SelitevView key={key} {...common} params={stage.params} />}
         {phase === 'countdown' && (

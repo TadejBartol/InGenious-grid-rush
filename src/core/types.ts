@@ -1,4 +1,4 @@
-export type GameKind = 'priklop' | 'konica' | 'detektiv' | 'wmbus' | 'urnik' | 'alarm' | 'selitev';
+export type GameKind = 'priklop' | 'konica' | 'detektiv' | 'wmbus' | 'toplovod' | 'puscanje' | 'polnilnica' | 'alarm' | 'selitev';
 
 export interface PriklopParams {
   cols: number;
@@ -77,26 +77,50 @@ export interface WmbusParams {
   seed: number;
 }
 
-export interface UrnikParams {
-  /** Blocks the day is split into (8 = 3 h, 12 = 2 h). */
-  blocks: number;
-  /** Heat tank size and morning level, in heat units per CHP unit. One running unit makes 2 per block. */
-  capacity: number;
-  start: number;
-  units?: number;
-  profile: 'mesto' | 'bolnisnica';
-  /** How strongly the margin swings over the day, 1 = full. */
-  swing: number;
-  spikes?: number;
-  /** Wear cost of every motor start (EUR). */
-  startCost?: number;
-  /** The tank must end the day at least as full as it started. */
-  keepEnd?: boolean;
-  /** Blocks in which a unit is in service and cannot run. */
-  service?: number;
-  /** Share of the best possible profit needed to pass. */
-  pass: number;
+export interface ToplovodParams {
+  cols: number;
+  rows: number;
+  /** Share of cells taken by other buildings: no pipe there. */
+  obstacles?: number;
+  /** Range of buildings to heat (tree leaves). */
+  houses: [number, number];
+  /** Pipes already welded in place (a gentle start). */
+  locked?: number;
+  /** Seconds between the Dark Meter twisting a hot pipe (boss). */
+  sabotage?: number;
   timeSec: number;
+  seed: number;
+}
+
+export interface PuscanjeParams {
+  cols: number;
+  rows: number;
+  leaks: number;
+  /** Extra heat meters revealed at the start beyond what logic needs. */
+  extraMeters?: number;
+  /** Thermal camera charges: each reveals one safe, useful cell. */
+  camera?: number;
+  timeSec: number;
+  seed: number;
+}
+
+export interface PolnilnicaParams {
+  /** Vehicles besides the EVs. */
+  cars: number;
+  trucks: number;
+  evs: number;
+  /** Moves each EV can make on its battery (undefined = plenty). */
+  battery?: number;
+  /** Chargers on the board edge with their power (kW). */
+  chargers: number[];
+  /** Site connection limit (kW); undefined = no limit. */
+  limitKw?: number;
+  /** Player moves an EV keeps a charger busy after plugging in. */
+  chargeMoves?: number;
+  /** The dark car moves by itself every N player moves (boss). */
+  darkEvery?: number;
+  /** Shortest solution length the generator aims for. */
+  minMoves: [number, number];
   seed: number;
 }
 
@@ -151,7 +175,9 @@ export type Stage =
   | { kind: 'konica'; params: KonicaParams }
   | { kind: 'detektiv'; params: DetektivParams }
   | { kind: 'wmbus'; params: WmbusParams }
-  | { kind: 'urnik'; params: UrnikParams }
+  | { kind: 'toplovod'; params: ToplovodParams }
+  | { kind: 'puscanje'; params: PuscanjeParams }
+  | { kind: 'polnilnica'; params: PolnilnicaParams }
   | { kind: 'alarm'; params: AlarmParams }
   | { kind: 'selitev'; params: SelitevParams };
 
@@ -209,7 +235,7 @@ export interface FacilityDef {
   /** kWh per hour saved once the facility is lit, before upgrades. */
   baseRate: number;
   upgradeBaseCost: number;
-  art: 'livarna' | 'peskanje' | 'kompresor' | 'hladilnica' | 'trafo' | 'pakirnica' | 'cistilna' | 'vodarna' | 'toplarna' | 'bolnisnica' | 'zd' | 'dostava' | 'arhiv' | 'omara';
+  art: 'livarna' | 'peskanje' | 'kompresor' | 'hladilnica' | 'trafo' | 'pakirnica' | 'cistilna' | 'vodarna' | 'toplarna' | 'bolnisnica' | 'zd' | 'dostava' | 'arhiv' | 'omara' | 'polnilnica';
 }
 
 export interface RegionDef {
