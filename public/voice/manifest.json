@@ -626,12 +626,12 @@
  },
  "r5-intro.4": {
   "file": "r5-intro.4.mp3",
-  "text": "Potem pa poglejmo, koliko alarmov prenese en robotek v eni noči.",
+  "text": "Potem pa poglejmo, ali ločiš moje meritve od pravih. Poslal jih bom na tisoče.",
   "v": 3
  },
  "fac-zdcenter.0": {
   "file": "fac-zdcenter.0.mp3",
-  "text": "ZD Center. Trije hladilniki, en dežurni in meja alarma, ki je končno nastavljena prav.",
+  "text": "ZD Center. Trije hladilniki, en dežurni in meritve, ki so končno preverjene.",
   "v": 3
  },
  "fac-zdcenter.1": {
@@ -641,7 +641,7 @@
  },
  "fac-zdcenter.2": {
   "file": "fac-zdcenter.2.mp3",
-  "text": "Cepilni center je pod nadzorom. Nič več lažnih alarmov ob vsakem odpiranju vrat.",
+  "text": "Cepilni center je pod nadzorom. Lažne meritve ostanejo zunaj kartona.",
   "v": 3
  },
  "fac-zdcenter.3": {
@@ -686,7 +686,7 @@
  },
  "r5-boss.2": {
   "file": "r5-boss.2.mp3",
-  "text": "Najprej senzorje nazaj na prehod. Potem vsak alarm, takoj, pravi ukrep.",
+  "text": "Najprej senzorje nazaj na prehod. Potem prestrežem vsako tvojo lažno meritev.",
   "v": 3
  },
  "r5-boss.3": {
@@ -701,7 +701,7 @@
  },
  "r5-taunt.1": {
   "file": "r5-taunt.1.mp3",
-  "text": "Prepočasi sem bral vzroke. Vrata, napajanje, smer krivulje. Še enkrat, hitreje.",
+  "text": "Preveč lažnih je prišlo skozi. Bodice režem, modrih in križev ne. Še enkrat.",
   "v": 3
  },
  "r5-ko.0": {
@@ -711,7 +711,7 @@
  },
  "r5-ko.1": {
   "file": "r5-ko.1.mp3",
-  "text": "Vsak alarm prebran. Vsak ukrep pravi. Nobenega uničenega odmerka.",
+  "text": "Vsaka lažna meritev prestrežena. Vsak pravi alarm je prišel do dežurnega.",
   "v": 3
  },
  "r5-ko.2": {
