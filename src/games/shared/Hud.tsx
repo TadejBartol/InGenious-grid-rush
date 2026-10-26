@@ -1,9 +1,12 @@
 import type { ComponentChildren } from 'preact';
+import { useContext } from 'preact/hooks';
 import type { GameResult } from '../../core/types';
 import { fmtSeconds } from '../../core/format';
-import { IconPause } from '../../ui/components/Icons';
+import { IconInfo, IconPause } from '../../ui/components/Icons';
+import { HelpContext } from '../../ui/components/GameHelp';
 
 export function Hud({ title, subtitle, time, onPause, children }: { title: string; subtitle: string; time: number | null; onPause: () => void; children?: ComponentChildren }) {
+  const openHelp = useContext(HelpContext);
   return (
     <div class="hud">
       <button class="icon-btn" onClick={onPause} aria-label="Premor">
@@ -14,6 +17,11 @@ export function Hud({ title, subtitle, time, onPause, children }: { title: strin
         <span>{subtitle}</span>
       </div>
       {children}
+      {openHelp && (
+        <button class="icon-btn" onClick={openHelp} aria-label="Navodila">
+          <IconInfo />
+        </button>
+      )}
       {time !== null && (
         <div class={`timer${time <= 10 ? ' low' : ''}`} role="timer" aria-label={`Preostali čas ${Math.ceil(time)} sekund`}>
           {fmtSeconds(time)}

@@ -7,7 +7,6 @@ export interface Cell {
   y: number;
 }
 
-export const BAUDS = [9600, 19200, 38400, 115200] as const;
 export const ADDRESS_MAX = 16;
 
 export interface Meter {
@@ -17,14 +16,12 @@ export interface Meter {
   y: number;
   port: number;
   address: number;
-  baud: number;
 }
 
 export interface Port {
   id: number;
   x: number;
   y: number;
-  baud: number;
 }
 
 export interface Puzzle {
@@ -44,7 +41,7 @@ export type PriklopEvent =
   | { type: 'blocked'; meter: number; cell: Cell }
   | { type: 'cut'; meter: number; cell: Cell }
   | { type: 'online'; meter: number }
-  | { type: 'spark'; meter: number; reason: 'address' | 'baud' }
+  | { type: 'spark'; meter: number; reason: 'address' }
   | { type: 'dropout'; meter: number; cell: Cell }
   | { type: 'unfilled'; empty: number }
   | { type: 'won' }
@@ -78,7 +75,6 @@ export function generatePuzzle(p: PriklopParams): Puzzle {
   const meters: Meter[] = [];
   const ports: Port[] = [];
   const solution: Cell[][] = [];
-  const portBaud = rng.pick(BAUDS);
   // Longest cables first, so M1 is the backbone of the board.
   segs.sort((a, b) => b.length - a.length);
   segs.forEach((seg, i) => {
@@ -86,24 +82,17 @@ export function generatePuzzle(p: PriklopParams): Puzzle {
     const route = at(seg[0]).y > at(seg[seg.length - 1]).y ? seg.map(at) : [...seg].reverse().map(at);
     const m = route[0];
     const port = route[route.length - 1];
-    ports.push({ id: i, x: port.x, y: port.y, baud: i % 3 === 2 ? rng.pick(BAUDS) : portBaud });
-    meters.push({ id: i, device: DEVICES[(i + p.seed) % DEVICES.length], x: m.x, y: m.y, port: i, address: 0, baud: 0 });
+    ports.push({ id: i, x: port.x, y: port.y });
+    meters.push({ id: i, device: DEVICES[(i + p.seed) % DEVICES.length], x: m.x, y: m.y, port: i, address: 0 });
     solution.push(route);
   });
   const count = meters.length;
   const addresses = rng.shuffle([...Array(ADDRESS_MAX).keys()].map((n) => n + 1)).slice(0, count);
-  meters.forEach((m, i) => {
-    m.address = addresses[i];
-    m.baud = ports[m.port].baud;
-  });
+  meters.forEach((m, i) => (m.address = addresses[i]));
   const victims = rng.shuffle([...meters.keys()]);
   for (let i = 0; i < Math.min(p.conflicts, count - 1); i++) {
     const m = meters[victims[i]];
     m.address = meters[victims[(i + 1) % count]].address;
-  }
-  for (let i = 0; i < Math.min(p.baudMismatch, count); i++) {
-    const m = meters[victims[count - 1 - i]];
-    m.baud = rng.pick(BAUDS.filter((b) => b !== ports[m.port].baud));
   }
   return { cols, rows, meters, ports, solution };
 }
@@ -181,10 +170,9 @@ export class PriklopGame {
   }
 
   /** Problems the meter's settings would cause right now. */
-  configProblem(meterId: number): 'address' | 'baud' | null {
+  configProblem(meterId: number): 'address' | null {
     const m = this.puzzle.meters[meterId];
     if (this.puzzle.meters.some((o) => o.id !== m.id && o.address === m.address)) return 'address';
-    if (m.baud !== this.puzzle.ports[m.port].baud) return 'baud';
     return null;
   }
 
@@ -303,12 +291,11 @@ export class PriklopGame {
     this.checkWin();
   }
 
-  configure(id: number, address: number, baud: number) {
+  configure(id: number, address: number) {
     if (this.finished) return;
     const m = this.puzzle.meters[id];
-    if (m.address === address && m.baud === baud) return;
+    if (m.address === address) return;
     m.address = address;
-    m.baud = baud;
     for (const other of this.puzzle.meters) {
       if (other.id !== id && this.status.get(other.id) === 'online' && this.configProblem(other.id)) this.status.set(other.id, 'error');
     }

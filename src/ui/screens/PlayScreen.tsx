@@ -5,7 +5,7 @@ import { PriklopView } from '../../games/priklop/PriklopView';
 import { KonicaView } from '../../games/konica/KonicaView';
 import { DetektivView } from '../../games/detektiv/DetektivView';
 import { WmbusView } from '../../games/wmbus/WmbusView';
-import { KogeneratorView } from '../../games/kogenerator/KogeneratorView';
+import { UrnikView } from '../../games/urnik/UrnikView';
 import { AlarmView } from '../../games/alarm/AlarmView';
 import { SelitevView } from '../../games/selitev/SelitevView';
 import { voice } from '../../audio/voice';
@@ -15,15 +15,16 @@ import { logEvent } from '../../state/persist';
 import { store, useGame } from '../../state/store';
 import { nav, type Screen } from '../nav';
 import { GenkoSays } from '../components/Genko';
+import { GameHelpSheet, HelpContext } from '../components/GameHelp';
 import { Sheet } from '../components/Common';
-import { IconPlay, IconRetry, IconX } from '../components/Icons';
+import { IconInfo, IconPlay, IconRetry, IconX } from '../components/Icons';
 
 export const KIND_NAME: Record<Stage['kind'], string> = {
   priklop: 'Priklop',
   konica: 'Lov na konico',
   detektiv: 'Detektiv',
   wmbus: 'Radijsko omrežje',
-  kogenerator: 'Kogenerator',
+  urnik: 'Vozni red',
   alarm: 'Alarm!',
   selitev: 'Selitev',
 };
@@ -33,15 +34,16 @@ const TIPS: Record<string, string> = {
   'r1-1': 'Povleci kabel od merilnika M1 do okrogle vtičnice iste barve. Kabli se ne smejo križati in morajo skupaj zapolniti vsa polja.',
   'r1-2': 'Dva merilnika imata isti ID. Tapni merilnik in mu nastavi prost naslov, preden ga priklopiš.',
   'r1-3': 'Tapni porabnika, da ga izklopiš. Drži krivuljo pod rdečo črto, a ne pusti, da se zaloga izprazni.',
-  'r1-5': 'Številka v vtičnici je hitrost, ki jo pričakuje. Merilnik mora imeti enako.',
   'r1-6': 'Ko porabnika vklopiš, za trenutek potegne več. Ne vklapljaj vsega naenkrat.',
   'r1-7': 'Pozor, povezava je nestabilna. Ko kabel pade, ga znova povleci.',
   'r2-1': 'Tapni na graf, kjer modra črta uide iz svetlega pasu. Čas se upočasni: izberi, kaj je vzrok. Prej ko opaziš, več DP.',
   'r2-4': 'Zgoraj je urnik. Kar je na njem, je načrtovano: tega ne prijavi, četudi izgleda kot anomalija.',
   'r3-1': 'Drži prst na polju in poglej krog dosega. Spusti, ko krog pokrije vse vodomere.',
   'r3-2': 'Najprej prehod, nato repetitor. Repetitor mora biti v krogu prehoda, sicer ostane oranžen.',
-  'r4-1': 'Motor zaženi, ko je rumena črta (cena) visoko. Toplota mora pokriti oranžne stolpce, sicer se mesto ohladi.',
-  'r4-2': 'Ko motor dela več toplote, kot jo mesto rabi, potisni hranilnik na »polni«. Ko motor stoji, ga prazni.',
+  'r4-1': 'Tapni blok v vrstici Motor, da tam teče. Vsak blok vožnje prinese rumeni znesek in toploto v hranilnik. Hranilnik ne sme biti prazen ne prepoln. Ko je urnik veljaven, zaženi dan.',
+  'r4-2': 'Negativni zneski pomenijo poceni elektriko: tam motor raje ugasni. Toploto za te ure pripravi vnaprej v hranilniku.',
+  'r4-7': 'Vsak zagon motorja stane obrabo. Raje en daljši tek kot trije kratki.',
+  'r4-10': 'Dva motorja, vsak s svojo vrstico. Ob servisu (ključ) motor ne more teči.',
   'r5-1': 'Ko zazvoni alarm, tapni hladilnik in izberi ukrep. Poglej vrata (ikona), napajanje in smer krivulje.',
   'r5-2': 'Meja alarma je spodaj. Prenizka zvoni ob vsakem odpiranju vrat, previsoka te opozori prepozno.',
   'r5-4': 'Torbe so na poti. Ko se hladilni vložki stopijo, temperatura raste: kurirju pošlji sveže vložke.',
@@ -56,6 +58,7 @@ export function PlayScreen({ level, from }: { level: LevelDef; from: Screen }) {
   const [phase, setPhase] = useState<'countdown' | 'playing' | 'between'>('countdown');
   const [count, setCount] = useState(3);
   const [paused, setPaused] = useState(false);
+  const [help, setHelp] = useState(false);
   const results = useRef<GameResult[]>([]);
   const research = useGame((s) => s.research);
   const seenTips = useGame((s) => s.seenTips);
@@ -137,7 +140,7 @@ export function PlayScreen({ level, from }: { level: LevelDef; from: Screen }) {
   const common = {
     title: level.name,
     subtitle: multi ? `Faza ${stageIdx + 1}/${level.stages.length} · ${KIND_NAME[stage.kind]}` : KIND_NAME[stage.kind],
-    paused: paused || phase !== 'playing',
+    paused: paused || help || phase !== 'playing',
     tip,
     onTipDone: () => store.getState().markTip(level.id),
     onPause: () => setPaused(true),
@@ -148,50 +151,56 @@ export function PlayScreen({ level, from }: { level: LevelDef; from: Screen }) {
   const key = `${stageIdx}-${attempt}`;
 
   return (
-    <div class="play">
-      {stage.kind === 'priklop' && <PriklopView key={key} {...common} params={stage.params} />}
-      {stage.kind === 'konica' && <KonicaView key={key} {...common} params={stage.params} />}
-      {stage.kind === 'detektiv' && <DetektivView key={key} {...common} params={stage.params} />}
-      {stage.kind === 'wmbus' && <WmbusView key={key} {...common} params={stage.params} />}
-      {stage.kind === 'kogenerator' && <KogeneratorView key={key} {...common} params={stage.params} />}
-      {stage.kind === 'alarm' && <AlarmView key={key} {...common} params={stage.params} />}
-      {stage.kind === 'selitev' && <SelitevView key={key} {...common} params={stage.params} />}
-      {phase === 'countdown' && (
-        <div class={`countdown${level.boss ? ' boss' : ''}`} aria-live="assertive">
-          {level.boss && (
-            <div class="boss-banner">
-              <b>BOSS</b>
-              <span>
-                Faza {stageIdx + 1} od {level.stages.length} · {KIND_NAME[stage.kind]}
-              </span>
-            </div>
-          )}
-          <span key={count}>{count}</span>
-        </div>
-      )}
-      {phase === 'between' && (
-        <div class="overlay center">
-          <div class="sheet" style={{ textAlign: 'center' }}>
-            <GenkoSays text={`Faza ${stageIdx + 1} opravljena. Zdaj pa ${KIND_NAME[level.stages[stageIdx + 1].kind].toLowerCase()}!`} mood="wow" />
+    <HelpContext.Provider value={() => setHelp(true)}>
+      <div class="play">
+        {stage.kind === 'priklop' && <PriklopView key={key} {...common} params={stage.params} />}
+        {stage.kind === 'konica' && <KonicaView key={key} {...common} params={stage.params} />}
+        {stage.kind === 'detektiv' && <DetektivView key={key} {...common} params={stage.params} />}
+        {stage.kind === 'wmbus' && <WmbusView key={key} {...common} params={stage.params} />}
+        {stage.kind === 'urnik' && <UrnikView key={key} {...common} params={stage.params} />}
+        {stage.kind === 'alarm' && <AlarmView key={key} {...common} params={stage.params} />}
+        {stage.kind === 'selitev' && <SelitevView key={key} {...common} params={stage.params} />}
+        {phase === 'countdown' && (
+          <div class={`countdown${level.boss ? ' boss' : ''}`} aria-live="assertive">
+            {level.boss && (
+              <div class="boss-banner">
+                <b>BOSS</b>
+                <span>
+                  Faza {stageIdx + 1} od {level.stages.length} · {KIND_NAME[stage.kind]}
+                </span>
+              </div>
+            )}
+            <span key={count}>{count}</span>
           </div>
-        </div>
-      )}
-      {paused && phase !== 'between' && (
-        <Sheet center label="Premor" onClose={() => setPaused(false)}>
-          <h2 style={{ textAlign: 'center', marginBottom: '14px' }}>Premor</h2>
-          <div style={{ display: 'grid', gap: '10px' }}>
-            <button class="btn primary big" onClick={() => setPaused(false)}>
-              <IconPlay width={18} /> Nadaljuj
+        )}
+        {phase === 'between' && (
+          <div class="overlay center">
+            <div class="sheet" style={{ textAlign: 'center' }}>
+              <GenkoSays text={`Faza ${stageIdx + 1} opravljena. Zdaj pa ${KIND_NAME[level.stages[stageIdx + 1].kind].toLowerCase()}!`} mood="wow" />
+            </div>
+          </div>
+        )}
+        {help && <GameHelpSheet kind={stage.kind} kindName={KIND_NAME[stage.kind]} level={level} tip={TIPS[level.id]} onClose={() => setHelp(false)} />}
+        {paused && !help && phase !== 'between' && (
+          <Sheet center label="Premor" onClose={() => setPaused(false)}>
+            <h2 style={{ textAlign: 'center', marginBottom: '14px' }}>Premor</h2>
+            <div style={{ display: 'grid', gap: '10px' }}>
+              <button class="btn primary big" onClick={() => setPaused(false)}>
+                <IconPlay width={18} /> Nadaljuj
+              </button>
+              <button class="btn big" onClick={() => setHelp(true)}>
+              <IconInfo width={18} /> Navodila
             </button>
             <button class="btn big" onClick={restart}>
-              <IconRetry width={18} /> Začni znova
-            </button>
-            <button class="btn big" onClick={() => nav.getState().go(from)}>
-              <IconX width={18} /> Zapusti stopnjo
-            </button>
-          </div>
-        </Sheet>
-      )}
-    </div>
+                <IconRetry width={18} /> Začni znova
+              </button>
+              <button class="btn big" onClick={() => nav.getState().go(from)}>
+                <IconX width={18} /> Zapusti stopnjo
+              </button>
+            </div>
+          </Sheet>
+        )}
+      </div>
+    </HelpContext.Provider>
   );
 }

@@ -7,7 +7,7 @@ import { Sheet } from '../../ui/components/Common';
 import { Hud, type GameProps } from '../shared/Hud';
 import { useShake } from '../shared/useShake';
 import { COLORS, Floaters, label, MONO, Particles, usePixi } from '../shared/pixi';
-import { ADDRESS_MAX, BAUDS, PriklopGame, type Cell } from './logic';
+import { ADDRESS_MAX, PriklopGame, type Cell } from './logic';
 import { expose } from '../../testHooks';
 import { plural } from '../../core/balance';
 
@@ -68,7 +68,7 @@ export function PriklopView(props: GameProps<PriklopParams>) {
           if (m) fx.current?.spark(m);
           shake();
           setFlash((f) => f + 1);
-          showToast(e.reason === 'address' ? `Iskra! M${e.meter + 1}: naslov ${m!.address} je že zaseden` : `Iskra! M${e.meter + 1}: napačna hitrost`, 'bad');
+          showToast(`Iskra! M${e.meter + 1}: naslov ${m!.address} je že zaseden`, 'bad');
           setVersion((v) => v + 1);
           break;
         case 'cut':
@@ -186,13 +186,6 @@ export function PriklopView(props: GameProps<PriklopParams>) {
         id.position.set(c.x, c.y + cell * 0.1);
         (id as Text & { meterId?: number }).meterId = m.id;
         labels.addChild(t, id);
-      }
-      for (const port of game.puzzle.ports) {
-        const c = center(port);
-        const b = label(`${port.baud >= 1000 ? `${port.baud / 1000}k` : port.baud}`, { fontFamily: MONO, fontSize: Math.max(8, cell * 0.17), fontWeight: '800', fill: METER_COLORS[port.id % METER_COLORS.length] });
-        b.anchor.set(0.5);
-        b.position.set(c.x, c.y + cell * 0.08);
-        labels.addChild(b);
       }
     };
 
@@ -413,7 +406,7 @@ export function PriklopView(props: GameProps<PriklopParams>) {
           const st = game.status.get(m.id);
           return (
             <button class={`meter-chip ${st}`} onClick={() => setConfig(m.id)} aria-label={`Nastavi merilnik M${m.id + 1}`}>
-              <i style={{ background: css(METER_COLORS[m.id % METER_COLORS.length]) }} />M{m.id + 1} · ID {m.address} · {m.baud}
+              <i style={{ background: css(METER_COLORS[m.id % METER_COLORS.length]) }} />M{m.id + 1} · ID {m.address}
             </button>
           );
         })}
@@ -423,8 +416,8 @@ export function PriklopView(props: GameProps<PriklopParams>) {
           game={game}
           meterId={cfgMeter.id}
           onClose={() => setConfig(null)}
-          onSave={(address, baud) => {
-            game.configure(cfgMeter.id, address, baud);
+          onSave={(address) => {
+            game.configure(cfgMeter.id, address);
             setConfig(null);
             setVersion((v) => v + 1);
           }}
@@ -434,11 +427,10 @@ export function PriklopView(props: GameProps<PriklopParams>) {
   );
 }
 
-function MeterConfig({ game, meterId, onClose, onSave }: { game: PriklopGame; meterId: number; onClose: () => void; onSave: (address: number, baud: number) => void }) {
+function MeterConfig({ game, meterId, onClose, onSave }: { game: PriklopGame; meterId: number; onClose: () => void; onSave: (address: number) => void }) {
   const m = game.puzzle.meters[meterId];
   const port = game.puzzle.ports[m.port];
   const [address, setAddress] = useState(m.address);
-  const [baud, setBaud] = useState(m.baud);
   const taken = new Set(game.puzzle.meters.filter((o) => o.id !== m.id).map((o) => o.address));
   const color = css(METER_COLORS[m.id % METER_COLORS.length]);
   return (
@@ -450,7 +442,7 @@ function MeterConfig({ game, meterId, onClose, onSave }: { game: PriklopGame; me
         <div class="grow">
           <b>{m.device}</b>
           <div class="small muted">
-            Vrata {port.id + 1} na prehodu · pričakujejo {port.baud} Bd
+            Vrata {port.id + 1} na prehodu
           </div>
         </div>
       </div>
@@ -464,15 +456,7 @@ function MeterConfig({ game, meterId, onClose, onSave }: { game: PriklopGame; me
           </button>
         ))}
       </div>
-      <div class="section-title">Hitrost (baud)</div>
-      <div class="baud-row">
-        {BAUDS.map((b) => (
-          <button class={`baud${b === baud ? ' sel' : ''}${b === port.baud ? ' match' : ''}`} onClick={() => (audio.play('tap'), setBaud(b))} aria-pressed={b === baud}>
-            {b}
-          </button>
-        ))}
-      </div>
-      <button class="btn primary big" onClick={() => onSave(address, baud)}>
+      <button class="btn primary big" onClick={() => onSave(address)}>
         Shrani nastavitve
       </button>
       <p class="tiny muted" style={{ marginTop: '10px', textAlign: 'center' }}>

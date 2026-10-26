@@ -23,7 +23,7 @@ export const GENKO = {
     'Vsak kWh na števcu je kWh, ki ga Temni števec ne bo pojedel.',
     'Nadgradi objekte in števec bo tekel hitreje. Matematika je lepa.',
   ],
-  spark: ['Iskra! Naslov ali hitrost ne štimata.', 'Ta merilnik govori drug jezik. Preveri baud.', 'Dva z istim naslovom? Na vodilu se kregata.'],
+  spark: ['Iskra! Dva merilnika z istim naslovom.', 'Ta naslov je že zaseden. Izberi prostega.', 'Dva z istim naslovom? Na vodilu se kregata.'],
   stall: ['Zastoj! Zaloga je prazna, proizvodnja stoji.', 'Brez zraka ni peskanja. Vklopi ga prej.'],
   peak: ['Konica! Nekaj izklopi, hitro!', 'Rdeča črta je rdeča z razlogom.'],
 } as const;

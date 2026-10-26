@@ -45,7 +45,7 @@ describe('Priklop generator', () => {
   it.each(priklopStages)('$id: injects the requested misconfiguration', ({ params }) => {
     const game = new PriklopGame(params);
     const problems = game.puzzle.meters.map((m) => game.configProblem(m.id)).filter(Boolean);
-    if (params.conflicts + params.baudMismatch > 0) expect(problems.length).toBeGreaterThan(0);
+    if (params.conflicts > 0) expect(problems.length).toBeGreaterThan(0);
     else expect(problems).toHaveLength(0);
   });
 
@@ -67,7 +67,7 @@ describe('Priklop generator', () => {
 });
 
 describe('Priklop play', () => {
-  const params: PriklopParams = { cols: 5, rows: 6, meters: 3, timeSec: 60, conflicts: 1, baudMismatch: 0, dropouts: [], seed: 42 };
+  const params: PriklopParams = { cols: 5, rows: 6, meters: 3, timeSec: 60, conflicts: 1, dropouts: [], seed: 42 };
 
   it('sparks and counts a mistake when a misconfigured meter is connected', () => {
     const game = new PriklopGame(params);
@@ -82,12 +82,12 @@ describe('Priklop play', () => {
     expect(events).toContain('spark');
     // Fixing the address on a connected meter brings it online.
     const free = [...Array(16).keys()].map((n) => n + 1).find((a) => !game.puzzle.meters.some((m) => m.address === a))!;
-    game.configure(bad.id, free, game.puzzle.ports[bad.port].baud);
+    game.configure(bad.id, free);
     expect(game.status.get(bad.id)).toBe('online');
   });
 
   it('a new cable cuts through an unfinished one, but never through endpoints', () => {
-    const game = new PriklopGame({ ...params, conflicts: 0, baudMismatch: 0 });
+    const game = new PriklopGame({ ...params, conflicts: 0 });
     const [a] = game.puzzle.solution;
     game.startDrag(a[0].x, a[0].y);
     for (const c of a.slice(1)) game.dragTo(c.x, c.y);
@@ -110,7 +110,7 @@ describe('Priklop play', () => {
   });
 
   it('can be drawn from the terminal end too', () => {
-    const game = new PriklopGame({ ...params, conflicts: 0, baudMismatch: 0 });
+    const game = new PriklopGame({ ...params, conflicts: 0 });
     const route = [...game.puzzle.solution[0]].reverse();
     game.startDrag(route[0].x, route[0].y);
     for (const c of route.slice(1)) game.dragTo(c.x, c.y);
@@ -120,7 +120,7 @@ describe('Priklop play', () => {
   it('all cables online but empty cells left is not a win', () => {
     const game = solvePriklop(params);
     expect(game.finished).toBe('won');
-    const g = new PriklopGame({ ...params, conflicts: 0, baudMismatch: 0 });
+    const g = new PriklopGame({ ...params, conflicts: 0 });
     const events: string[] = [];
     g.on((e) => events.push(e.type));
     // Connect every pair along its own route except one detour-free shortcut is impossible,

@@ -19,7 +19,7 @@ const KIND_ICON: Record<Stage['kind'], typeof IconPlug> = {
   konica: IconChart,
   detektiv: IconSearch,
   wmbus: IconWave,
-  kogenerator: IconCogen,
+  urnik: IconCogen,
   alarm: IconBell,
   selitev: IconDatabase,
 };

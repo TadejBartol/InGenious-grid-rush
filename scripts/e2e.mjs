@@ -28,7 +28,7 @@ const clearHooks = () =>
     delete window.__gr_konica;
     delete window.__gr_detektiv;
     delete window.__gr_wmbus;
-    delete window.__gr_kogen;
+    delete window.__gr_urnik;
     delete window.__gr_alarm;
     delete window.__gr_selitev;
   });
@@ -117,17 +117,15 @@ async function playPriklop() {
     const fix = await page.evaluate((id) => {
       const g = window.__gr_priklop.game;
       const m = g.puzzle.meters[id];
-      const port = g.puzzle.ports[m.port];
       const taken = new Set(g.puzzle.meters.filter((o) => o.id !== id).map((o) => o.address));
       const needAddr = taken.has(m.address);
       let addr = m.address;
       if (needAddr) for (let a = 1; a <= 16; a++) if (!taken.has(a)) { addr = a; break; }
-      return needAddr || m.baud !== port.baud ? { addr, baud: port.baud } : null;
+      return needAddr ? { addr } : null;
     }, id);
     if (!fix) continue;
     await page.getByRole('button', { name: `Nastavi merilnik M${id + 1}` }).click();
     await page.getByRole('button', { name: new RegExp(`^Naslov ${fix.addr}(,|$)`) }).click();
-    await page.getByRole('button', { name: String(fix.baud), exact: true }).click();
     await page.getByRole('button', { name: 'Shrani nastavitve' }).click();
     await wait(150);
   }
@@ -225,36 +223,17 @@ async function playWmbus() {
   }
 }
 
-async function playKogen(screenshotAt) {
-  await page.waitForFunction(() => window.__gr_kogen);
-  await wait(2200);
-  const load = page.getByRole('slider', { name: 'Moč kogeneratorja' });
-  const storage = page.getByRole('slider', { name: /Hranilnik toplote/ });
-  let shotDone = false;
-  let lastLoad = -1;
-  let lastSt = -999;
-  for (;;) {
-    // Same policy as the balance bot, but through the real sliders.
-    const st = await page.evaluate(() => {
-      const s = window.__gr_kogen;
-      const sorted = [...s.day.price].sort((a, b) => a - b);
-      const threshold = Math.max(112.5 - 55 * 1.2 * 0.7, sorted[Math.floor(sorted.length * 0.45)]);
-      const heatFull = s.p.chpKw * 1.2;
-      const ahead = s.sample(s.day.demand, s.hour + 1);
-      let load = s.price >= threshold ? 1 : 0;
-      if (!load && s.soc < 0.12) load = Math.min(1, Math.max(0.4, (ahead * 1.05) / heatFull));
-      const want = load * heatFull - s.demand + (s.temp - 80) * heatFull * 0.08;
-      return { finished: s.finished, hour: s.hour, load: Math.round(load * 20) * 5, storage: Math.max(-100, Math.min(100, Math.round((want / s.storageMaxKw) * 20) * 5)) };
-    });
-    if (st.finished) break;
-    if (!shotDone && st.hour > screenshotAt) {
-      await shot('21-kogenerator');
-      shotDone = true;
-    }
-    if (st.load !== lastLoad) await load.fill(String((lastLoad = st.load)));
-    if (st.storage !== lastSt) await storage.fill(String((lastSt = st.storage)));
-    await wait(100);
+async function playUrnik() {
+  await page.waitForFunction(() => window.__gr_urnik);
+  await wait(2300);
+  // Tap the known best plan through the real motor buttons, like a player who solved it.
+  const cells = await page.evaluate(() => window.__gr_urnik.day.bestPlan.flatMap((row, u) => row.map((on, i) => (on ? [u, i] : null)).filter(Boolean)));
+  for (const [u, i] of cells) {
+    await page.locator(`.urn-motor button[data-unit="${u}"][data-block="${i}"]`).click();
+    await wait(60);
   }
+  await shot('21-urnik');
+  await page.getByRole('button', { name: 'Zaženi dan ▶' }).click();
 }
 
 async function resultStars() {
@@ -435,11 +414,11 @@ await page.getByRole('button', { name: /Odkleni/ }).click();
 await skipStory();
 await page.getByRole('button', { name: /Stopnja 1: Prvi zagon/ }).click();
 await startLevel();
-await playKogen(12);
+await playUrnik();
 stars = await resultStars();
 step(`4-1 result: ${stars}`);
 await shot('22-result-kogen');
-if (stars?.startsWith('0')) fail('4-1 should be beatable through the sliders');
+if (stars?.startsWith('0')) fail('4-1 should be beatable by tapping the best plan');
 
 // 10. Healthcare and the Dark Meter's centre
 const jump = (id) =>

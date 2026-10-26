@@ -183,7 +183,7 @@ export const SCENES: Scene[] = [
     tone: 'boss',
     lines: [
       { who: 'dark', mood: 'smirk', text: 'Iskal si lažnivca, našel pa si samo svojo napako.', act: 'laugh' },
-      { who: 'genko', mood: 'worried', text: 'Faze si sledijo brez odmora. Najprej priklop, nato detektiv. Tokrat pazim na hitrost vtičnic.' },
+      { who: 'genko', mood: 'worried', text: 'Faze si sledijo brez odmora. Najprej priklop, nato detektiv. Tokrat pazim na naslove.' },
     ],
   },
   {

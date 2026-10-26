@@ -24,6 +24,7 @@ export const IconGear = (p: P) =>
   ]);
 export const IconBack = (p: P) => base(p, <path d="M15 18l-6-6 6-6" />);
 export const IconPause = (p: P) => base(p, [<path d="M9 5v14M15 5v14" />]);
+export const IconInfo = (p: P) => base(p, [<circle cx="12" cy="12" r="9" />, <path d="M12 11v6M12 7.5v.5" />]);
 export const IconLock = (p: P) => base(p, [<rect x="5" y="11" width="14" height="10" rx="2" />, <path d="M8 11V7a4 4 0 0 1 8 0v4" />]);
 export const IconStar = (p: P) => base(p, <path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z" fill="currentColor" stroke="none" />);
 export const IconCheck = (p: P) => base(p, <path d="M5 12l5 5 9-10" />);

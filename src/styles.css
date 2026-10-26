@@ -1414,31 +1414,6 @@ p {
   text-decoration: none;
 }
 
-.baud-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-  margin: 8px 0 16px;
-}
-
-.baud {
-  height: 40px;
-  border-radius: 10px;
-  font: 700 13px var(--mono);
-  background: var(--panel);
-  border: 1px solid var(--line);
-}
-
-.baud.sel {
-  color: #03121a;
-  background: var(--brand);
-  border-color: var(--brand);
-}
-
-.baud.match:not(.sel) {
-  border-color: rgba(61, 255, 154, 0.5);
-}
-
 .meter-legend {
   display: flex;
   flex-wrap: wrap;
@@ -7194,4 +7169,285 @@ button.pill:active {
   to {
     transform: scaleX(1);
   }
+}
+
+/* Vozni red (urnik): a planning board, one column per block of the day */
+.urnik-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 12px calc(var(--safe-bottom) + 12px);
+  overflow-y: auto;
+}
+
+.urn-goal {
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.urn-bar {
+  position: relative;
+  height: 10px;
+  border-radius: 6px;
+  background: var(--bg-2);
+  overflow: hidden;
+}
+
+.urn-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--brand-2), var(--green));
+  transition: width 0.25s ease;
+}
+
+.urn-fill.bad {
+  background: linear-gradient(90deg, #6b2a3c, var(--red));
+}
+
+.urn-mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #fff;
+  opacity: 0.85;
+}
+
+.urn-goal-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.urn-goal-row b {
+  color: var(--text);
+}
+
+.urn-board {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  touch-action: none;
+}
+
+.urn-label {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.urn-label small {
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.8;
+}
+
+.urn-row {
+  display: grid;
+  grid-template-columns: repeat(var(--n), 1fr);
+  gap: 3px;
+}
+
+.urn-row > * {
+  min-width: 0;
+}
+
+.urn-margin span,
+.urn-demand span,
+.urn-tank span {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 52px;
+  border-radius: 6px;
+  background: var(--bg-2);
+  overflow: hidden;
+}
+
+.urn-margin i,
+.urn-demand i,
+.urn-tank i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--h) * 100%);
+  transition: height 0.2s ease;
+}
+
+.urn-margin i {
+  background: rgba(255, 211, 77, 0.35);
+}
+
+.urn-margin .neg i {
+  background: rgba(255, 59, 92, 0.25);
+}
+
+.urn-margin .spike {
+  box-shadow: inset 0 0 0 1.5px #ffd34d;
+}
+
+.urn-margin b,
+.urn-demand b,
+.urn-tank b {
+  position: relative;
+  padding-bottom: 3px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.urn-margin b {
+  color: #ffd34d;
+}
+
+.urn-margin .neg b {
+  color: #ff8095;
+}
+
+.urn-motor button {
+  height: 50px;
+  padding: 0;
+  border-radius: 8px;
+  font-size: 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: inherit;
+  transition: background 0.12s ease;
+}
+
+.urn-motor button.on {
+  background: linear-gradient(180deg, #ff9a4f, #d65a1f);
+  border-color: #ffb37a;
+}
+
+.urn-motor button.locked {
+  opacity: 0.55;
+  font-size: 13px;
+  background: repeating-linear-gradient(135deg, var(--panel) 0 5px, var(--bg-2) 5px 10px);
+}
+
+.urn-demand span {
+  height: 30px;
+}
+
+.urn-demand i {
+  background: rgba(255, 138, 79, 0.3);
+}
+
+.urn-demand b {
+  color: #ffb08a;
+}
+
+.urn-tank span {
+  height: 60px;
+  border: 1px solid var(--line);
+}
+
+.urn-tank i {
+  background: linear-gradient(180deg, #ff7a4f, #b8322b);
+  opacity: 0.75;
+}
+
+.urn-tank .cold {
+  border-color: var(--brand);
+  background: rgba(56, 225, 255, 0.15);
+}
+
+.urn-tank .cold b {
+  color: var(--brand);
+}
+
+.urn-tank .over {
+  border-color: var(--red);
+  background: rgba(255, 59, 92, 0.18);
+}
+
+.urn-tank .over b {
+  color: var(--red);
+}
+
+.urn-tank .later i,
+.urn-tank .later b {
+  opacity: 0.15;
+}
+
+.urn-hours span {
+  font: 600 10px var(--mono);
+  color: var(--muted);
+  text-align: left;
+}
+
+.urn-row .now,
+.urn-motor button.now {
+  outline: 2px solid #fff;
+  outline-offset: -1px;
+}
+
+.urn-status {
+  min-height: 34px;
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--muted);
+}
+
+.urn-status.good {
+  color: var(--green);
+}
+
+.urn-status.bad {
+  color: #ff8095;
+}
+
+.urn-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* In-game rules sheet */
+.help-goal {
+  margin: 0 0 12px;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.help-list {
+  margin: 6px 0 14px;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.help-list li + li {
+  margin-top: 4px;
+}
+
+.help-tip {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.4;
+  background: rgba(56, 225, 255, 0.08);
+  border: 1px solid rgba(56, 225, 255, 0.25);
+}
+
+.help-stars {
+  margin: 6px 0 16px;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #ffd34d;
 }

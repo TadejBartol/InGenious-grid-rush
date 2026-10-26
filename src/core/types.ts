@@ -1,4 +1,4 @@
-export type GameKind = 'priklop' | 'konica' | 'detektiv' | 'wmbus' | 'kogenerator' | 'alarm' | 'selitev';
+export type GameKind = 'priklop' | 'konica' | 'detektiv' | 'wmbus' | 'urnik' | 'alarm' | 'selitev';
 
 export interface PriklopParams {
   cols: number;
@@ -7,8 +7,6 @@ export interface PriklopParams {
   timeSec: number;
   /** Meters shipped with an address that collides with another meter. */
   conflicts: number;
-  /** Meters shipped with the wrong baud rate. */
-  baudMismatch: number;
   /** Times (s from start) when an online cable gets cut and must be re-routed. */
   dropouts: number[];
   seed: number;
@@ -79,23 +77,26 @@ export interface WmbusParams {
   seed: number;
 }
 
-export interface KogeneratorParams {
-  /** Real seconds for one simulated day. */
-  durationSec: number;
-  /** CHP electric power at 100% load (kW). Heat output follows at a fixed ratio. */
-  chpKw: number;
-  /** Units shown on screen; power is split evenly, for flavour and the boss. */
+export interface UrnikParams {
+  /** Blocks the day is split into (8 = 3 h, 12 = 2 h). */
+  blocks: number;
+  /** Heat tank size and morning level, in heat units per CHP unit. One running unit makes 2 per block. */
+  capacity: number;
+  start: number;
   units?: number;
-  /** Heat storage capacity (kWh of heat). */
-  storageKwh: number;
-  /** Heat demand relative to the CHP heat output at full load. */
-  demandScale: number;
-  /** 0..1, how far the price swings from its daily mean. */
-  priceSwing: number;
-  /** Random price spikes during the day. */
-  spikes: number;
-  /** Profit needed to pass (EUR). */
-  targetEur: number;
+  profile: 'mesto' | 'bolnisnica';
+  /** How strongly the margin swings over the day, 1 = full. */
+  swing: number;
+  spikes?: number;
+  /** Wear cost of every motor start (EUR). */
+  startCost?: number;
+  /** The tank must end the day at least as full as it started. */
+  keepEnd?: boolean;
+  /** Blocks in which a unit is in service and cannot run. */
+  service?: number;
+  /** Share of the best possible profit needed to pass. */
+  pass: number;
+  timeSec: number;
   seed: number;
 }
 
@@ -150,7 +151,7 @@ export type Stage =
   | { kind: 'konica'; params: KonicaParams }
   | { kind: 'detektiv'; params: DetektivParams }
   | { kind: 'wmbus'; params: WmbusParams }
-  | { kind: 'kogenerator'; params: KogeneratorParams }
+  | { kind: 'urnik'; params: UrnikParams }
   | { kind: 'alarm'; params: AlarmParams }
   | { kind: 'selitev'; params: SelitevParams };
 

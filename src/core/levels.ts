@@ -1,5 +1,5 @@
 import { hashString } from './rng';
-import type { AlarmParams, ConsumerDef, DetektivParams, FacilityDef, KogeneratorParams, KonicaParams, LevelDef, PriklopParams, RegionDef, SelitevParams, StarGoal, WmbusParams } from './types';
+import type { AlarmParams, ConsumerDef, DetektivParams, FacilityDef, KonicaParams, LevelDef, PriklopParams, RegionDef, SelitevParams, StarGoal, UrnikParams, WmbusParams } from './types';
 
 const seed = (id: string, salt = '') => hashString(`grid-rush:${id}${salt}`);
 
@@ -7,7 +7,7 @@ const priklop = (id: string, p: Omit<PriklopParams, 'seed'>, salt = ''): Priklop
 const konica = (id: string, p: Omit<KonicaParams, 'seed'>): KonicaParams => ({ ...p, seed: seed(id) });
 const detektiv = (id: string, p: Omit<DetektivParams, 'seed'>): DetektivParams => ({ ...p, seed: seed(id) });
 const wmbus = (id: string, p: Omit<WmbusParams, 'seed'>): WmbusParams => ({ ...p, seed: seed(id) });
-const kogen = (id: string, p: Omit<KogeneratorParams, 'seed'>): KogeneratorParams => ({ ...p, seed: seed(id) });
+const urnik = (id: string, p: Omit<UrnikParams, 'seed'>): UrnikParams => ({ ...p, seed: seed(id) });
 const alarm = (id: string, p: Omit<AlarmParams, 'seed'>): AlarmParams => ({ ...p, seed: seed(id) });
 const selitev = (id: string, p: Omit<SelitevParams, 'seed'>): SelitevParams => ({ ...p, seed: seed(id) });
 
@@ -18,8 +18,7 @@ const noStall: StarGoal = { type: 'mistakes', max: 0, label: 'Brez zastoja proiz
 const timeLeft = (s: number): StarGoal => ({ type: 'timeLeft', min: s });
 const noMoves: StarGoal = { type: 'mistakes', max: 0, label: 'Brez prestavljanja naprav' };
 const devicesMax = (n: number): StarGoal => ({ type: 'metric', key: 'used', op: '<=', value: n, unit: '', label: `Največ ${n} ${n === 1 ? 'naprava' : n === 2 ? 'napravi' : n < 5 ? 'naprave' : 'naprav'}` });
-const effOver = (pct: number): StarGoal => ({ type: 'metric', key: 'efficiency', op: '>=', value: pct, unit: '%', label: `Izkoristek ≥ ${pct} %` });
-const warm: StarGoal = { type: 'mistakes', max: 0, label: 'Brez mrzlih radiatorjev' };
+const bestPlan: StarGoal = { type: 'metric', key: 'gap', op: '<=', value: 0, unit: '€', label: 'Najboljši možni urnik' };
 const foundAll: StarGoal = { type: 'metric', key: 'missed', op: '<=', value: 0, unit: '', label: 'Najdi vse anomalije' };
 const fastResponse = (s: number): StarGoal => ({ type: 'metric', key: 'response', op: '<=', value: s, unit: 's', label: `Povprečni odziv ≤ ${String(s).replace('.', ',')} s` });
 const fewFalse = (n: number): StarGoal => ({ type: 'metric', key: 'falseAlarms', op: '<=', value: n, unit: '', label: `Največ ${n} ${n === 1 ? 'lažni alarm' : n === 2 ? 'lažna alarma' : 'lažne alarme'}` });
@@ -58,7 +57,7 @@ export const REGIONS: RegionDef[] = [
   { id: 1, name: 'Industrijska cona', theme: 'Konične moči in puščanje zraka', mechanic: 'Priklop · Lov na konico', pos: { x: 52, y: 52 }, available: true, unlockChips: 0 },
   { id: 2, name: 'Mlekarna in prehrana', theme: 'Hladna veriga in števci na TP', mechanic: 'Detektiv', pos: { x: 81, y: 22 }, available: true, unlockChips: 3 },
   { id: 3, name: 'Komunala', theme: 'Radijski vodomeri, puhala in puščanje', mechanic: 'Radijsko omrežje', pos: { x: 27, y: 80 }, available: true, unlockChips: 5 },
-  { id: 4, name: 'Kogeneracija', theme: 'Elektrika, toplota in cena na borzi', mechanic: 'Kogenerator', pos: { x: 17, y: 44 }, available: true, unlockChips: 8 },
+  { id: 4, name: 'Kogeneracija', theme: 'Elektrika, toplota in cena na borzi', mechanic: 'Vozni red toplarne', pos: { x: 17, y: 44 }, available: true, unlockChips: 8 },
   { id: 5, name: 'Zdravstvo', theme: 'Hladna veriga cepiv in alarmi v realnem času', mechanic: 'Alarm!', pos: { x: 78, y: 68 }, available: true, unlockChips: 11 },
   { id: 6, name: 'Center Temnega števca', theme: 'Selitev zgodovine in finale', mechanic: 'Selitev · vse mehanike', pos: { x: 43, y: 13 }, available: true, unlockChips: 14 },
 ];
@@ -93,7 +92,7 @@ export const LEVELS: LevelDef[] = [
     facilityId: 'livarna',
     intro: 'Livarna nima niti enega merilnika. Temni števec se tukaj masti že leta.',
     lesson: 'Vsak InGenious projekt se začne z zajemom: merilnik → prehod → platforma. Brez kabla ni podatkov.',
-    stages: [{ kind: 'priklop', params: priklop('r1-1', { cols: 4, rows: 4, meters: 2, timeSec: 75, conflicts: 0, baudMismatch: 0, dropouts: [] }) }],
+    stages: [{ kind: 'priklop', params: priklop('r1-1', { cols: 4, rows: 4, meters: 2, timeSec: 75, conflicts: 0, dropouts: [] }) }],
     stars: [complete, timeLeft(45), clean],
     reward: { kwh: 120, dp: 20 },
     card: { id: 'c-analizator', name: 'Analizator omrežja', rarity: 'navadna', text: 'Meri napetost, tok, moč in harmonike. Prvi vir resnice v vsaki tovarni.' },
@@ -105,8 +104,8 @@ export const LEVELS: LevelDef[] = [
     name: 'Napačen naslov',
     facilityId: 'livarna',
     intro: 'Dva merilnika sta prišla iz tovarne z istim Modbus naslovom. Klasika.',
-    lesson: 'Na enem Modbus vodilu mora imeti vsaka naprava svoj naslov in isto hitrost (baud) kot prehod. Tapni merilnik in ga nastavi, preden ga priklopiš.',
-    stages: [{ kind: 'priklop', params: priklop('r1-2', { cols: 5, rows: 5, meters: 3, timeSec: 90, conflicts: 1, baudMismatch: 0, dropouts: [] }) }],
+    lesson: 'Na enem Modbus vodilu mora imeti vsaka naprava svoj naslov. Tapni merilnik in ga nastavi, preden ga priklopiš.',
+    stages: [{ kind: 'priklop', params: priklop('r1-2', { cols: 5, rows: 5, meters: 3, timeSec: 90, conflicts: 1, dropouts: [] }) }],
     stars: [complete, timeLeft(35), clean],
     reward: { kwh: 150, dp: 25 },
     card: { id: 'c-prehod', name: 'Modbus prehod', rarity: 'navadna', text: 'Zbira meritve z RS-485 vodila in jih pošilja v oblak. Mali, a nepogrešljiv.' },
@@ -171,9 +170,9 @@ export const LEVELS: LevelDef[] = [
     index: 5,
     name: 'Kabelska džungla',
     facilityId: 'peskanje',
-    intro: 'Štirje merilniki, kup strojev in en prehod. Pa še hitrosti so pomešane.',
-    lesson: 'Prehod ima lahko več vrat z različnimi hitrostmi. Hitrost merilnika mora ustrezati vratom, na katera je priklopljen.',
-    stages: [{ kind: 'priklop', params: priklop('r1-5', { cols: 5, rows: 6, meters: 4, timeSec: 100, conflicts: 1, baudMismatch: 1, dropouts: [] }) }],
+    intro: 'Štirje merilniki, kup strojev in en prehod. Kable bo treba speljati pametno.',
+    lesson: 'Kabel naj gre po najkrajši poti, a vsa polja morajo biti zapolnjena. Najprej speljaj tiste, ki imajo le eno možnost.',
+    stages: [{ kind: 'priklop', params: priklop('r1-5', { cols: 5, rows: 6, meters: 4, timeSec: 100, conflicts: 1, dropouts: [] }) }],
     stars: [complete, timeLeft(30), clean],
     reward: { kwh: 260, dp: 40 },
     card: { id: 'c-rs485', name: 'RS-485 vodilo', rarity: 'navadna', text: 'Do 32 naprav na enem paru žic, do 1200 m. Industrijski klasik.' },
@@ -213,7 +212,7 @@ export const LEVELS: LevelDef[] = [
     facilityId: 'kompresorji',
     intro: 'Kompresorska postaja: pet merilnikov, nestabilna povezava. Kabli bodo padali.',
     lesson: 'Izpadi komunikacije so del terena. InGenious beleži vrzeli in ko se povezava vrne, podatke dopolni iz pomnilnika prehoda.',
-    stages: [{ kind: 'priklop', params: priklop('r1-7', { cols: 6, rows: 6, meters: 5, timeSec: 110, conflicts: 1, baudMismatch: 1, dropouts: [50] }) }],
+    stages: [{ kind: 'priklop', params: priklop('r1-7', { cols: 6, rows: 6, meters: 5, timeSec: 110, conflicts: 1, dropouts: [50] }) }],
     stars: [complete, timeLeft(25), clean],
     reward: { kwh: 340, dp: 50 },
     card: { id: 'c-pretok', name: 'Merilnik pretoka zraka', rarity: 'redka', text: 'Pokaže puščanje: če pretok teče, ko nihče ne dela, zrak uhaja.' },
@@ -252,8 +251,8 @@ export const LEVELS: LevelDef[] = [
     name: 'Hitri priklop',
     facilityId: 'kompresorji',
     intro: 'Vzdrževalci so zamenjali pol opreme. Nastavitve so vse narobe, časa je malo.',
-    lesson: 'Pri zagonu projekta InGenious najprej preveri naslove in hitrosti vseh naprav. Ena napačna nastavitev utiša celo vodilo.',
-    stages: [{ kind: 'priklop', params: priklop('r1-9', { cols: 6, rows: 7, meters: 5, timeSec: 110, conflicts: 2, baudMismatch: 2, dropouts: [60] }, '#4') }],
+    lesson: 'Pri zagonu projekta InGenious najprej preveri naslove vseh naprav. Ena napačna nastavitev utiša celo vodilo.',
+    stages: [{ kind: 'priklop', params: priklop('r1-9', { cols: 6, rows: 7, meters: 5, timeSec: 110, conflicts: 2, dropouts: [60] }, '#4') }],
     stars: [complete, timeLeft(20), clean],
     reward: { kwh: 420, dp: 60 },
     card: { id: 'c-gateway', name: 'Industrijski prehod 4G', rarity: 'redka', text: 'Prehod z mobilno povezavo in lokalnim pomnilnikom. Podatki ne izginejo, tudi ko pade omrežje.' },
@@ -268,7 +267,7 @@ export const LEVELS: LevelDef[] = [
     intro: 'Ob dveh zjutraj kompresorska postaja piska kot za stavo. Temni števec je tu. Najprej merilniki, potem lov.',
     lesson: 'Boss: najprej priklopi vse merilnike, nato v nočni izmeni ukroti konico. Brez podatkov si samo še en človek z mnenjem.',
     stages: [
-      { kind: 'priklop', params: priklop('r1-10', { cols: 6, rows: 6, meters: 5, timeSec: 100, conflicts: 1, baudMismatch: 1, dropouts: [55] }) },
+      { kind: 'priklop', params: priklop('r1-10', { cols: 6, rows: 6, meters: 5, timeSec: 100, conflicts: 1, dropouts: [55] }) },
       {
         kind: 'konica',
         params: konica('r1-10', {
@@ -309,7 +308,7 @@ export const LEVELS: LevelDef[] = [
     facilityId: 'hladilnica',
     intro: 'Hladilnica dobi nove sonde. Priklopi jih, preden se jogurt odloči, da je sir.',
     lesson: 'Temperaturne sonde in števci na istem prehodu: različne naprave, isto pravilo naslovov.',
-    stages: [{ kind: 'priklop', params: priklop('r2-2', { cols: 6, rows: 7, meters: 6, timeSec: 110, conflicts: 2, baudMismatch: 1, dropouts: [45] }, '#3') }],
+    stages: [{ kind: 'priklop', params: priklop('r2-2', { cols: 6, rows: 7, meters: 6, timeSec: 110, conflicts: 2, dropouts: [45] }, '#3') }],
     stars: [complete, timeLeft(25), clean],
     reward: { kwh: 650, dp: 85 },
     card: { id: 'c-sonda', name: 'Temperaturna sonda', rarity: 'navadna', text: 'Za hladno verigo šteje vsaka stopinja. Sonda poroča vsako minuto.' },
@@ -367,7 +366,7 @@ export const LEVELS: LevelDef[] = [
     facilityId: 'pakirnica',
     intro: 'Nova polnilna linija, šest merilnikov in prehod, ki se pritožuje nad vsem.',
     lesson: 'Več merilnikov pomeni več vpogleda: InGenious zna iz glavnega števca in podštevcev izračunati, kaj ostane nepokrito.',
-    stages: [{ kind: 'priklop', params: priklop('r2-5', { cols: 7, rows: 7, meters: 6, timeSec: 120, conflicts: 2, baudMismatch: 2, dropouts: [50, 90] }, '#5') }],
+    stages: [{ kind: 'priklop', params: priklop('r2-5', { cols: 7, rows: 7, meters: 6, timeSec: 120, conflicts: 2, dropouts: [50, 90] }, '#5') }],
     stars: [complete, timeLeft(20), clean],
     reward: { kwh: 850, dp: 105 },
     card: { id: 'c-podstevec', name: 'Podštevec', rarity: 'navadna', text: 'Razdeli porabo po linijah. Šele potem veš, kdo je res požrešen.' },
@@ -426,7 +425,7 @@ export const LEVELS: LevelDef[] = [
     facilityId: 'trafo',
     intro: 'Na trafo postaji je dvanajst števcev. Zaenkrat jih priklopi šest, preostali čakajo na boss.',
     lesson: 'Več naprav na vodilu = več pazljivosti. Isti naslov dvakrat in obe napravi utihneta.',
-    stages: [{ kind: 'priklop', params: priklop('r2-8', { cols: 7, rows: 8, meters: 7, timeSec: 130, conflicts: 2, baudMismatch: 2, dropouts: [40, 80] }, '#3') }],
+    stages: [{ kind: 'priklop', params: priklop('r2-8', { cols: 7, rows: 8, meters: 7, timeSec: 130, conflicts: 2, dropouts: [40, 80] }, '#3') }],
     stars: [complete, timeLeft(15), clean],
     reward: { kwh: 1000, dp: 125 },
     card: { id: 'c-wmbus', name: 'wM-Bus sprejemnik', rarity: 'redka', text: 'Brezžično bere vodomere in toplotne števce. Napoved naslednje regije.' },
@@ -474,7 +473,7 @@ export const LEVELS: LevelDef[] = [
     intro: 'Eden od dvanajstih števcev laže. Najprej priklopi preostale, potem ga ujemi v podatkih.',
     lesson: 'Boss: vsota podštevcev se mora ujemati z glavnim števcem. Kjer se ne, je nekdo, ki laže – ali kdo, ki krade.',
     stages: [
-      { kind: 'priklop', params: priklop('r2-10', { cols: 7, rows: 8, meters: 7, timeSec: 120, conflicts: 2, baudMismatch: 2, dropouts: [50] }, '#2') },
+      { kind: 'priklop', params: priklop('r2-10', { cols: 7, rows: 8, meters: 7, timeSec: 120, conflicts: 2, dropouts: [50] }, '#2') },
       { kind: 'detektiv', params: detektiv('r2-10', { durationSec: 60, profile: 'trafo', anomalies: 6, kinds: ['nocna', 'konica', 'zrak', 'prazniTek', 'hladilnik'], noise: 0.06, decoys: 2, scale: 0.75 }) },
     ],
     stars: [complete, foundAll, clean],
@@ -665,8 +664,8 @@ export const LEVELS: LevelDef[] = [
     facilityId: 'toplarna',
     intro: 'Plinski motor daje elektriko in toploto hkrati. Elektriko prodaš, toploto potrebuje mesto.',
     lesson: 'Kogeneracija (CHP) izkoristi do 90 % energije plina, a le, če toploto res porabiš. Motor naj teče, ko je elektrika draga.',
-    stages: [{ kind: 'kogenerator', params: kogen('r4-1', { durationSec: 55, chpKw: 1000, storageKwh: 5000, demandScale: 0.65, priceSwing: 0.6, spikes: 0, targetEur: 330 }) }],
-    stars: [complete, effOver(80), warm],
+    stages: [{ kind: 'urnik', params: urnik('r4-1', { blocks: 8, capacity: 6, start: 3, profile: 'mesto', swing: 0.8, pass: 0.75, timeSec: 120 }) }],
+    stars: [complete, bestPlan, timeLeft(40)],
     reward: { kwh: 2000, dp: 230 },
     card: { id: 'c-chp', name: 'Kogeneracijska enota', rarity: 'navadna', text: 'Motor, generator in toplotni izmenjevalnik v enem zabojniku.' },
   },
@@ -678,8 +677,8 @@ export const LEVELS: LevelDef[] = [
     facilityId: 'toplarna',
     intro: 'Elektrika je draga zvečer, toplota pa se rabi zjutraj. Hranilnik je most med njima.',
     lesson: 'Hranilnik toplote loči proizvodnjo od porabe. Motor teče, ko se splača, toplota pa počaka v rezervoarju.',
-    stages: [{ kind: 'kogenerator', params: kogen('r4-2', { durationSec: 60, chpKw: 1000, storageKwh: 4500, demandScale: 0.6, priceSwing: 0.8, spikes: 0, targetEur: 380 }) }],
-    stars: [complete, effOver(82), warm],
+    stages: [{ kind: 'urnik', params: urnik('r4-2', { blocks: 12, capacity: 5, start: 2, profile: 'mesto', swing: 1, pass: 0.8, timeSec: 150 }) }],
+    stars: [complete, bestPlan, timeLeft(40)],
     reward: { kwh: 2150, dp: 240 },
     card: { id: 'c-hranilnik', name: 'Hranilnik toplote', rarity: 'redka', text: 'Velik izoliran rezervoar vroče vode. Najcenejša baterija, kar jih poznamo.' },
   },
@@ -691,8 +690,8 @@ export const LEVELS: LevelDef[] = [
     facilityId: 'toplarna',
     intro: 'Borza se je zbudila nervozna. Ko cena poskoči, bodi pripravljen.',
     lesson: 'Cene elektrike na borzi se menjajo vsakih 15 minut. Kdor ima podatke in prostor v hranilniku, ujame najboljše ure.',
-    stages: [{ kind: 'kogenerator', params: kogen('r4-3', { durationSec: 60, chpKw: 1000, storageKwh: 4500, demandScale: 0.6, priceSwing: 0.8, spikes: 2, targetEur: 730 }) }],
-    stars: [complete, effOver(82), warm],
+    stages: [{ kind: 'urnik', params: urnik('r4-3', { blocks: 12, capacity: 5, start: 2, profile: 'mesto', swing: 1, spikes: 2, pass: 0.8, timeSec: 150 }) }],
+    stars: [complete, bestPlan, timeLeft(40)],
     reward: { kwh: 2300, dp: 250 },
     card: { id: 'c-borza', name: 'Borzna cena', rarity: 'redka', text: 'Zvečer je elektrika lahko desetkrat dražja kot opoldne, ko sije sonce.' },
   },
@@ -717,8 +716,8 @@ export const LEVELS: LevelDef[] = [
     facilityId: 'bolnisnicni',
     intro: 'Bolnišnica ne sme nikoli ostati brez toplote. Jutranja konica odjema je huda.',
     lesson: 'Pri CHP je toplota pogosto glavni produkt, elektrika pa bonus. Najprej zagotovi odjem, potem lovi ceno.',
-    stages: [{ kind: 'kogenerator', params: kogen('r4-5', { durationSec: 60, chpKw: 1000, storageKwh: 4000, demandScale: 0.75, priceSwing: 0.8, spikes: 1, targetEur: 510 }) }],
-    stars: [complete, effOver(84), warm],
+    stages: [{ kind: 'urnik', params: urnik('r4-5', { blocks: 12, capacity: 4, start: 2, profile: 'bolnisnica', swing: 1, spikes: 1, keepEnd: true, pass: 0.8, timeSec: 150 }) }],
+    stars: [complete, bestPlan, timeLeft(40)],
     reward: { kwh: 2600, dp: 270 },
     card: { id: 'c-odjem', name: 'Toplotni odjem', rarity: 'navadna', text: 'Bolnišnica potrebuje toploto vse leto: ogrevanje pozimi, topla voda in sterilizacija vedno.' },
   },
@@ -755,10 +754,10 @@ export const LEVELS: LevelDef[] = [
     index: 7,
     name: 'Nervozna borza',
     facilityId: 'daljinsko',
-    intro: 'Dva cenovna skoka, večji hranilnik in večji odjem. Zdaj se igraš kot pravi dispečer.',
+    intro: 'Dva cenovna skoka, večji hranilnik in obraba motorja: vsak zagon nekaj stane. Zdaj načrtuješ kot pravi dispečer.',
     lesson: 'Dispečer CHP gleda tri krivulje hkrati: ceno, odjem in hranilnik. InGenious jih prikaže na enem zaslonu.',
-    stages: [{ kind: 'kogenerator', params: kogen('r4-7', { durationSec: 65, chpKw: 1500, storageKwh: 7000, demandScale: 0.65, priceSwing: 1, spikes: 2, targetEur: 1070 }) }],
-    stars: [complete, effOver(84), warm],
+    stages: [{ kind: 'urnik', params: urnik('r4-7', { blocks: 12, capacity: 6, start: 2, profile: 'mesto', swing: 1, spikes: 2, startCost: 15, pass: 0.8, timeSec: 150 }) }],
+    stars: [complete, bestPlan, timeLeft(40)],
     reward: { kwh: 2900, dp: 290 },
     card: { id: 'c-dispecer', name: 'Dispečerski pult', rarity: 'redka', text: 'Kjer se srečata trg elektrike in toplotno omrežje.' },
   },
@@ -783,8 +782,8 @@ export const LEVELS: LevelDef[] = [
     facilityId: 'daljinsko',
     intro: 'Hranilnik je v remontu, na voljo je le majhen. Vsaka odločitev šteje dvakrat.',
     lesson: 'Brez hranilnika mora motor slediti odjemu. Ravno tu se vidi, koliko je vredna prožnost.',
-    stages: [{ kind: 'kogenerator', params: kogen('r4-9', { durationSec: 65, chpKw: 1500, storageKwh: 3500, demandScale: 0.7, priceSwing: 1, spikes: 1, targetEur: 770 }) }],
-    stars: [complete, effOver(85), warm],
+    stages: [{ kind: 'urnik', params: urnik('r4-9', { blocks: 12, capacity: 3, start: 1, profile: 'mesto', swing: 1, spikes: 1, startCost: 10, keepEnd: true, pass: 0.8, timeSec: 150 }) }],
+    stars: [complete, bestPlan, timeLeft(40)],
     reward: { kwh: 3200, dp: 310 },
     card: { id: 'c-proznost', name: 'Prožnost', rarity: 'redka', text: 'Sposobnost, da porabo ali proizvodnjo premakneš v čas, ko se najbolj splača.' },
   },
@@ -798,10 +797,10 @@ export const LEVELS: LevelDef[] = [
     intro: 'Najmrzlejši dan v letu, dve enoti in Temni števec, ki je zmešal vse nastavitve. Najprej poveži, potem vozi.',
     lesson: 'Boss: brez zanesljivega zajema podatkov ni dispečiranja. Ko vse teče, ena platforma vodi elektriko, toploto in plin.',
     stages: [
-      { kind: 'priklop', params: priklop('r4-10', { cols: 6, rows: 8, meters: 6, timeSec: 110, conflicts: 2, baudMismatch: 1, dropouts: [55] }, '#6') },
-      { kind: 'kogenerator', params: kogen('r4-10', { durationSec: 70, chpKw: 2000, units: 2, storageKwh: 9000, demandScale: 0.8, priceSwing: 1, spikes: 2, targetEur: 1640 }) },
+      { kind: 'priklop', params: priklop('r4-10', { cols: 6, rows: 8, meters: 6, timeSec: 110, conflicts: 2, dropouts: [55] }, '#6') },
+      { kind: 'urnik', params: urnik('r4-10', { blocks: 12, capacity: 4, start: 2, units: 2, profile: 'mesto', swing: 1, spikes: 2, startCost: 15, keepEnd: true, service: 2, pass: 0.8, timeSec: 180 }) },
     ],
-    stars: [complete, effOver(85), clean],
+    stars: [complete, bestPlan, clean],
     reward: { kwh: 4000, dp: 400 },
     card: { id: 'c-zima', name: 'Zimska konica', rarity: 'epska', text: 'Ko je zunaj –15 °C, je vsak kilovat toplote vreden zlata. In vsak izgubljen dvojno.' },
   },
@@ -947,7 +946,7 @@ export const LEVELS: LevelDef[] = [
     intro: 'Temni števec je izklopil senzorje v treh zdravstvenih domovih in sredi noči sproži vse naenkrat. Najprej poveži, potem rešuj.',
     lesson: 'Boss: brez meritve ni alarma. Ko so senzorji spet na prehodu, alarmi pridejo pravočasno in dežurni ve, kaj naredi.',
     stages: [
-      { kind: 'priklop', params: priklop('r5-10', { cols: 6, rows: 8, meters: 6, timeSec: 110, conflicts: 2, baudMismatch: 1, dropouts: [50] }, '#2') },
+      { kind: 'priklop', params: priklop('r5-10', { cols: 6, rows: 8, meters: 6, timeSec: 110, conflicts: 2, dropouts: [50] }, '#2') },
       { kind: 'alarm', params: alarm('r5-10', { durationSec: 90, sites: 3, fridges: 5, bags: 2, incidents: 7, causes: ['vrata', 'izpad', 'kompresor', 'zmrzal', 'torba'], glitches: 3, openings: 8, threshold: 7.5, speed: 1.15 }) },
     ],
     stars: [complete, fastResponse(7.5), noWrong],
@@ -1055,8 +1054,8 @@ export const LEVELS: LevelDef[] = [
     facilityId: 'omara',
     intro: 'Center ogreva ista toplarna kot pol mesta. Borza je nervozna, noč pa dolga.',
     lesson: 'Ko imaš zgodovino in napoved v isti platformi, dispečer ne ugiba. Ve, kaj se je zgodilo lani na tak dan.',
-    stages: [{ kind: 'kogenerator', params: kogen('r6-7', { durationSec: 65, chpKw: 2000, units: 2, storageKwh: 9000, demandScale: 0.75, priceSwing: 1, spikes: 3, targetEur: 1700 }) }],
-    stars: [complete, effOver(85), warm],
+    stages: [{ kind: 'urnik', params: urnik('r6-7', { blocks: 12, capacity: 4, start: 2, units: 2, profile: 'bolnisnica', swing: 1, spikes: 3, startCost: 15, keepEnd: true, service: 3, pass: 0.85, timeSec: 180 }) }],
+    stars: [complete, bestPlan, timeLeft(40)],
     reward: { kwh: 7200, dp: 670 },
     card: { id: 'c-napoved-odjema', name: 'Napoved odjema', rarity: 'redka', text: 'Jutri bo mrzlo. Lani je bilo na tak dan potrebnih 31 MWh toplote.' },
   },
@@ -1082,7 +1081,7 @@ export const LEVELS: LevelDef[] = [
     intro: 'Pred zadnjim spopadom preizkus celotne verige: poveži odvode Centra in preberi njihov teden.',
     lesson: 'Zajem, analiza, ukrep. Vsak projekt energetskega upravljanja gre skozi isti krog, znova in znova.',
     stages: [
-      { kind: 'priklop', params: priklop('r6-9', { cols: 6, rows: 8, meters: 6, timeSec: 110, conflicts: 2, baudMismatch: 2, dropouts: [40, 75] }, '#3') },
+      { kind: 'priklop', params: priklop('r6-9', { cols: 6, rows: 8, meters: 6, timeSec: 110, conflicts: 2, dropouts: [40, 75] }, '#3') },
       { kind: 'detektiv', params: detektiv('r6-9', { durationSec: 60, profile: 'livarna', anomalies: 5, kinds: ['nocna', 'konica', 'zrak', 'prazniTek', 'hladilnik'], noise: 0.06, decoys: 3, scale: 0.55 }) },
     ],
     stars: [complete, foundAll, clean],
@@ -1099,7 +1098,7 @@ export const LEVELS: LevelDef[] = [
     intro: 'Omara Š-0. Prvi števec omrežja, ki je 39 let štel sam. Tri faze: odpri ga, prestani njegov bes in preberi njegov spomin.',
     lesson: 'Finale: vsak števec je vreden toliko, kolikor ga kdo bere. Ko je zgodovina prenesena, postane Š-0 del omrežja, ne njegov sovražnik.',
     stages: [
-      { kind: 'priklop', params: priklop('r6-10', { cols: 6, rows: 8, meters: 7, timeSec: 115, conflicts: 2, baudMismatch: 2, dropouts: [45] }, '#4') },
+      { kind: 'priklop', params: priklop('r6-10', { cols: 6, rows: 8, meters: 7, timeSec: 115, conflicts: 2, dropouts: [45] }, '#4') },
       {
         kind: 'konica',
         params: konica('r6-10', {
