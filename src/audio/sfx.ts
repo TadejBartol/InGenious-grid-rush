@@ -28,7 +28,9 @@ export type Sfx =
   | 'unlock'
   | 'zap'
   | 'boom'
-  | 'powerup';
+  | 'powerup'
+  | 'slice'
+  | 'swipe';
 
 class AudioEngine {
   private ctx: AudioContext | null = null;
@@ -203,6 +205,13 @@ class AudioEngine {
       case 'boom':
         this.tone(70, 0.9, { vol: 0.45, type: 'sine', to: 28 });
         this.hiss(0.8, { freq: 300, q: 0.5, vol: 0.5, type: 'lowpass' });
+        break;
+      case 'slice':
+        this.hiss(0.13, { freq: 5200, q: 1.4, vol: 0.4 });
+        this.tone(1500, 0.08, { vol: 0.06, type: 'square', to: 420 });
+        break;
+      case 'swipe':
+        this.hiss(0.14, { freq: 2600, q: 0.9, vol: 0.12 });
         break;
       case 'powerup':
         this.tone(110, 1.1, { vol: 0.14, type: 'sawtooth', to: 880, attack: 0.3 });

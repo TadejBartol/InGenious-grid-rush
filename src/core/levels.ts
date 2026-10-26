@@ -1,5 +1,5 @@
 import { hashString } from './rng';
-import type { AlarmParams, ConsumerDef, DetektivParams, FacilityDef, KonicaParams, LevelDef, PriklopParams, RegionDef, PolnilnicaParams, PuscanjeParams, SelitevParams, StarGoal, ToplovodParams, WmbusParams } from './types';
+import type { ConsumerDef, DetektivParams, FacilityDef, KonicaParams, LevelDef, PriklopParams, RegionDef, PolnilnicaParams, PrestreziParams, PuscanjeParams, SelitevParams, StarGoal, ToplovodParams, WmbusParams } from './types';
 
 const seed = (id: string, salt = '') => hashString(`grid-rush:${id}${salt}`);
 
@@ -10,7 +10,7 @@ const wmbus = (id: string, p: Omit<WmbusParams, 'seed'>): WmbusParams => ({ ...p
 const toplovod = (id: string, p: Omit<ToplovodParams, 'seed'>, salt = ''): ToplovodParams => ({ ...p, seed: seed(id, salt) });
 const puscanje = (id: string, p: Omit<PuscanjeParams, 'seed'>, salt = ''): PuscanjeParams => ({ ...p, seed: seed(id, salt) });
 const polnilnica = (id: string, p: Omit<PolnilnicaParams, 'seed'>, salt = ''): PolnilnicaParams => ({ ...p, seed: seed(id, salt) });
-const alarm = (id: string, p: Omit<AlarmParams, 'seed'>): AlarmParams => ({ ...p, seed: seed(id) });
+const prestrezi = (id: string, p: Omit<PrestreziParams, 'seed'>): PrestreziParams => ({ ...p, seed: seed(id) });
 const selitev = (id: string, p: Omit<SelitevParams, 'seed'>): SelitevParams => ({ ...p, seed: seed(id) });
 
 const complete: StarGoal = { type: 'complete' };
@@ -25,9 +25,9 @@ const noDig: StarGoal = { type: 'mistakes', max: 0, label: 'Brez prekopa na slep
 const parMoves = (n: number): StarGoal => ({ type: 'metric', key: 'overPar', op: '<=', value: n, unit: '', label: n ? `Največ ${n} ${n === 1 ? 'poteza' : n === 2 ? 'potezi' : n < 5 ? 'poteze' : 'potez'} nad najboljšo rešitvijo` : 'Najmanj možnih potez' });
 const noHint: StarGoal = { type: 'metric', key: 'hints', op: '<=', value: 0, unit: '', label: 'Brez namiga' };
 const foundAll: StarGoal = { type: 'metric', key: 'missed', op: '<=', value: 0, unit: '', label: 'Najdi vse anomalije' };
-const fastResponse = (s: number): StarGoal => ({ type: 'metric', key: 'response', op: '<=', value: s, unit: 's', label: `Povprečni odziv ≤ ${String(s).replace('.', ',')} s` });
-const fewFalse = (n: number): StarGoal => ({ type: 'metric', key: 'falseAlarms', op: '<=', value: n, unit: '', label: `Največ ${n} ${n === 1 ? 'lažni alarm' : n === 2 ? 'lažna alarma' : 'lažne alarme'}` });
-const noWrong: StarGoal = { type: 'mistakes', max: 0, label: 'Brez napačnega ukrepa' };
+const noCutReal: StarGoal = { type: 'mistakes', max: 0, label: 'Nobena prava meritev prerezana' };
+const noMiss: StarGoal = { type: 'metric', key: 'missed', op: '<=', value: 0, unit: '', label: 'Nobena lažna ne uide' };
+const combo = (n: number): StarGoal => ({ type: 'metric', key: 'combo', op: '>=', value: n, unit: '', label: `Kombo ×${n} z enim potegom` });
 const intact = (pct: number): StarGoal => ({ type: 'metric', key: 'integrity', op: '>=', value: pct, unit: '%', label: `Celovitost ≥ ${pct} %` });
 const cleanImport: StarGoal = { type: 'mistakes', max: 0, label: 'Brez napake pri uvozu' };
 
@@ -68,7 +68,7 @@ export const REGIONS: RegionDef[] = [
   { id: 2, name: 'Mlekarna in prehrana', theme: 'Hladna veriga in števci na TP', mechanic: 'Detektiv', pos: { x: 81, y: 22 }, available: true, unlockChips: 3 },
   { id: 3, name: 'Komunala', theme: 'Radijski vodomeri, puhala in puščanje', mechanic: 'Radijsko omrežje', pos: { x: 27, y: 80 }, available: true, unlockChips: 5 },
   { id: 4, name: 'Kogeneracija', theme: 'Elektrika, toplota in cena na borzi', mechanic: 'Toplovod · Lov na puščanje', pos: { x: 17, y: 44 }, available: true, unlockChips: 8 },
-  { id: 5, name: 'Zdravstvo', theme: 'Hladna veriga cepiv in alarmi v realnem času', mechanic: 'Alarm!', pos: { x: 78, y: 68 }, available: true, unlockChips: 11 },
+  { id: 5, name: 'Zdravstvo', theme: 'Hladna veriga cepiv in preverjanje meritev', mechanic: 'Prestrezi', pos: { x: 78, y: 68 }, available: true, unlockChips: 11 },
   { id: 6, name: 'Center Temnega števca', theme: 'Selitev zgodovine in finale', mechanic: 'Selitev · vse mehanike', pos: { x: 43, y: 13 }, available: true, unlockChips: 14 },
   { id: 7, name: 'Polnilni park', theme: 'Električni avtomobili, polnilnice in moč priključka', mechanic: 'Polnilnica', pos: { x: 47, y: 81 }, available: true, unlockChips: 17 },
 ];
@@ -823,12 +823,12 @@ export const LEVELS: LevelDef[] = [
     id: 'r5-1',
     region: 5,
     index: 1,
-    name: 'Prvi alarm',
+    name: 'Lažne meritve',
     facilityId: 'zdcenter',
-    intro: 'Noč v cepilnem centru. Dva hladilnika, cepiva za tisoč otrok in senzor, ki vsakih nekaj sekund pove temperaturo.',
-    lesson: 'Cepiva morajo ostati med 2 in 8 °C. InGenious vsako meritev primerja z mejo alarma in pošlje obvestilo dežurnemu, takoj.',
-    stages: [{ kind: 'alarm', params: alarm('r5-1', { durationSec: 60, sites: 1, fridges: 2, incidents: 2, causes: ['vrata'], glitches: 0, openings: 2, threshold: 7 }) }],
-    stars: [complete, fastResponse(9), noWrong],
+    intro: 'Noč v cepilnem centru. Senzorji hladilnikov pošiljajo meritve, Temni števec pa mednje podtika lažne. Prestrezi jih, preden pridejo v karton.',
+    lesson: 'Cepiva morajo ostati med 2 in 8 °C. InGenious vsako meritev preveri, preden jo zapiše: nemogoče vrednosti, kot je 99 °C v hladilniku, zavrže.',
+    stages: [{ kind: 'prestrezi', params: prestrezi('r5-1', { durationSec: 45, lives: 3, gap: [1.6, 1.15], volley: [1, 2], fake: 0.55, clusters: 1 }) }],
+    stars: [complete, noCutReal, noMiss],
     reward: { kwh: 4200, dp: 420 },
     card: { id: 'c-cepiva', name: 'Hladilnik cepiv', rarity: 'navadna', text: 'Med 2 in 8 °C. Ena noč pri 12 °C in cela pošiljka gre v uničenje.' },
   },
@@ -836,12 +836,12 @@ export const LEVELS: LevelDef[] = [
     id: 'r5-2',
     region: 5,
     index: 2,
-    name: 'Meja alarma',
+    name: 'Šum',
     facilityId: 'zdcenter',
-    intro: 'Nekdo je mejo alarma nastavil na 5 °C. Zvoni ob vsakem odpiranju vrat in dežurni je nehal poslušati.',
-    lesson: 'Prenizka meja ustvari lažne alarme in ljudje jih začnejo ignorirati. Previsoka te opozori prepozno. Pravo mejo najdeš s podatki.',
-    stages: [{ kind: 'alarm', params: alarm('r5-2', { durationSec: 70, sites: 1, fridges: 3, incidents: 3, causes: ['vrata', 'kompresor'], glitches: 1, openings: 8, threshold: 5 }) }],
-    stars: [complete, fewFalse(2), fastResponse(8)],
+    intro: 'Temni števec pošilja šum v rojih. Če ga spustiš v sistem, dežurni dobi sto lažnih alarmov in neha poslušati.',
+    lesson: 'Lažni alarmi so nevarni, ker ljudje nehajo poslušati. Zato InGenious meritve najprej preveri in šele nato sproži alarm.',
+    stages: [{ kind: 'prestrezi', params: prestrezi('r5-2', { durationSec: 55, lives: 3, gap: [1.4, 0.95], volley: [2, 3], fake: 0.6, clusters: 3, ai: 1 }) }],
+    stars: [complete, combo(3), noCutReal],
     reward: { kwh: 4350, dp: 430 },
     card: { id: 'c-meja', name: 'Meja alarma', rarity: 'redka', text: 'Alarm, ki zvoni vsakih pet minut, ni alarm. Je šum.' },
   },
@@ -849,12 +849,12 @@ export const LEVELS: LevelDef[] = [
     id: 'r5-3',
     region: 5,
     index: 3,
-    name: 'Tema v ambulanti',
+    name: 'Pravi alarm',
     facilityId: 'zdcenter',
-    intro: 'Dva zdravstvena doma, nevihta in stari agregati. Ko zmanjka elektrike, se ogrejejo vsi hladilniki v stavbi.',
-    lesson: 'Ko alarmira več naprav hkrati na isti lokaciji, je vzrok skupen. Napajanje merimo na isti platformi kot temperaturo.',
-    stages: [{ kind: 'alarm', params: alarm('r5-3', { durationSec: 75, sites: 2, fridges: 4, incidents: 4, causes: ['vrata', 'izpad', 'kompresor'], glitches: 1, openings: 5, threshold: 7.5 }) }],
-    stars: [complete, fastResponse(7.5), noWrong],
+    intro: 'Nevihta, izpad elektrike in hladilnik, ki se res greje. Med lažnimi meritvami letijo tudi pravi alarmi. Teh ne smeš prerezati.',
+    lesson: 'Vsak rdeč signal ni lažen. Pravi alarm pride iz preverjenega senzorja, ima smiselno vrednost in mora do dežurnega, četudi je neprijeten.',
+    stages: [{ kind: 'prestrezi', params: prestrezi('r5-3', { durationSec: 60, lives: 3, gap: [1.3, 0.9], volley: [2, 3], fake: 0.5, alarm: 0.18, clusters: 2, ai: 1 }) }],
+    stars: [complete, noCutReal, noMiss],
     reward: { kwh: 4500, dp: 440 },
     card: { id: 'c-agregat-zd', name: 'Agregat v kleti', rarity: 'navadna', text: 'Zažene se v desetih sekundah. Če ga kdo vklopi.' },
   },
@@ -864,10 +864,10 @@ export const LEVELS: LevelDef[] = [
     index: 4,
     name: 'Torbe na poti',
     facilityId: 'dostava',
-    intro: 'Kurirji vozijo cepiva med domovi. V vsaki torbi je majhen senzor, ki poroča po mobilnem omrežju.',
+    intro: 'Kurirji vozijo cepiva med domovi. Torbe poročajo po mobilnem omrežju in Temni števec se preobleče v njihove meritve. Pazi, kaj se razkrije na vrhu.',
     lesson: 'Hladna veriga ne konča pri hladilniku. Temperaturni zapisovalnik v torbi dokaže, da je pošiljka ostala v območju vso pot.',
-    stages: [{ kind: 'alarm', params: alarm('r5-4', { durationSec: 75, sites: 2, fridges: 2, bags: 2, incidents: 4, causes: ['torba', 'vrata', 'zmrzal'], glitches: 1, openings: 4, threshold: 7 }) }],
-    stars: [complete, fastResponse(7.5), noWrong],
+    stages: [{ kind: 'prestrezi', params: prestrezi('r5-4', { durationSec: 60, lives: 3, gap: [1.3, 0.9], volley: [2, 3], fake: 0.55, alarm: 0.1, cloak: 0.3, clusters: 2, ai: 1, shield: 1 }) }],
+    stars: [complete, noCutReal, combo(3)],
     reward: { kwh: 4650, dp: 450 },
     card: { id: 'c-torba', name: 'Torba s cepivi', rarity: 'navadna', text: 'Hladilni vložki zdržijo šest ur. Promet na obvoznici včasih sedem.' },
   },
@@ -890,10 +890,10 @@ export const LEVELS: LevelDef[] = [
     index: 6,
     name: 'Mrzla noč',
     facilityId: 'dostava',
-    intro: 'Minus deset zunaj. Termostati se zatikajo, torbe so v avtih, vrata ambulant se odpirajo vso noč.',
-    lesson: 'Zmrzovanje je za cepiva enako nevarno kot pregrevanje. Zato ima vsak alarm dve meji: zgornjo in spodnjo.',
-    stages: [{ kind: 'alarm', params: alarm('r5-6', { durationSec: 80, sites: 2, fridges: 3, bags: 2, incidents: 5, causes: ['vrata', 'izpad', 'kompresor', 'zmrzal', 'torba'], glitches: 2, openings: 6, threshold: 6.5, speed: 1.1 }) }],
-    stars: [complete, fastResponse(7), noWrong],
+    intro: 'Minus deset zunaj. Temni števec pošilja oklepne pakete, ki zdržijo tri reze. In vmes vsi pravi alarmi mrzle noči.',
+    lesson: 'Zmrzovanje je za cepiva enako nevarno kot pregrevanje. Zato ima vsak alarm dve meji, preverjanje meritev pa ločuje pravi mraz od pokvarjenega senzorja.',
+    stages: [{ kind: 'prestrezi', params: prestrezi('r5-6', { durationSec: 70, lives: 3, gap: [1.2, 0.8], volley: [2, 4], fake: 0.55, alarm: 0.12, cloak: 0.25, armored: 2, clusters: 2, ai: 1, shield: 1, speed: 1.05 }) }],
+    stars: [complete, noCutReal, noMiss],
     reward: { kwh: 4950, dp: 470 },
     card: { id: 'c-zmrzal', name: 'Spodnja meja', rarity: 'redka', text: 'Pri 0 °C cepivo zmrzne in izgubi učinkovitost. Na pogled se ne vidi nič.' },
   },
@@ -916,10 +916,10 @@ export const LEVELS: LevelDef[] = [
     index: 8,
     name: 'Trije domovi',
     facilityId: 'lekarna',
-    intro: 'Dežurstvo za tri zdravstvene domove hkrati. Šest hladilnikov, en dispečer: ti.',
-    lesson: 'En nadzorni zaslon za vse lokacije. Ko je alarmov veliko, šteje, kako hitro razbereš vzrok iz podatkov ob alarmu.',
-    stages: [{ kind: 'alarm', params: alarm('r5-8', { durationSec: 85, sites: 3, fridges: 6, incidents: 6, causes: ['vrata', 'izpad', 'kompresor', 'zmrzal'], glitches: 2, openings: 8, threshold: 7, speed: 1.1 }) }],
-    stars: [complete, fastResponse(7), noWrong],
+    intro: 'Dežurstvo za tri zdravstvene domove hkrati. Meritve letijo od vsepovsod, oklepni paketi pa razpadejo na dva manjša.',
+    lesson: 'En nadzorni zaslon za vse lokacije. Ko je meritev veliko, samodejna validacija ustavi šum, človek pa vidi samo tisto, kar je res.',
+    stages: [{ kind: 'prestrezi', params: prestrezi('r5-8', { durationSec: 75, lives: 3, gap: [1.1, 0.7], volley: [3, 4], fake: 0.55, alarm: 0.15, cloak: 0.3, armored: 2, splits: true, clusters: 3, ai: 2, shield: 1, speed: 1.1 }) }],
+    stars: [complete, combo(4), noCutReal],
     reward: { kwh: 5250, dp: 490 },
     card: { id: 'c-dispecer-zd', name: 'Dežurni dispečer', rarity: 'redka', text: 'Obvestilo na telefon ob treh zjutraj. Samo, ko je res treba.' },
   },
@@ -957,13 +957,13 @@ export const LEVELS: LevelDef[] = [
     name: 'Noč treh domov',
     facilityId: 'lekarna',
     boss: true,
-    intro: 'Temni števec je izklopil senzorje v treh zdravstvenih domovih in sredi noči sproži vse naenkrat. Najprej poveži, potem rešuj.',
-    lesson: 'Boss: brez meritve ni alarma. Ko so senzorji spet na prehodu, alarmi pridejo pravočasno in dežurni ve, kaj naredi.',
+    intro: 'Temni števec je izklopil senzorje v treh zdravstvenih domovih, nato pa v sistem spusti vse, kar ima. Najprej poveži, potem prestrezi.',
+    lesson: 'Boss: brez meritve ni alarma, brez preverjanja pa je alarmov preveč. Šele oboje skupaj da dežurnemu mirno noč.',
     stages: [
       { kind: 'priklop', params: priklop('r5-10', { cols: 6, rows: 8, meters: 6, timeSec: 110, conflicts: 2, dropouts: [50] }, '#2') },
-      { kind: 'alarm', params: alarm('r5-10', { durationSec: 90, sites: 3, fridges: 5, bags: 2, incidents: 7, causes: ['vrata', 'izpad', 'kompresor', 'zmrzal', 'torba'], glitches: 3, openings: 8, threshold: 7.5, speed: 1.15 }) },
+      { kind: 'prestrezi', params: prestrezi('r5-10', { durationSec: 80, lives: 4, gap: [1.0, 0.65], volley: [3, 5], fake: 0.6, alarm: 0.15, cloak: 0.3, armored: 4, splits: true, clusters: 3, ai: 2, shield: 2, speed: 1.12 }) },
     ],
-    stars: [complete, fastResponse(7.5), noWrong],
+    stars: [complete, noCutReal, combo(4)],
     reward: { kwh: 5800, dp: 560 },
     card: { id: 'c-hladna-veriga', name: 'Nepretrgana veriga', rarity: 'epska', text: 'Od tovarne do roke: vsak korak izmerjen, vsak odklon zabeležen.' },
   },

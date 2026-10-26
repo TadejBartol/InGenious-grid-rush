@@ -51,6 +51,7 @@ export const IconSearch = (p: P) => base(p, [<circle cx="11" cy="11" r="7" />, <
 export const IconWave = (p: P) => base(p, [<circle cx="12" cy="18" r="2" />, <path d="M8.5 14.5a5 5 0 0 1 7 0M5.5 11.5a9 9 0 0 1 13 0M2.5 8.5a13 13 0 0 1 19 0" />]);
 export const IconPipe = (p: P) => base(p, [<path d="M3 8h9a4 4 0 0 1 4 4v9" />, <path d="M3 4h9a8 8 0 0 1 8 8v9" />]);
 export const IconDrop = (p: P) => base(p, [<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z" />, <path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5" />]);
+export const IconSlash = (p: P) => base(p, [<path d="M4 20L20 4" />, <path d="M14 4h6v6" />, <circle cx="7" cy="8" r="2.5" />, <circle cx="17" cy="16" r="2.5" />]);
 export const IconCar = (p: P) => base(p, [<path d="M4 16v-4l2-5h12l2 5v4z" />, <circle cx="8" cy="17" r="2" />, <circle cx="16" cy="17" r="2" />, <path d="M13 8l-2 3h3l-2 3" />]);
 export const IconCogen = (p: P) => base(p, [<path d="M12 3c2 3 4 5 4 8a4 4 0 0 1-8 0c0-3 2-5 4-8z" />, <path d="M10 21h4M12 15v6" />]);
 export const IconDark = (p: P) => base(p, [<circle cx="12" cy="12" r="9" />, <path d="M7 15l3-4 2 2 2-4 3 5" />]);

@@ -80,13 +80,14 @@ export const HELP: Record<GameKind, Help> = {
       'Pri bossu se črn avto Temnega števca premakne sam po nekaj tvojih potezah.',
     ],
   },
-  alarm: {
-    goal: 'Obvaruj cepiva: ko hladilnik zazvoni, izberi pravi ukrep.',
-    how: ['Ko zazvoni alarm, tapni hladilnik.', 'Poglej ikone (vrata, napajanje) in smer krivulje, nato izberi ukrep.'],
+  prestrezi: {
+    goal: 'Prestrezi lažne meritve Temnega števca, preden padejo v karton pacienta.',
+    how: ['Potegni s prstom čez meritev, da jo prerežeš. Tap ne reže, potreben je poteg.', 'Ena lažna, ki pade nazaj dol, ali ena prerezana prava stane eno srce.'],
     watch: [
-      'Vsak alarm ni pravi: lažni senzor pokaže skok brez razloga.',
-      'Mejo alarma lahko premakneš. Prenizka zvoni ob vsakem odpiranju vrat, previsoka te opozori prepozno.',
-      'Kurirske torbe potrebujejo sveže hladilne vložke, ko se temperatura dvigne.',
+      'Rdeče bodičaste z očesom so lažne: reži jih. Modre okrogle so prave: pusti jih.',
+      'Rdeč krog z belim križem je pravi alarm. Ne reži ga, čeprav je rdeč.',
+      'Preoblečene lažne se razkrijejo na vrhu leta. Oklepni paket zdrži tri reze.',
+      'Tri ali več z enim potegom je kombo. AI upočasni čas, zeleni ščit počisti vse lažne.',
     ],
   },
   selitev: {

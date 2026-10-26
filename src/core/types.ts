@@ -1,4 +1,4 @@
-export type GameKind = 'priklop' | 'konica' | 'detektiv' | 'wmbus' | 'toplovod' | 'puscanje' | 'polnilnica' | 'alarm' | 'selitev';
+export type GameKind = 'priklop' | 'konica' | 'detektiv' | 'wmbus' | 'toplovod' | 'puscanje' | 'polnilnica' | 'prestrezi' | 'selitev';
 
 export interface PriklopParams {
   cols: number;
@@ -124,29 +124,32 @@ export interface PolnilnicaParams {
   seed: number;
 }
 
-export type AlarmCause = 'vrata' | 'izpad' | 'kompresor' | 'zmrzal' | 'torba' | 'senzor';
-
-export interface AlarmParams {
+export interface PrestreziParams {
   durationSec: number;
-  /** Health centres (ZD) watched at once; a power cut hits every fridge of one centre. */
-  sites: number;
-  /** Vaccine fridges in total, spread over the sites. */
-  fridges: number;
-  /** Courier cool bags on the road. */
-  bags?: number;
-  /** Real incidents that will spoil the vaccines unless handled. */
-  incidents: number;
-  causes: AlarmCause[];
-  /** Sensor glitches: an alarm with nothing behind it. */
-  glitches: number;
-  /** Ordinary door openings by the nurses: short bumps that only a too-tight limit turns into alarms. */
-  openings: number;
-  /** Alarm limit the round starts with (°C); the player can move it. */
-  threshold: number;
-  /** Incident heating speed, 1 = normal. */
+  /** Hearts: a fake that gets through or a real reading cut costs one. */
+  lives: number;
+  /** Seconds between volleys at the start and at the end of the round. */
+  gap: [number, number];
+  /** Most readings in one volley at the start and at the end. */
+  volley: [number, number];
+  /** Share of fakes among ordinary readings. */
+  fake: number;
+  /** Share of real alarms: red, scary and true. Never cut them. */
+  alarm?: number;
+  /** Share of fakes disguised as real readings until the top of their flight. */
+  cloak?: number;
+  /** Armored packets that take three cuts. */
+  armored?: number;
+  /** Armored packets burst into two small fakes. */
+  splits?: boolean;
+  /** Fakes thrown side by side for a combo swipe. */
+  clusters?: number;
+  /** AI analysis power-ups (slow motion) and validators (clear every fake). */
+  ai?: number;
+  shield?: number;
+  slowSec?: number;
+  /** Throw speed, 1 = normal. */
   speed?: number;
-  /** Fridges that may be lost and still pass (boss rounds). */
-  maxLost?: number;
   seed: number;
 }
 
@@ -178,7 +181,7 @@ export type Stage =
   | { kind: 'toplovod'; params: ToplovodParams }
   | { kind: 'puscanje'; params: PuscanjeParams }
   | { kind: 'polnilnica'; params: PolnilnicaParams }
-  | { kind: 'alarm'; params: AlarmParams }
+  | { kind: 'prestrezi'; params: PrestreziParams }
   | { kind: 'selitev'; params: SelitevParams };
 
 export type StarGoal =

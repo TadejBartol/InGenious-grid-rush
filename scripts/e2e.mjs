@@ -31,37 +31,47 @@ const clearHooks = () =>
     delete window.__gr_toplovod;
     delete window.__gr_puscanje;
     delete window.__gr_polnilnica;
-    delete window.__gr_alarm;
+    delete window.__gr_prestrezi;
+    delete window.__gr_prestreziView;
     delete window.__gr_selitev;
   });
-// Alarm!: tap whichever unit needs help and pick the fix the incident calls for.
-const FIX = { vrata: 'zapri', izpad: 'agregat', kompresor: 'preseli', zmrzal: 'termostat', torba: 'vlozki' };
-async function playAlarm(maxSec = 140) {
-  await page.waitForFunction(() => window.__gr_alarm);
+// Prestrezi: real mouse swipes through the fakes the game's own bot picks, a little ahead of time.
+async function playPrestrezi(maxSec = 120) {
+  await page.waitForFunction(() => window.__gr_prestrezi && window.__gr_prestreziView);
   const t0 = Date.now();
+  let shotTaken = false;
   while (Date.now() - t0 < maxSec * 1000) {
-    const todo = await page.evaluate((FIX) => {
-      const sim = window.__gr_alarm;
-      if (!sim || sim.finished) return 'done';
-      for (const x of sim.incidents) {
-        if (!x.active || x.done) continue;
-        const u = sim.units[x.unit];
-        if (u.alarm || u.door || !u.power) return { unit: x.unit, action: FIX[x.cause] };
-      }
-      const g = sim.units.find((u) => u.alarm && !u.lost);
-      return g ? { unit: g.id, action: 'lazni' } : null;
-    }, FIX);
-    if (todo === 'done') break;
-    if (todo) {
-      const ok = await page
-        .locator(`.unit-card[data-unit="${todo.unit}"]`)
-        .click({ timeout: 2000 })
-        .then(() => true, () => false);
-      const opt = page.locator(`.alarm-opt[data-action="${todo.action}"]`);
-      if (ok && (await opt.count())) await opt.click();
-      else if (await page.locator('.alarm-sheet .sheet-x').count()) await page.locator('.alarm-sheet .sheet-x').click();
+    const cut = await page.evaluate(() => {
+      const g = window.__gr_prestrezi;
+      if (!g || g.finished) return 'done';
+      if (document.querySelector('.pz-start')) return 'start';
+      const c = g.suggestCut(0.05);
+      if (!c) return null;
+      const v = window.__gr_prestreziView;
+      return { a: v.toClient(c.x0, c.y0), b: v.toClient(c.x1, c.y1), n: g.items.length };
+    });
+    if (cut === 'done') break;
+    if (cut === 'start') {
+      // The tutorial bubble holds the round until the first swipe.
+      await page.mouse.move(100, 420);
+      await page.mouse.down();
+      await page.mouse.move(300, 440, { steps: 4 });
+      await page.mouse.up();
+      await wait(300);
+      continue;
     }
-    await wait(250);
+    if (!cut) {
+      await wait(30);
+      continue;
+    }
+    await page.mouse.move(cut.a.x, cut.a.y);
+    await page.mouse.down();
+    await page.mouse.move(cut.b.x, cut.b.y, { steps: 3 });
+    if (!shotTaken && cut.n >= 3) {
+      shotTaken = true;
+      await shot('23a-prestrezi');
+    }
+    await page.mouse.up();
   }
   await page.waitForSelector('.result', { timeout: 15000 });
 }
@@ -122,7 +132,12 @@ async function playPriklop() {
       const taken = new Set(g.puzzle.meters.filter((o) => o.id !== id).map((o) => o.address));
       const needAddr = taken.has(m.address);
       let addr = m.address;
-      if (needAddr) for (let a = 1; a <= 16; a++) if (!taken.has(a)) { addr = a; break; }
+      if (needAddr)
+        for (let a = 1; a <= 16; a++)
+          if (!taken.has(a)) {
+            addr = a;
+            break;
+          }
       return needAddr ? { addr } : null;
     }, id);
     if (!fix) continue;
@@ -134,12 +149,14 @@ async function playPriklop() {
   const routes = await page.evaluate(() => {
     const { game, center, canvas } = window.__gr_priklop;
     const r = canvas.getBoundingClientRect();
-    return game.puzzle.solution.map((route) => route.map((c) => {
-      const p = center(c);
-      // The UI is drawn scaled down (zoom-out), so layout pixels are smaller on screen.
-      const k = r.width / canvas.clientWidth;
-      return { x: r.left + p.x * k, y: r.top + p.y * k };
-    }));
+    return game.puzzle.solution.map((route) =>
+      route.map((c) => {
+        const p = center(c);
+        // The UI is drawn scaled down (zoom-out), so layout pixels are smaller on screen.
+        const k = r.width / canvas.clientWidth;
+        return { x: r.left + p.x * k, y: r.top + p.y * k };
+      }),
+    );
   });
   for (const route of routes) {
     await page.mouse.move(route[0].x, route[0].y);
@@ -176,13 +193,20 @@ async function playKonica(screenshotAt) {
     if (starving) {
       // Make room first, like a player who reads the graph.
       const donor = tog.filter((c) => c.on && c.buffer > 0.5).sort((a, b) => b.buffer - a.buffer)[0];
-      if (donor && st.p + starving.kw * 1.5 > st.limit * 0.97) await page.getByRole('button', { name: new RegExp(`^${donor.name},`) }).click({ timeout: 2000 }).catch(() => {});
+      if (donor && st.p + starving.kw * 1.5 > st.limit * 0.97)
+        await page
+          .getByRole('button', { name: new RegExp(`^${donor.name},`) })
+          .click({ timeout: 2000 })
+          .catch(() => {});
       target = starving;
-    }
-    else if (st.p > st.limit * 0.96) target = tog.filter((c) => c.on && c.buffer > 0.35).sort((a, b) => b.buffer - a.buffer)[0];
+    } else if (st.p > st.limit * 0.96) target = tog.filter((c) => c.on && c.buffer > 0.35).sort((a, b) => b.buffer - a.buffer)[0];
     else target = tog.filter((c) => !c.on && st.p + c.kw * 1.5 < st.limit * 0.93).sort((a, b) => a.buffer - b.buffer)[0];
     // The round can end between reading the state and clicking.
-    if (target) await page.getByRole('button', { name: new RegExp(`^${target.name},`) }).click({ timeout: 2000 }).catch(() => {});
+    if (target)
+      await page
+        .getByRole('button', { name: new RegExp(`^${target.name},`) })
+        .click({ timeout: 2000 })
+        .catch(() => {});
     await wait(120);
   }
 }
@@ -216,7 +240,10 @@ async function playWmbus() {
     const { game, center, canvas } = window.__gr_wmbus;
     const r = canvas.getBoundingClientRect();
     const k = r.width / canvas.clientWidth;
-    return game.puzzle.solution.map((d) => { const c = center(d); return { kind: d.kind, x: c.x * k, y: c.y * k, left: r.left, top: r.top }; });
+    return game.puzzle.solution.map((d) => {
+      const c = center(d);
+      return { kind: d.kind, x: c.x * k, y: c.y * k, left: r.left, top: r.top };
+    });
   });
   for (const d of devices) {
     await page.getByRole('radio', { name: d.kind === 'gateway' ? /^Prehod/ : /^Repetitor/ }).click();
@@ -258,11 +285,15 @@ async function playPuscanje() {
       const f = g.field;
       const st = g.state;
       const nb = (c) => {
-        const x = c % f.cols, y = Math.floor(c / f.cols), o = [];
-        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-          const nx = x + dx, ny = y + dy;
-          if ((dx || dy) && nx >= 0 && ny >= 0 && nx < f.cols && ny < f.rows) o.push(ny * f.cols + nx);
-        }
+        const x = c % f.cols,
+          y = Math.floor(c / f.cols),
+          o = [];
+        for (let dy = -1; dy <= 1; dy++)
+          for (let dx = -1; dx <= 1; dx++) {
+            const nx = x + dx,
+              ny = y + dy;
+            if ((dx || dy) && nx >= 0 && ny >= 0 && nx < f.cols && ny < f.rows) o.push(ny * f.cols + nx);
+          }
         return o;
       };
       for (let c = 0; c < f.leak.length; c++) {
@@ -373,7 +404,10 @@ const litTag = await page.locator('text=Livarna je osvetljena').count();
 if (!litTag) fail('Livarna should light up after 1-3');
 
 // 5. Tabs
-await page.locator('.result').getByRole('button', { name: /Zemljevid/ }).click();
+await page
+  .locator('.result')
+  .getByRole('button', { name: /Zemljevid/ })
+  .click();
 await skipStory();
 await shot('07-region-lit');
 await page.getByRole('button', { name: 'Zemljevid', exact: true }).click();
@@ -453,7 +487,10 @@ step(`2-1 result: ${stars}`);
 await shot('16-result-detektiv');
 if (!stars?.startsWith('3')) fail('2-1 should be 3 stars with perfect play');
 
-await page.locator('.result').getByRole('button', { name: /Zemljevid/ }).click();
+await page
+  .locator('.result')
+  .getByRole('button', { name: /Zemljevid/ })
+  .click();
 await page.getByRole('button', { name: /^Izziv/ }).click();
 await wait(300);
 await shot('17-daily');
@@ -494,7 +531,10 @@ await page.evaluate(() => {
   for (const l of window.__gr_levels) if (l.region === 3) levels[l.id] = levels[l.id] ?? { stars: 2, best: 0, plays: 1 };
   window.__gr_store.setState({ levels });
 });
-await page.locator('.result').getByRole('button', { name: /Zemljevid/ }).click();
+await page
+  .locator('.result')
+  .getByRole('button', { name: /Zemljevid/ })
+  .click();
 await page.getByRole('button', { name: 'Zemljevid', exact: true }).click();
 await page.locator('.region-node').getByText('Kogeneracija').click();
 await page.getByRole('button', { name: /Odkleni/ }).click();
@@ -522,11 +562,11 @@ const jump = (id) =>
 await clearHooks();
 await jump('r5-1');
 await skipStory();
-await playAlarm();
+await playPrestrezi();
 stars = await resultStars();
 step(`5-1 result: ${stars}`);
-await shot('23-result-alarm');
-if (!stars?.startsWith('3')) fail('5-1 should be 3 stars with prompt, correct responses');
+await shot('23-result-prestrezi');
+if (!stars?.startsWith('3')) fail('5-1 should be 3 stars when every fake is cut and no real one');
 
 await clearHooks();
 await jump('r6-2');

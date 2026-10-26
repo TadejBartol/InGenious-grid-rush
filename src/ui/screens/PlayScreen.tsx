@@ -8,7 +8,7 @@ import { WmbusView } from '../../games/wmbus/WmbusView';
 import { ToplovodView } from '../../games/toplovod/ToplovodView';
 import { PuscanjeView } from '../../games/puscanje/PuscanjeView';
 import { PolnilnicaView } from '../../games/polnilnica/PolnilnicaView';
-import { AlarmView } from '../../games/alarm/AlarmView';
+import { PrestreziView } from '../../games/prestrezi/PrestreziView';
 import { SelitevView } from '../../games/selitev/SelitevView';
 import { voice } from '../../audio/voice';
 import { FACILITIES } from '../../core/levels';
@@ -29,7 +29,7 @@ export const KIND_NAME: Record<Stage['kind'], string> = {
   toplovod: 'Toplovod',
   puscanje: 'Lov na puščanje',
   polnilnica: 'Polnilnica',
-  alarm: 'Alarm!',
+  prestrezi: 'Prestrezi',
   selitev: 'Selitev',
 };
 
@@ -50,9 +50,11 @@ const TIPS: Record<string, string> = {
   'r7-1': 'Povleci avto naprej ali nazaj po njegovi vrsti. Avto s strelo pripelji do polnilnice ob robu parkirišča.',
   'r7-2': 'Številka na bateriji pove, koliko premikov še zmore električni avto. Ko pade na nič, obstane.',
   'r7-4': 'Polnilnice imajo moč, priključek pa mejo. Dva hitra polnilnika hkrati lahko presežeta mejo, zato počakaj, da se en avto napolni.',
-  'r5-1': 'Ko zazvoni alarm, tapni hladilnik in izberi ukrep. Poglej vrata (ikona), napajanje in smer krivulje.',
-  'r5-2': 'Meja alarma je spodaj. Prenizka zvoni ob vsakem odpiranju vrat, previsoka te opozori prepozno.',
-  'r5-4': 'Torbe so na poti. Ko se hladilni vložki stopijo, temperatura raste: kurirju pošlji sveže vložke.',
+  'r5-1': 'Potegni s prstom čez rdeče bodičaste meritve Temnega števca. Modre so prave: pusti jih, da padejo v karton.',
+  'r5-2': 'Ko jih leti več v vrsti, jih prereži z enim potegom za kombo. Moder šesterokotnik AI upočasni čas.',
+  'r5-3': 'Rdeč krog z belim križem je pravi alarm. Je strašen, a resničen: ne reži ga!',
+  'r5-4': 'Nekatere lažne se preoblečejo v prave. Na vrhu leta se razkrijejo. Zeleni ščit počisti vse lažne naenkrat.',
+  'r5-6': 'Vijoličen oklepni paket zdrži tri reze. Vsak potez šteje le enkrat.',
   'r6-1': 'Zgoraj je tabela kod. Vsak zapis pošlji na pravi nov merilnik, preden ga čas odnese.',
   'r6-2': 'Rumen Wh pomeni 1000× večjo številko. Najprej pritisni »Wh → kWh«, nato zapis pošlji.',
   'r6-4': '##### in negativne vrednosti v koš. Če je mesec pri merilniku že zelen, je zapis dvojnik: tudi v koš.',
@@ -166,7 +168,7 @@ export function PlayScreen({ level, from }: { level: LevelDef; from: Screen }) {
         {stage.kind === 'toplovod' && <ToplovodView key={key} {...common} params={stage.params} />}
         {stage.kind === 'puscanje' && <PuscanjeView key={key} {...common} params={stage.params} />}
         {stage.kind === 'polnilnica' && <PolnilnicaView key={key} {...common} params={stage.params} />}
-        {stage.kind === 'alarm' && <AlarmView key={key} {...common} params={stage.params} />}
+        {stage.kind === 'prestrezi' && <PrestreziView key={key} {...common} params={stage.params} />}
         {stage.kind === 'selitev' && <SelitevView key={key} {...common} params={stage.params} />}
         {phase === 'countdown' && (
           <div class={`countdown${level.boss ? ' boss' : ''}`} aria-live="assertive">

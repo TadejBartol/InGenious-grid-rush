@@ -395,7 +395,7 @@ export const SCENES: Scene[] = [
       { who: 'genko', mood: 'worried', text: 'Med 2 in 8 °C. Ena sama noč pri dvanajstih in vse gre v uničenje.', act: 'scan' },
       { who: 'dark', mood: 'smirk', text: 'Toplota je potrpežljiva. Pride počasi, stopinjo za stopinjo. Nihče ne gleda ob treh zjutraj.' },
       { who: 'genko', mood: 'smug', text: 'Jaz gledam. In ko bo narobe, bo dežurni izvedel v sekundi.' },
-      { who: 'dark', mood: 'angry', text: 'Potem pa poglejmo, koliko alarmov prenese en robotek v eni noči.', act: 'glitch' },
+      { who: 'dark', mood: 'angry', text: 'Potem pa poglejmo, ali ločiš moje meritve od pravih. Poslal jih bom na tisoče.', act: 'glitch' },
     ],
   },
   {
@@ -404,9 +404,9 @@ export const SCENES: Scene[] = [
     tone: 'lit',
     facility: 'zdcenter',
     lines: [
-      { who: 'narrator', text: 'ZD Center. Trije hladilniki, en dežurni in meja alarma, ki je končno nastavljena prav.' },
+      { who: 'narrator', text: 'ZD Center. Trije hladilniki, en dežurni in meritve, ki so končno preverjene.' },
       { who: 'genko', mood: 'happy', text: 'Vratni kontakt, napajanje, temperatura. Ko zazvoni, je jasno, zakaj.', act: 'connect' },
-      { who: 'genko', mood: 'wow', fx: 'light', text: 'Cepilni center je pod nadzorom. Nič več lažnih alarmov ob vsakem odpiranju vrat.' },
+      { who: 'genko', mood: 'wow', fx: 'light', text: 'Cepilni center je pod nadzorom. Lažne meritve ostanejo zunaj kartona.' },
       { who: 'dark', mood: 'hurt', text: 'Tišina je bila moja. Zdaj zvoni samo, ko je res treba.' },
     ],
   },
@@ -432,7 +432,7 @@ export const SCENES: Scene[] = [
     lines: [
       { who: 'narrator', text: 'Polnoč. Nevihta nad mestom. V treh zdravstvenih domovih hkrati utihnejo senzorji.' },
       { who: 'dark', mood: 'angry', text: 'Tisto noč leta 1991 sem štel vsako sekundo izpada. Štiri ure. Nihče ni vprašal, koliko.', act: 'glitch' },
-      { who: 'genko', mood: 'worried', text: 'Najprej senzorje nazaj na prehod. Potem vsak alarm, takoj, pravi ukrep.' },
+      { who: 'genko', mood: 'worried', text: 'Najprej senzorje nazaj na prehod. Potem prestrežem vsako tvojo lažno meritev.' },
       { who: 'dark', mood: 'smirk', text: 'Danes boš ti štel sekunde. Sam.', act: 'laugh' },
     ],
   },
@@ -443,7 +443,7 @@ export const SCENES: Scene[] = [
     weather: 'storm',
     lines: [
       { who: 'dark', mood: 'smirk', text: 'Slišiš? Zvoni. In zvoni. In nihče ne pride.', act: 'laugh' },
-      { who: 'genko', mood: 'worried', text: 'Prepočasi sem bral vzroke. Vrata, napajanje, smer krivulje. Še enkrat, hitreje.' },
+      { who: 'genko', mood: 'worried', text: 'Preveč lažnih je prišlo skozi. Bodice režem, modrih in križev ne. Še enkrat.' },
     ],
   },
   {
@@ -454,7 +454,7 @@ export const SCENES: Scene[] = [
     weather: 'storm',
     lines: [
       { who: 'narrator', text: 'Tri ure zjutraj. Vsi hladilniki v treh domovih kažejo med 2 in 8 °C.' },
-      { who: 'genko', mood: 'smug', text: 'Vsak alarm prebran. Vsak ukrep pravi. Nobenega uničenega odmerka.', act: 'scan' },
+      { who: 'genko', mood: 'smug', text: 'Vsaka lažna meritev prestrežena. Vsak pravi alarm je prišel do dežurnega.', act: 'scan' },
       { who: 'dark', mood: 'angry', text: 'Zakaj jih rešuješ? Saj te nihče ne vidi!' },
       { who: 'genko', mood: 'wow', fx: 'zap', text: 'Ker jih nekdo mora brati. Agregati, zdaj!' },
       { who: 'dark', mood: 'hurt', fx: 'flash', text: 'Tako svetlo … kot tisto jutro, ko so prižgali luči v bolnišnici …' },
