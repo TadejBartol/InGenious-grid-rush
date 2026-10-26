@@ -77,6 +77,6 @@ describe('Prestrezi', () => {
   });
 
   it('everything stays inside the play area', () => {
-    for (const s of stages) for (const l of schedule(s.params)) expect(l.vy).toBeLessThan(-Math.sqrt(2 * 800 * (H * 0.4)));
+    for (const s of stages) for (const l of schedule(s.params)) expect(l.vy).toBeLessThan(-Math.sqrt(2 * 600 * (H * 0.4)));
   });
 });

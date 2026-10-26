@@ -334,6 +334,7 @@ interface Half {
   side: 1 | -1;
   r: number;
   label: string;
+  fake: boolean;
   life: number;
 }
 
@@ -470,7 +471,8 @@ export function PrestreziView(props: GameProps<PrestreziParams>) {
           vr: side * (2 + Math.random() * 3),
           side,
           r: it.r,
-          label: it.kind === 'real' || it.kind === 'alarm' ? it.label : '',
+          label: it.kind === 'ai' || it.kind === 'shield' ? '' : it.label,
+          fake: it.kind === 'fake' || it.kind === 'armored',
           life: 0,
         });
       }
@@ -489,7 +491,7 @@ export function PrestreziView(props: GameProps<PrestreziParams>) {
           flash(e.item, e.angle);
           burst(e.item.x, e.item.y, e.item.kind === 'armored' ? 34 : 18, ['#ff2e7e', '#ff9bc8', '#ffd1e6', '#b00f4f'], 280, true);
           f.rings.push({ x: e.item.x, y: e.item.y, r: e.item.r * 0.7, grow: 60, life: 0, max: 0.28, color: '255,80,150', width: 3 });
-          float(e.item.x, e.item.y - e.item.r, e.item.kind === 'armored' ? '+30' : '+10', '#ffd1e6', 16, 0.7);
+          float(e.item.x, e.item.y - e.item.r - 4, `✕ ${e.item.label}  +${e.item.kind === 'armored' ? 30 : 10}`, '#ffb3d1', 17, 0.8);
           if (e.item.kind === 'armored') shake();
           break;
         case 'hit':
@@ -619,7 +621,7 @@ export function PrestreziView(props: GameProps<PrestreziParams>) {
         g.stroke();
         g.setLineDash([]);
       }
-      const spin = it.kind === 'real' || it.kind === 'alarm' || disguised ? Math.sin(it.rot) * 0.25 : it.rot;
+      const spin = it.kind === 'real' || it.kind === 'alarm' || disguised ? Math.sin(it.rot) * 0.2 : Math.sin(it.rot) * 0.5;
       g.rotate(spin);
       const glitch = (it.kind === 'fake' || it.kind === 'armored') && !disguised && Math.sin(f.clock * 23 + it.id * 3.1) > 0.82;
       if (glitch) {
@@ -641,12 +643,21 @@ export function PrestreziView(props: GameProps<PrestreziParams>) {
       g.textAlign = 'center';
       g.textBaseline = 'middle';
       if (it.kind === 'real' || it.kind === 'alarm' || disguised) {
+        const text = disguised ? `${(2.8 + ((it.id * 37) % 45) / 10).toFixed(1).replace('.', ',')}°` : it.label;
+        g.font = font(it.r * 0.6, 900);
+        g.lineWidth = 4;
+        g.lineJoin = 'round';
+        g.strokeStyle = it.kind === 'alarm' ? 'rgba(90,0,15,0.85)' : 'rgba(0,40,70,0.85)';
+        g.strokeText(text, 0, it.r * 0.22);
         g.fillStyle = '#ffffff';
-        g.font = font(it.r * 0.5, 900);
-        g.fillText(disguised ? `${(2.8 + ((it.id * 37) % 45) / 10).toFixed(1).replace('.', ',')}°` : it.label, 0, it.r * 0.2);
+        g.fillText(text, 0, it.r * 0.22);
       } else if (it.kind === 'fake' || it.kind === 'armored') {
-        g.fillStyle = '#ffe1ee';
-        g.font = font(it.r * 0.36, 900);
+        g.font = font(it.r * 0.46, 900);
+        g.lineWidth = 4;
+        g.lineJoin = 'round';
+        g.strokeStyle = 'rgba(60,0,25,0.9)';
+        g.strokeText(it.label, glitch ? 3 : 0, it.r * 0.42);
+        g.fillStyle = '#ffffff';
         g.fillText(it.label, glitch ? 3 : 0, it.r * 0.42);
       }
       if (it.kind === 'armored') {
@@ -678,11 +689,14 @@ export function PrestreziView(props: GameProps<PrestreziParams>) {
       g.rotate(-h.angle + h.rot);
       g.drawImage(h.sprite.img, -h.sprite.size / 2, -h.sprite.size / 2, h.sprite.size, h.sprite.size);
       if (h.label) {
-        g.fillStyle = '#ffffff';
-        g.font = font(h.r * 0.5, 900);
+        g.font = font(h.r * (h.fake ? 0.46 : 0.6), 900);
         g.textAlign = 'center';
         g.textBaseline = 'middle';
-        g.fillText(h.label, 0, h.r * 0.2);
+        g.lineWidth = 4;
+        g.strokeStyle = 'rgba(20,0,20,0.8)';
+        g.strokeText(h.label, 0, h.r * (h.fake ? 0.42 : 0.22));
+        g.fillStyle = '#ffffff';
+        g.fillText(h.label, 0, h.r * (h.fake ? 0.42 : 0.22));
       }
       g.restore();
       // The fresh cut face glows for a moment.
@@ -754,16 +768,16 @@ export function PrestreziView(props: GameProps<PrestreziParams>) {
       // Cut flashes.
       for (const fl of f.flashes) {
         fl.life += rdt;
-        const a = 1 - fl.life / 0.18;
+        const a = 1 - fl.life / 0.32;
         if (a <= 0) continue;
         g.strokeStyle = `rgba(255,255,255,${a})`;
-        g.lineWidth = 3 * a + 1;
+        g.lineWidth = 6 * a + 1;
         g.beginPath();
         g.moveTo(fl.x0, fl.y0);
         g.lineTo(fl.x1, fl.y1);
         g.stroke();
       }
-      f.flashes = f.flashes.filter((fl) => fl.life < 0.18);
+      f.flashes = f.flashes.filter((fl) => fl.life < 0.32);
       for (const r of f.rings) {
         r.life += rdt;
         const p = r.life / r.max;
@@ -796,7 +810,7 @@ export function PrestreziView(props: GameProps<PrestreziParams>) {
       f.sparks = f.sparks.filter((s) => s.life < s.max);
       // Blade trail: a tapered ribbon, glow first and a white core on top.
       const tn = now / 1000;
-      f.trail = f.trail.filter((p) => tn - p.t < 0.14);
+      f.trail = f.trail.filter((p) => tn - p.t < 0.22);
       if (f.trail.length > 1) {
         g.lineCap = 'round';
         for (const pass of [0, 1]) {

@@ -10,7 +10,7 @@ import type { PrestreziParams } from '../../core/types';
 
 export const W = 360;
 export const H = 640;
-const GRAVITY = 900;
+const GRAVITY = 650;
 /** How far the finger has to travel in one stroke before it cuts (no tap-and-hold). */
 const MIN_TRAVEL = 6;
 const SLOW_FACTOR = 0.4;
@@ -66,6 +66,8 @@ const RADIUS: Record<ItemKind, number> = { real: 30, fake: 30, alarm: 32, armore
 const FAKE_LABELS = ['31°', '−40°', '###', '99°', '0xFF', '??', '−0°', '88°'];
 
 const isFake = (it: Item) => it.kind === 'fake' || it.kind === 'armored';
+/** Forgiving blade: fakes and power-ups are easy to hit, real readings hard to clip by accident. */
+const hitRadius = (it: Item) => (it.kind === 'real' || it.kind === 'alarm' ? it.r * 0.62 : it.r * 1.1);
 
 /** A throw from below the screen that peaks at apexY and comes down near xEnd. */
 function arc(rng: Rng, x0: number, apexY: number, speed: number) {
@@ -111,7 +113,7 @@ export function schedule(p: PrestreziParams): Launch[] {
     const used: number[] = [];
     for (let i = 0; i < n; i++) {
       let x = 50 + rng.next() * (W - 100);
-      for (let k = 0; k < 6 && used.some((u) => Math.abs(u - x) < 70); k++) x = 50 + rng.next() * (W - 100);
+      for (let k = 0; k < 6 && used.some((u) => Math.abs(u - x) < 95); k++) x = 50 + rng.next() * (W - 100);
       used.push(x);
       const roll = rng.next();
       const kind: ItemKind = roll < p.fake ? 'fake' : roll < p.fake + (p.alarm ?? 0) ? 'alarm' : 'real';
@@ -284,7 +286,7 @@ export class PrestreziGame {
     const angle = Math.atan2(y - y0, x - x0);
     for (const it of [...this.items]) {
       if (s.hit.has(it.id) || !this.items.includes(it)) continue;
-      if (segDist(x0, y0, x, y, it.x, it.y) > it.r * 0.92) continue;
+      if (segDist(x0, y0, x, y, it.x, it.y) > hitRadius(it)) continue;
       s.hit.add(it.id);
       this.cut(it, angle);
       if (this.finished) return;
