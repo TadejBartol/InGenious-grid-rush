@@ -2992,7 +2992,7 @@ button.pill:active {
 /* Lab: research as a circuit board */
 .board {
   position: relative;
-  height: 420px;
+  height: 500px;
   margin: 4px 0 12px;
   border-radius: 24px;
   background: radial-gradient(circle at 50% 50%, rgba(56, 225, 255, 0.1), transparent 60%), repeating-linear-gradient(0deg, transparent 0 23px, rgba(56, 225, 255, 0.04) 23px 24px), repeating-linear-gradient(90deg, transparent 0 23px, rgba(56, 225, 255, 0.04) 23px 24px), #070c20;
