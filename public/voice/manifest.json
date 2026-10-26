@@ -471,12 +471,12 @@
  },
  "r4-intro.1": {
   "file": "r4-intro.1.mp3",
-  "text": "Elektriko prodaš, ko je draga. Toploto shraniš, ko je ne rabiš. Zveni preprosto. Ni.",
+  "text": "Toplota mora po ceveh do vsake stavbe. In nobena kaplja ne sme pobegniti v zemljo.",
   "v": 3
  },
  "r4-intro.2": {
   "file": "r4-intro.2.mp3",
-  "text": "Vsaka toplota, ki jo vržeš v hladilnik, greje mene.",
+  "text": "Vsaka kaplja, ki uide v zemljo, greje mene.",
   "v": 3
  },
  "fac-toplarna.0": {
@@ -491,7 +491,7 @@
  },
  "fac-toplarna.2": {
   "file": "fac-toplarna.2.mp3",
-  "text": "Vozni red po ceni in hranilnik toplote. Motor teče, ko se splača.",
+  "text": "Nove cevi, zaprti konci, nič puščanja. Toplota pride do zadnjega radiatorja.",
   "v": 3
  },
  "fac-toplarna.3": {
@@ -531,12 +531,12 @@
  },
  "r4-boss.1": {
   "file": "r4-boss.1.mp3",
-  "text": "Zmešal sem jim vse nastavitve. Ko zmrznejo radiatorji, bodo prosili zame.",
+  "text": "Sukal bom cevi, ko jih boš ravno poravnal. Ko zmrznejo radiatorji, bodo prosili zame.",
   "v": 3
  },
  "r4-boss.2": {
   "file": "r4-boss.2.mp3",
-  "text": "Tokrat ne. Najprej poveži, potem vozi. Topli domovi in visok izkoristek.",
+  "text": "Tokrat ne. Vsako cev zasukam nazaj, potem po števcih najdem vsako puščanje.",
   "v": 3
  },
  "r4-taunt.0": {
@@ -546,12 +546,12 @@
  },
  "r4-taunt.1": {
   "file": "r4-taunt.1.mp3",
-  "text": "Najprej poveži, potem vozi motor po ceni. Hranilnik je moj zaveznik. Gremo še enkrat.",
+  "text": "Hitreje zasukam, kot on zmeša. In števci povedo, kje pušča. Gremo še enkrat.",
   "v": 3
  },
  "r4-ko.0": {
   "file": "r4-ko.0.mp3",
-  "text": "Minus petnajst. Obe enoti tečeta, hranilnik je poln, radiatorji so topli.",
+  "text": "Minus petnajst. Zanka je sklenjena, puščanja zaprta, radiatorji so topli.",
   "v": 3
  },
  "r4-ko.1": {
@@ -917,6 +917,151 @@
  "r6-victory.5": {
   "file": "r6-victory.5.mp3",
   "text": "Kar je izmerjeno, ni pozabljeno. InGenious Grid Rush. Konec.",
+  "v": 3
+ },
+ "r7-intro.0": {
+  "file": "r7-intro.0.mp3",
+  "text": "Podeželje. Stara kmetijska zadruga, pred njo novo parkirišče s polnilnicami.",
+  "v": 3
+ },
+ "r7-intro.1": {
+  "file": "r7-intro.1.mp3",
+  "text": "Polnilnice delajo, a avtomobili ne pridejo do njih. Nekdo je parkiral tako, da je vse zaprto.",
+  "v": 3
+ },
+ "r7-intro.2": {
+  "file": "r7-intro.2.mp3",
+  "text": "Jaz sem Š-1. Brat tistega, ki si ga prebral v mestu. Mene ni bral nihče.",
+  "v": 3
+ },
+ "r7-intro.3": {
+  "file": "r7-intro.3.mp3",
+  "text": "Potem bom pa začel. Avto za avtom, polnilnico za polnilnico.",
+  "v": 3
+ },
+ "r7-intro.4": {
+  "file": "r7-intro.4.mp3",
+  "text": "Parkirišče je moje. Vsak kilovat, ki gre v avto, gre mimo mene.",
+  "v": 3
+ },
+ "fac-zadruga.0": {
+  "file": "fac-zadruga.0.mp3",
+  "text": "Parkirišče zadruge. Dve polnilnici, ki sta pol leta stali prazni.",
+  "v": 3
+ },
+ "fac-zadruga.1": {
+  "file": "fac-zadruga.1.mp3",
+  "text": "Avtomobili so na polnilnicah, števci so priklopljeni.",
+  "v": 3
+ },
+ "fac-zadruga.2": {
+  "file": "fac-zadruga.2.mp3",
+  "text": "Vsaka polnitev izmerjena in zaračunana. Zadruga prvič zasluži z elektriko!",
+  "v": 3
+ },
+ "fac-zadruga.3": {
+  "file": "fac-zadruga.3.mp3",
+  "text": "Dve polnilnici sta malo. Na avtocesti jih je šest.",
+  "v": 3
+ },
+ "fac-hub.0": {
+  "file": "fac-hub.0.mp3",
+  "text": "Hitri hub ob avtocesti. Šest polnilnic, en priključek in petkova gneča.",
+  "v": 3
+ },
+ "fac-hub.1": {
+  "file": "fac-hub.1.mp3",
+  "text": "Če se vsi priklopijo hkrati, priključek odpove.",
+  "v": 3
+ },
+ "fac-hub.2": {
+  "file": "fac-hub.2.mp3",
+  "text": "Upravljanje obremenitve. Moč se deli, nihče ne čaka predolgo.",
+  "v": 3
+ },
+ "fac-hub.3": {
+  "file": "fac-hub.3.mp3",
+  "text": "Pridi v klet, robotek. Tam ni signala in ni pomoči.",
+  "v": 3
+ },
+ "fac-hub.4": {
+  "file": "fac-hub.4.mp3",
+  "text": "Na kleti zadruge visi tablica: »Š-1, odvod zadruga, mlin, vaška razsvetljava«.",
+  "v": 3
+ },
+ "r7-boss.0": {
+  "file": "r7-boss.0.mp3",
+  "text": "Klet zadruge. Š-1 utripa rdeče, zunaj se gnete deset avtomobilov.",
+  "v": 3
+ },
+ "r7-boss.1": {
+  "file": "r7-boss.1.mp3",
+  "text": "Najprej bom prižgal vse naenkrat. Potem bo moj črni avto zaprl vsako pot.",
+  "v": 3
+ },
+ "r7-boss.2": {
+  "file": "r7-boss.2.mp3",
+  "text": "Najprej ukrotim konico. Potem prehitim tvoj avto. Vidim, kam bo zapeljal.",
+  "v": 3
+ },
+ "r7-taunt.0": {
+  "file": "r7-taunt.0.mp3",
+  "text": "Zaprto! Nihče ne bo polnil.",
+  "v": 3
+ },
+ "r7-taunt.1": {
+  "file": "r7-taunt.1.mp3",
+  "text": "Njegov avto se premakne po vsakih nekaj mojih potezah. Moram ga predvideti. Še enkrat.",
+  "v": 3
+ },
+ "r7-ko.0": {
+  "file": "r7-ko.0.mp3",
+  "text": "Zadnji avto zapelje na polnilnico. Črni avto stoji v kotu, brez poti.",
+  "v": 3
+ },
+ "r7-ko.1": {
+  "file": "r7-ko.1.mp3",
+  "text": "Kako? Zaprl sem vse!",
+  "v": 3
+ },
+ "r7-ko.2": {
+  "file": "r7-ko.2.mp3",
+  "text": "Ker sem videl vsako potezo, preden si jo naredil. Tako kot bratovo zgodovino.",
+  "v": 3
+ },
+ "r7-ko.3": {
+  "file": "r7-ko.3.mp3",
+  "text": "Š-1, odčitek številka ena. Prehod, beri!",
+  "v": 3
+ },
+ "r7-ko.4": {
+  "file": "r7-ko.4.mp3",
+  "text": "Brat … ti si tisti, ki je bral brata? Potem … beri še mene.",
+  "v": 3
+ },
+ "r7-ko.5": {
+  "file": "r7-ko.5.mp3",
+  "text": "Klet zadruge zasveti zeleno. Polnilni park je osvetljen.",
+  "v": 3
+ },
+ "r7-victory.0": {
+  "file": "r7-victory.0.mp3",
+  "text": "Jutro na podeželju. Pred zadrugo se polnijo avtomobili, traktor in dostavni kombi.",
+  "v": 3
+ },
+ "r7-victory.1": {
+  "file": "r7-victory.1.mp3",
+  "text": "Brat mi je povedal, da je v omrežju lepo. Da te kdo pogleda vsak dan.",
+  "v": 3
+ },
+ "r7-victory.2": {
+  "file": "r7-victory.2.mp3",
+  "text": "Dobrodošel, Š-1. Zdaj štejeta oba. Mesto in vas.",
+  "v": 3
+ },
+ "r7-victory.3": {
+  "file": "r7-victory.3.mp3",
+  "text": "Kar je izmerjeno, ni pozabljeno. Tudi na podeželju.",
   "v": 3
  }
 }
