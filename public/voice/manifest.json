@@ -786,7 +786,7 @@
  },
  "fac-arhiv.0": {
   "file": "fac-arhiv.0.mp3",
-  "text": "Arhiv meritev. Prvi trakovi so prebrani. Enote preverjene, dvojniki zavrženi.",
+  "text": "Arhiv meritev. Prvi trakovi so prebrani. Enote preverjene, pokvarjeni zapisi zavrženi.",
   "v": 3
  },
  "fac-arhiv.1": {
@@ -856,7 +856,7 @@
  },
  "r6-taunt.1": {
   "file": "r6-taunt.1.mp3",
-  "text": "Ne bom te pustil v kleti. Preveri enote, zavrzi dvojnike, ne izgubi nobenega meseca. Še enkrat.",
+  "text": "Ne bom te pustil v kleti. Preveri enote, zavrzi pokvarjene, ne izgubi nobenega meseca. Še enkrat.",
   "v": 3
  },
  "r6-ko.0": {
