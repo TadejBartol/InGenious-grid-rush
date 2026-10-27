@@ -19,7 +19,6 @@ export function SelitevView(props: GameProps<SelitevParams>) {
   const [toast, setToast] = useState<{ text: string; kind: 'good' | 'bad'; id: number } | null>(null);
   const [fly, setFly] = useState<Fly | null>(null);
   const [hit, setHit] = useState<{ lane: number | 'bin'; good: boolean; id: number } | null>(null);
-  const [peek, setPeek] = useState(false);
   const [tip, setTip] = useState(props.tip ?? null);
   const [stageRef, shake] = useShake(props.reducedMotion);
   const pausedRef = useRef(props.paused);
@@ -150,14 +149,13 @@ export function SelitevView(props: GameProps<SelitevParams>) {
     setFrame((f) => f + 1);
   };
 
-  const mapShown = game.mapVisible || peek;
   const left = r ? 1 - game.wait / game.cardSec : 0;
   const t = r ? game.targets[r.target] : null;
   const unit = r ? (r.unit === 'Wh' && !game.converted ? 'Wh' : 'kWh') : '';
   const warn = validation && r && game.bad(r);
   const queue = game.records.slice(game.index + 1, game.index + 4);
   // Accuracy so far: good records that arrived intact out of the good ones already handled.
-  const handled = game.records.slice(0, game.index).filter((x) => !x.flaw && !x.duplicate).length;
+  const handled = game.records.slice(0, game.index).filter((x) => !x.flaw).length;
   const running = handled ? game.correct / handled : 1;
 
   return (
@@ -171,38 +169,34 @@ export function SelitevView(props: GameProps<SelitevParams>) {
         </span>
       </Hud>
       <div class="stage selitev-stage" ref={stageRef}>
-        <div
-          class={`sel-map${mapShown ? '' : ' hidden'}`}
-          onPointerDown={() => !game.mapVisible && setPeek(true)}
-          onPointerUp={() => setPeek(false)}
-          onPointerLeave={() => setPeek(false)}
-          aria-label="Tabela kod"
-        >
+        <div class="sel-map" aria-label="Tabela kod">
           <span class="sel-map-head">STARA KODA → NOV MERILNIK</span>
           <div class="sel-map-rows">
             {game.targets.map((x) => (
               <span style={{ '--c': hex(x.color) }}>
-                <b class="mono">{mapShown ? x.code : 'Š-0/•••'}</b>
+                <b class="mono">{x.code}</b>
                 <i>→</i>
                 {x.name}
               </span>
             ))}
           </div>
-          {!game.mapVisible && !peek && <small>drži za pogled v tabelo</small>}
         </div>
 
         <div class="sel-terminal">
           <div class="sel-queue" aria-hidden="true">
             {queue.map((q, k) => (
-              <span class="sel-ghost" style={{ '--k': k }}>
+              <span class="sel-ghost" style={{ '--k': k, '--c': hex(game.targets[q.target]?.color ?? 0x888888) }}>
                 {game.targets[q.target]?.code}
               </span>
             ))}
           </div>
           {r && t && (
-            <div class={`sel-card${warn ? ' warn' : ''}${r.flaw ? ' flaw' : ''}`} key={r.id}>
+            <div class={`sel-card${warn ? ' warn' : ''}${r.flaw ? ' flaw' : ''}`} key={r.id} style={{ '--c': hex(t.color) }}>
               <div class="sel-card-row">
-                <span class="mono sel-code">{t.code}</span>
+                <span class="mono sel-code">
+                  <i class="sel-dot" aria-hidden="true" />
+                  {t.code}
+                </span>
                 <span class="mono sel-date">
                   {MONTHS[r.month]} {r.year}
                 </span>
@@ -222,7 +216,13 @@ export function SelitevView(props: GameProps<SelitevParams>) {
           <button class={`btn sel-convert${game.converted ? ' on' : ''}`} onClick={convert} disabled={!r || game.converted} aria-label="Pretvori Wh v kWh">
             Wh → kWh <small>÷ 1000</small>
           </button>
-          <button class={`btn sel-bin${hit?.lane === 'bin' ? (hit.good ? ' hit-good' : ' hit-bad') : ''}`} key={hit?.lane === 'bin' ? hit.id : 'bin'} onClick={bin} disabled={!r} aria-label="Zavrzi zapis">
+          <button
+            class={`btn sel-bin${hit?.lane === 'bin' ? (hit.good ? ' hit-good' : ' hit-bad') : ''}`}
+            key={hit?.lane === 'bin' ? hit.id : 'bin'}
+            onClick={bin}
+            disabled={!r}
+            aria-label="Zavrzi zapis"
+          >
             🗑 Zavrzi
           </button>
         </div>
@@ -238,7 +238,7 @@ export function SelitevView(props: GameProps<SelitevParams>) {
               aria-label={`Prenesi na ${x.name}`}
             >
               <b>{x.name}</b>
-              <span class="mono">{mapShown ? x.code : 'Š-0/•••'}</span>
+              <span class="mono">{x.code}</span>
               <span class="sel-slots" aria-hidden="true">
                 {x.slots.map((s, m) => (
                   <i class={s ? 'on' : ''} title={MONTHS[m]} />

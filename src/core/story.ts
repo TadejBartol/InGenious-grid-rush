@@ -492,7 +492,7 @@ export const SCENES: Scene[] = [
     tone: 'lit',
     facility: 'arhiv',
     lines: [
-      { who: 'narrator', text: 'Arhiv meritev. Prvi trakovi so prebrani. Enote preverjene, dvojniki zavrženi.' },
+      { who: 'narrator', text: 'Arhiv meritev. Prvi trakovi so prebrani. Enote preverjene, pokvarjeni zapisi zavrženi.' },
       { who: 'genko', mood: 'wow', text: 'Januar 1987, Livarna: 12 480 kWh. Prvi odčitek Š-0. Po devetintridesetih letih spet berljiv.', act: 'connect' },
       { who: 'narrator', fx: 'light', text: 'Arhiv zasveti. Zgodovina mesta teče v platformo.' },
       { who: 'dark', mood: 'hurt', text: 'Ta številka … napisal sem jo s tresočim kolutom. Prvi dan.' },
@@ -530,7 +530,7 @@ export const SCENES: Scene[] = [
     weather: 'storm',
     lines: [
       { who: 'dark', mood: 'smirk', text: 'Vidiš? Tudi ti si izgubil zapise. Vsi jih izgubijo. Zato sem sam.', act: 'laugh' },
-      { who: 'genko', mood: 'worried', text: 'Ne bom te pustil v kleti. Preveri enote, zavrzi dvojnike, ne izgubi nobenega meseca. Še enkrat.' },
+      { who: 'genko', mood: 'worried', text: 'Ne bom te pustil v kleti. Preveri enote, zavrzi pokvarjene, ne izgubi nobenega meseca. Še enkrat.' },
     ],
   },
   {

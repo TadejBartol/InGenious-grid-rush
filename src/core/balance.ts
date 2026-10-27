@@ -29,7 +29,7 @@ export const RESEARCH: ResearchDef[] = [
   { id: 'pragovi', name: 'Filter šuma', text: 'Pri Prestrezi dobiš eno srce več na stopnjo.', costs: [900, 2200], feature: 'Preverjanje meritev', region: 5 },
   { id: 'termokamera', name: 'Termokamera', text: 'Pri Lovu na puščanje dobiš en posnetek termokamere več na stopnjo.', costs: [1200, 2400], feature: 'Analiza izgub', region: 4 },
   { id: 'baterija', name: 'Pametno polnjenje', text: 'Električni avtomobili v Polnilnici zmorejo en premik več.', costs: [1500], feature: 'Upravljanje polnilnic', region: 7 },
-  { id: 'validacija', name: 'Preverjanje uvoza', text: 'Pri Selitvi platforma označi pokvarjene zapise in dvojnike.', costs: [2600], feature: 'Uvoz meritev', region: 6 },
+  { id: 'validacija', name: 'Preverjanje uvoza', text: 'Pri Selitvi platforma označi pokvarjene zapise.', costs: [2600], feature: 'Uvoz meritev', region: 6 },
 ];
 
 export interface SkinDef {

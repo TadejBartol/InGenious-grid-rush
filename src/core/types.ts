@@ -162,12 +162,8 @@ export interface SelitevParams {
   convert: number;
   /** Share of corrupt records (#####, negative readings) that must be thrown away. */
   corrupt: number;
-  /** Share of records for a month that was already imported. */
-  duplicates: number;
   /** Seconds a record waits at the reading head before it is lost. */
   cardSec: number;
-  /** Hide the code-to-meter table after the first records: the player must remember it. */
-  hideMap?: boolean;
   /** Share of records that must arrive intact to pass. */
   pass: number;
   seed: number;

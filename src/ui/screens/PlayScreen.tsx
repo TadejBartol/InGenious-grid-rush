@@ -55,9 +55,9 @@ const TIPS: Record<string, string> = {
   'r5-3': 'Rdeč krog z belim križem je pravi alarm. Je strašen, a resničen: ne reži ga!',
   'r5-4': 'Nekatere lažne se preoblečejo v prave. Na vrhu leta se razkrijejo. Zeleni ščit počisti vse lažne naenkrat.',
   'r5-6': 'Vijoličen oklepni paket zdrži tri reze. Vsak potez šteje le enkrat.',
-  'r6-1': 'Zgoraj je tabela kod. Vsak zapis pošlji na pravi nov merilnik, preden ga čas odnese.',
+  'r6-1': 'Zapis ima barvo svojega novega merilnika. Tapni merilnik iste barve spodaj, preden zapis odnese čas.',
   'r6-2': 'Rumen Wh pomeni 1000× večjo številko. Najprej pritisni »Wh → kWh«, nato zapis pošlji.',
-  'r6-4': '##### in negativne vrednosti v koš. Če je mesec pri merilniku že zelen, je zapis dvojnik: tudi v koš.',
+  'r6-4': '##### in negativne vrednosti so pokvarjene. Tapni »Zavrzi«, da gredo v koš.',
 };
 
 export function PlayScreen({ level, from }: { level: LevelDef; from: Screen }) {

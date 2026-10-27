@@ -92,11 +92,10 @@ export const HELP: Record<GameKind, Help> = {
   },
   selitev: {
     goal: 'Prenesi stare zapise Š-0 na prave nove merilnike, brez napak.',
-    how: ['Poglej kodo zapisa in jo poišči v tabeli zgoraj.', 'Tapni pravi merilnik spodaj, da zapis pošlješ tja.'],
+    how: ['Zapis ima barvo svojega novega merilnika.', 'Tapni merilnik iste barve spodaj, da zapis pošlješ tja.'],
     watch: [
       'Rumen Wh je 1000× preveč: najprej pritisni »Wh → kWh«.',
       '##### in negativne vrednosti vrzi v koš.',
-      'Če je mesec pri merilniku že zelen, je zapis dvojnik: tudi v koš.',
       'Zapis ne čaka večno, pazi na trak pod njim.',
     ],
   },
